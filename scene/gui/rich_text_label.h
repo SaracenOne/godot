@@ -246,6 +246,8 @@ private:
 	bool use_bbcode;
 	String bbcode;
 
+	int visible_chars;
+	int processed_chars;
 protected:
 	void _notification(int p_what);
 
@@ -303,6 +305,9 @@ public:
 
 	void set_bbcode(const String& p_bbcode);
 	String get_bbcode() const;
+
+	int get_total_character_count();
+	void set_visible_characters(int p_amount);
 
 	RichTextLabel();
 	~RichTextLabel();

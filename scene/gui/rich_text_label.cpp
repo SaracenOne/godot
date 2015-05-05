@@ -307,42 +307,48 @@ if (m_height > line_height) {\
 
 
 								ofs+=cw;
-							} else if (p_mode==PROCESS_DRAW) {
-
-								bool selected=false;
-								if (selection.active) {
-
-									int cofs = (&c[i])-cf;
-									if ((text->index > selection.from->index || (text->index == selection.from->index && cofs >=selection.from_char)) && (text->index < selection.to->index || (text->index == selection.to->index && cofs <=selection.to_char))) {
-										selected=true;
-									}
-								}
-
-								int cw;
-
-								if (selected) {
-
-									cw = font->get_char_size(c[i],c[i+1]).x;
-									draw_rect(Rect2(pofs,y,cw,lh),selection_bg);
-									font->draw_char(ci,Point2(pofs,y+lh-(fh-ascent)),c[i],c[i+1],selection_fg);
-
-								} else {
-									cw=font->draw_char(ci,Point2(pofs,y+lh-(fh-ascent)),c[i],c[i+1],color);
-								}
-
-
-								//print_line("draw char: "+String::chr(c[i]));
-
-								if (underline) {
-									Color uc=color;
-									uc.a*=0.5;
-									//VS::get_singleton()->canvas_item_add_line(ci,Point2(pofs,y+ascent+2),Point2(pofs+cw,y+ascent+2),uc);
-									int uy = y+lh-fh+ascent+2;
-									VS::get_singleton()->canvas_item_add_line(ci,Point2(pofs,uy),Point2(pofs+cw,uy),uc);
-								}
-								ofs+=cw;
 							}
+							else if (p_mode == PROCESS_DRAW) {
 
+								if (visible_chars < 0 || processed_chars<visible_chars) {
+									bool selected = false;
+									if (selection.active) {
+
+										int cofs = (&c[i]) - cf;
+										if ((text->index > selection.from->index || (text->index == selection.from->index && cofs >= selection.from_char)) && (text->index < selection.to->index || (text->index == selection.to->index && cofs <= selection.to_char))) {
+											selected = true;
+										}
+									}
+
+									int cw;
+
+									if (selected) {
+
+										cw = font->get_char_size(c[i], c[i + 1]).x;
+										draw_rect(Rect2(pofs, y, cw, lh), selection_bg);
+										font->draw_char(ci, Point2(pofs, y + lh - (fh - ascent)), c[i], c[i + 1], selection_fg);
+
+									}
+									else {
+										cw = font->draw_char(ci, Point2(pofs, y + lh - (fh - ascent)), c[i], c[i + 1], color);
+									}
+
+
+									//print_line("draw char: "+String::chr(c[i]));
+
+									if (underline) {
+										Color uc = color;
+										uc.a *= 0.5;
+										//VS::get_singleton()->canvas_item_add_line(ci,Point2(pofs,y+ascent+2),Point2(pofs+cw,y+ascent+2),uc);
+										int uy = y + lh - fh + ascent + 2;
+										VS::get_singleton()->canvas_item_add_line(ci, Point2(pofs, uy), Point2(pofs + cw, uy), uc);
+									}
+									ofs += cw;
+				
+									if (c[i] != ' ')
+										processed_chars++;
+								}
+							}
 						}
 					}
 
@@ -372,7 +378,10 @@ if (m_height > line_height) {\
 				ENSURE_WIDTH( img->image->get_width() );
 
 				if (p_mode==PROCESS_DRAW) {
-					img->image->draw(ci,Point2(wofs,y+lh-font->get_descent()-img->image->get_height()));
+					if (visible_chars < 0 || processed_chars < visible_chars) {
+						img->image->draw(ci, Point2(wofs, y + lh - font->get_descent() - img->image->get_height()));
+						processed_chars++;
+					}
 				}
 
 				ADVANCE( img->image->get_width() );
@@ -557,6 +566,8 @@ void RichTextLabel::_notification(int p_what) {
 			int y = (lines[from_line].height_accum_cache - lines[from_line].height_cache) - ofs;
 			Ref<Font> base_font=get_font("normal_font");
 			Color base_color=get_color("default_color");
+
+			processed_chars = 0;
 
 			while (y<size.height && from_line<lines.size()) {
 
@@ -1621,6 +1632,46 @@ String RichTextLabel::get_bbcode() const {
 	return bbcode;
 }
 
+int RichTextLabel::get_total_character_count() {
+	
+	int character_count = 0;
+	Item *it;
+
+	int i;
+	for (i = 0; i < lines.size(); i++) {
+		it = lines[i].from;
+		while (it != NULL) {
+			switch (it->type)
+			{
+				case ITEM_TEXT: {
+					ItemText *t = static_cast<ItemText*>(it);
+					const CharType *c = t->text.c_str();
+					while(*c) {
+						if(*c != ' ')
+							character_count++;
+						c++;
+					}
+					break;
+				}
+				case ITEM_IMAGE: {
+					character_count++;
+					break;
+				}
+			}
+
+			it = _get_next_item(it);
+		}
+	}
+
+	return character_count;
+}
+
+void RichTextLabel::set_visible_characters(int p_amount) {
+
+	visible_chars = p_amount;
+	update();
+}
+
 void RichTextLabel::set_use_bbcode(bool p_enable) {
 	if (use_bbcode==p_enable)
 		return;
@@ -1676,6 +1727,9 @@ void RichTextLabel::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("set_use_bbcode","enable"),&RichTextLabel::set_use_bbcode);
 	ObjectTypeDB::bind_method(_MD("is_using_bbcode"),&RichTextLabel::is_using_bbcode);
+
+	ObjectTypeDB::bind_method(_MD("get_total_character_count"), &RichTextLabel::get_total_character_count);
+	ObjectTypeDB::bind_method(_MD("set_visible_characters"), &RichTextLabel::set_visible_characters);
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL,"bbcode/enabled"),_SCS("set_use_bbcode"),_SCS("is_using_bbcode"));
 	ADD_PROPERTY(PropertyInfo(Variant::STRING,"bbcode/bbcode",PROPERTY_HINT_MULTILINE_TEXT),_SCS("set_bbcode"),_SCS("get_bbcode"));
@@ -1737,6 +1791,9 @@ RichTextLabel::RichTextLabel() {
 	vscroll->hide();
 	current_idx=1;
 	use_bbcode=false;
+
+	visible_chars = -1;
+	processed_chars = 0;
 
 	selection.click=NULL;
 	selection.active=false;
