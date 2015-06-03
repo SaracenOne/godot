@@ -281,6 +281,13 @@ public:
 
 	/* MESH API */
 
+	enum MorphArrayType {
+
+		MORPH_ARRAY_VERTEX=0,
+		MORPH_ARRAY_INDEX,
+		MORPH_ARRAY_MAX
+	};
+
 	enum ArrayType {
 
 		ARRAY_VERTEX=0,

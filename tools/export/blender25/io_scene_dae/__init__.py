@@ -114,6 +114,13 @@ class ExportDAE(bpy.types.Operator, ExportHelper):
             description="Export keyframe animation",
             default=False,
             )
+			
+    use_fbx_style_morphing = BoolProperty(
+            name="Use FBX style morphing",
+            description="Exports shape key data in a format reminiscent of Autodesk FBX morphing data which only exports vertices relevant to a specific shape key track.",
+            default=True,
+            )
+			
     use_anim_action_all = BoolProperty(
             name="All Actions",
             description=("Export all actions for the first armature found in separate DAE files"),

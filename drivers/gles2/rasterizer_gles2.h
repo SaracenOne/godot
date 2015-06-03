@@ -336,12 +336,21 @@ class RasterizerGLES2 : public Rasterizer {
 		//bool packed;
 
 		struct MorphTarget {
+			ArrayData morph_array[VS::MORPH_ARRAY_MAX];
+			int morph_array_len;
+			int morph_stride;
+
 			uint32_t configured_format;
+
 			uint8_t *array;
+			uint8_t *index_array;
 		};
 
 		MorphTarget* morph_targets_local;
 		int morph_target_count;
+		// Optimization for the new morphing system with multi material meshes
+		uint8_t morph_targets_active;
+
 		AABB aabb;
 
 		int array_len;
@@ -385,8 +394,8 @@ class RasterizerGLES2 : public Rasterizer {
 
 			format=0;
 			stride=0;
-			morph_targets_local=0;
 			morph_target_count=0;
+			morph_targets_active=0;
 
 			array_local = index_array_local = 0;
 			vertex_id = index_id = 0;
@@ -420,7 +429,7 @@ class RasterizerGLES2 : public Rasterizer {
 	mutable RID_Owner<Mesh> mesh_owner;
 
 	Error _surface_set_arrays(Surface *p_surface, uint8_t *p_mem,uint8_t *p_index_mem,const Array& p_arrays,bool p_main);
-
+	Error _surface_set_morph_arrays(Surface::MorphTarget *p_surface_morph_target, uint8_t *p_mem,uint8_t *p_index_mem,const Array& p_arrays);
 
 	struct MultiMesh;
 

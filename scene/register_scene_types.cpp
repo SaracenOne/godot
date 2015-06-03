@@ -127,6 +127,8 @@
 #include "scene/resources/mesh_data_tool.h"
 #include "scene/resources/scene_preloader.h"
 
+#include "scene/resources/morph_data.h"
+
 #include "scene/main/timer.h"
 
 #include "scene/audio/stream_player.h"

@@ -37,6 +37,8 @@
 #include "gl_context/context_gl.h"
 #include <string.h>
 
+#include "scene/resources/morph_data.h"
+
 #ifdef GLEW_ENABLED
 #define   _GL_HALF_FLOAT_OES      0x140B
 #else
@@ -1791,6 +1793,11 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 	int index_array_len=0;
 	int array_len=0;
 
+	Vector<int> morph_array_len_array;
+	Vector<uint32_t> morph_array_formats;
+	morph_array_len_array.resize(p_blend_shapes.size());
+	morph_array_formats.resize(p_blend_shapes.size());
+
 	for(int i=0;i<p_arrays.size();i++) {
 
 		if (p_arrays[i].get_type()==Variant::NIL)
@@ -1822,9 +1829,15 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 
 				if (arr[j].get_type()!=Variant::NIL)
 					bsformat|=(1<<j);
-			}
 
-			ERR_FAIL_COND( (bsformat)!=(format&(VS::ARRAY_FORMAT_BONES-1)));
+				if (j==VS::MORPH_ARRAY_INDEX) {
+
+					morph_array_len_array[i]=IntArray(arr[j]).size();
+				}
+			}
+			morph_array_formats[i] = bsformat;
+
+			//ERR_FAIL_COND( (bsformat)!=(format&(VS::ARRAY_FORMAT_BONES-1)));
 		}
 	}
 
@@ -2071,9 +2084,108 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 			surface->morph_targets_local = memnew_arr(Surface::MorphTarget,mesh->morph_target_count);
 			for(int i=0;i<mesh->morph_target_count;i++) {
 
-				surface->morph_targets_local[i].array=memnew_arr(uint8_t,surface->local_stride*surface->array_len);
-				surface->morph_targets_local[i].configured_format=surface->morph_format;
-				_surface_set_arrays(surface,surface->morph_targets_local[i].array,NULL,p_blend_shapes[i],false);
+				surface->morph_targets_local[i].morph_array_len=0;
+				surface->morph_targets_local[i].morph_stride=0;
+
+				surface->morph_targets_local[i].configured_format=0;
+
+				surface->morph_targets_local[i].array=0;
+				surface->morph_targets_local[i].index_array=0;
+
+				int total_morph_elem_size=0;
+				int morph_length = morph_array_len_array[i];
+
+				int morph_index_size=0;
+
+				for (int j=0;j<VS::MORPH_ARRAY_MAX;j++) {
+					Surface::ArrayData&adm=surface->morph_targets_local[i].morph_array[j];
+					adm.size=0;
+					adm.ofs=0;
+					int morph_elem_size=0;
+					int morph_elem_count=0;
+					bool valid_local=true;
+					GLenum datatype;
+					bool normalize=false;
+					bool bind=false;
+
+					if (!(morph_array_formats[i]&(1<<j))) // no array
+					{
+						morph_length = 0;
+						continue;
+					}
+
+
+					switch(j) {
+						case VS::MORPH_ARRAY_VERTEX: {
+
+							if (use_VBO && use_half_float) {
+								morph_elem_size=3*sizeof(int16_t); // vertex
+								datatype=_GL_HALF_FLOAT_OES;
+							} else {
+
+								morph_elem_size=3*sizeof(GLfloat); // vertex
+								datatype=GL_FLOAT;
+							}
+							bind=true;
+							morph_elem_count=3;
+
+						} break;
+						case VS::MORPH_ARRAY_INDEX: {
+
+							if (morph_length<=0) {
+								continue;
+							}
+							/* determine wether using 16 or 32 bits indices */
+							if (array_len>(1<<16)) {
+
+								morph_elem_size=4;
+								morph_index_size=4;
+								datatype=GL_UNSIGNED_INT;
+							} else {
+								morph_elem_size=2;
+								morph_index_size=2;
+								datatype=GL_UNSIGNED_SHORT;
+							}
+
+							surface->morph_targets_local[i].morph_array_len=morph_length; // only way it can exist
+							adm.ofs=0;
+							adm.size=morph_elem_size;
+							adm.count=1;
+							continue;
+						} break;
+						default: {
+							ERR_FAIL( );
+						}
+					}
+
+					adm.ofs=total_morph_elem_size;
+					adm.size=morph_elem_size;
+					adm.datatype=datatype;
+					adm.normalize=normalize;
+					adm.bind=bind;
+					adm.count=morph_elem_count;
+					total_morph_elem_size+=morph_elem_size;
+					if (valid_local) {
+						surface->morph_targets_local[i].morph_stride+=morph_elem_size;
+						surface->morph_format|=(1<<i);
+					}
+				}
+
+				if(morph_length > 0)
+				{
+					surface->morph_targets_local[i].array=memnew_arr(uint8_t,surface->morph_targets_local[i].morph_stride * surface->morph_targets_local[i].morph_array_len);
+					surface->morph_targets_local[i].index_array=memnew_arr(uint8_t,surface->morph_targets_local[i].morph_array_len * morph_index_size);
+
+					_surface_set_morph_arrays(
+						&surface->morph_targets_local[i],
+						surface->morph_targets_local[i].array,
+						surface->morph_targets_local[i].index_array,
+						p_blend_shapes[i]);
+
+					surface->morph_targets_local[i].configured_format=surface->morph_format;
+
+					surface->morph_targets_active++;
+				}
 			}
 		}
 	}
@@ -2541,6 +2653,133 @@ Error RasterizerGLES2::_surface_set_arrays(Surface *p_surface, uint8_t *p_mem,ui
 	return OK;
 }
 
+Error RasterizerGLES2::_surface_set_morph_arrays(Surface::MorphTarget *p_surface_morph_target, uint8_t *p_mem,uint8_t *p_index_mem,const Array& p_arrays)  {
+
+	uint32_t stride = p_surface_morph_target->morph_stride;
+
+	for(int ai=0;ai<VS::MORPH_ARRAY_MAX;ai++) {
+		if (ai>=p_arrays.size())
+			break;
+		if (p_arrays[ai].get_type()==Variant::NIL)
+			continue;
+		Surface::ArrayData &a=p_surface_morph_target->morph_array[ai];
+
+		switch(ai) {
+
+
+		case MorphData::MORPH_ARRAY_VERTEX: {
+
+				ERR_FAIL_COND_V( p_arrays[ai].get_type() != Variant::VECTOR3_ARRAY, ERR_INVALID_PARAMETER );
+
+				DVector<Vector3> array = p_arrays[ai];
+				ERR_FAIL_COND_V( array.size() != p_surface_morph_target->morph_array_len, ERR_INVALID_PARAMETER );
+
+
+				DVector<Vector3>::Read read = array.read();
+				const Vector3* src=read.ptr();
+
+				if (p_surface_morph_target->morph_array[VS::MORPH_ARRAY_VERTEX].datatype==_GL_HALF_FLOAT_OES) {
+
+					for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
+
+
+						uint16_t vector[3]={ make_half_float(src[i].x), make_half_float(src[i].y), make_half_float(src[i].z) };
+
+						copymem(&p_mem[a.ofs+i*stride], vector, a.size);
+					}
+
+
+				} else {
+					for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
+
+
+						GLfloat vector[3]={ src[i].x, src[i].y, src[i].z };
+
+						copymem(&p_mem[a.ofs+i*stride], vector, a.size);
+					}
+				}
+
+			} break;
+			/*case MorphData::MORPH_ARRAY_NORMAL: {
+
+				ERR_FAIL_COND_V( p_arrays[ai].get_type() != Variant::VECTOR3_ARRAY, ERR_INVALID_PARAMETER );
+
+				DVector<Vector3> array = p_arrays[ai];
+				ERR_FAIL_COND_V( array.size() != p_surface_morph_target->morph_array_len, ERR_INVALID_PARAMETER );
+
+
+				DVector<Vector3>::Read read = array.read();
+				const Vector3* src=read.ptr();
+
+				// setting vertices means regenerating the AABB
+
+				if (p_surface_morph_target->morph_array[VS::MORPH_ARRAY_NORMAL].datatype==GL_BYTE) {
+
+					for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
+
+						GLbyte vector[4]={
+							CLAMP(src[i].x*127,-128,127),
+							CLAMP(src[i].y*127,-128,127),
+							CLAMP(src[i].z*127,-128,127),
+							0,
+						};
+
+						copymem(&p_mem[a.ofs+i*stride], vector, a.size);
+
+					}
+
+				} else {
+					for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
+
+
+						GLfloat vector[3]={ src[i].x, src[i].y, src[i].z };
+						copymem(&p_mem[a.ofs+i*stride], vector, a.size);
+
+					}
+				}
+
+
+			} break;*/
+			case VS::MORPH_ARRAY_INDEX: {
+
+				ERR_FAIL_COND_V( p_surface_morph_target->morph_array_len<=0, ERR_INVALID_DATA );
+				ERR_FAIL_COND_V( p_arrays[ai].get_type() != Variant::INT_ARRAY, ERR_INVALID_PARAMETER );
+
+				DVector<int> indices = p_arrays[ai];
+				ERR_FAIL_COND_V( indices.size() == 0, ERR_INVALID_PARAMETER );
+				ERR_FAIL_COND_V( indices.size() != p_surface_morph_target->morph_array_len, ERR_INVALID_PARAMETER );
+
+				/* determine wether using 16 or 32 bits indices */
+
+				DVector<int>::Read read = indices.read();
+				const int *src=read.ptr();
+
+				for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
+
+
+					if (a.size==2) {
+						uint16_t v=src[i];
+
+						copymem(&p_index_mem[i*a.size], &v, a.size);
+					} else {
+						uint32_t v=src[i];
+
+						copymem(&p_index_mem[i*a.size], &v, a.size);
+					}
+				}
+
+
+			} break;
+
+
+			default: { ERR_FAIL_V(ERR_INVALID_PARAMETER);}
+		}
+
+		p_surface_morph_target->configured_format|=(1<<ai);
+	}
+
+	return OK;
+}
 
 
 void RasterizerGLES2::mesh_add_custom_surface(RID p_mesh,const Variant& p_dat) {
@@ -2697,8 +2936,10 @@ void RasterizerGLES2::mesh_remove_surface(RID p_mesh,int p_index) {
 
 
 	if (mesh->morph_target_count) {
-		for(int i=0;i<mesh->morph_target_count;i++)
+		for(int i=0;i<mesh->morph_target_count;i++) {
 			memfree(surface->morph_targets_local[i].array);
+			memfree(surface->morph_targets_local[i].index_array);
+		}
 		memfree( surface->morph_targets_local );
 	}
 
@@ -5560,7 +5801,7 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Materia
 					for(int i=0;i<surf->morph_target_count;i++) {
 						if (surf->mesh->morph_target_mode==VS::MORPH_MODE_NORMALIZED)
 							coef-=p_morphs[i];
-						ERR_FAIL_COND_V( surf->morph_format != surf->morph_targets_local[i].configured_format, ERR_INVALID_DATA );
+						//ERR_FAIL_COND_V( surf->morph_format != surf->morph_targets_local[i].configured_format, ERR_INVALID_DATA );
 
 					}
 
@@ -5648,66 +5889,44 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Materia
 
 
 					for(int j=0;j<surf->morph_target_count;j++) {
+						if(surf->morph_targets_local[j].morph_array_len > 0 && p_morphs[j] > 0.0f) {
+							for(int i=0;i<1;i++) {
 
-						for(int i=0;i<VS::ARRAY_MAX-3;i++) {
+								const Surface::ArrayData& ad=surf->array[i];
+								if (ad.size==0)
+									continue;
 
-							const Surface::ArrayData& ad=surf->array[i];
-							if (ad.size==0)
-								continue;
+								int ofs = ad.ofs;
+								int src_stride=surf->morph_targets_local[j].morph_stride;
+								int dst_stride=skeleton_valid?surf->stride:surf->local_stride;
 
+								int count = surf->morph_targets_local[j].morph_array_len;
 
-							int ofs = ad.ofs;
-							int src_stride=surf->local_stride;
-							int dst_stride=skeleton_valid?surf->stride:surf->local_stride;
-							int count = surf->array_len;
-							const uint8_t *morph=surf->morph_targets_local[j].array;
-							float w = p_morphs[j];
-							int16_t wfp = CLAMP(w*255,0,255);
+								const uint8_t *morph=			surf->morph_targets_local[j].array;
+								const uint8_t *morph_indices=	surf->morph_targets_local[j].index_array;
 
-							switch(i) {
+								int index_size = surf->morph_targets_local[j].morph_array[VS::MORPH_ARRAY_INDEX].size;
 
-								case VS::ARRAY_VERTEX:
-								case VS::ARRAY_NORMAL:
-								case VS::ARRAY_TANGENT:
-									{
+								float w = p_morphs[j];
 
-									for(int k=0;k<count;k++) {
+								switch(i) {
 
-										const float *src_morph = (const float*)&morph[ofs+k*src_stride];
-										float *dst = (float*)&base[ofs+k*dst_stride];
+								case VS::ARRAY_VERTEX: {
+										for(int k=0;k<count;k++) {
 
-										dst[0]+= src_morph[0]*w;
-										dst[1]+= src_morph[1]*w;
-										dst[2]+= src_morph[2]*w;
-									}
+											int out_index = 0;
+											copymem(&out_index, &morph_indices[k * index_size], index_size);
 
-								} break;
-								case VS::ARRAY_COLOR: {
-									for(int k=0;k<count;k++) {
+											const float *src_morph = (const float*)&morph[ofs+k*src_stride];
+											float *dst = (float*)&base[ofs+out_index*dst_stride];
 
-										const uint8_t *src = (const uint8_t*)&morph[ofs+k*src_stride];
-										uint8_t *dst = (uint8_t*)&base[ofs+k*dst_stride];
+											dst[0]+= src_morph[0]*w;
+											dst[1]+= src_morph[1]*w;
+											dst[2]+= src_morph[2]*w;
+										}
 
-										dst[0]=	(src[0]*wfp)>>8;
-										dst[1]=	(src[1]*wfp)>>8;
-										dst[2]=	(src[2]*wfp)>>8;
-										dst[3]=	(src[3]*wfp)>>8;
-									}
-
-								} break;
-								case VS::ARRAY_TEX_UV:
-								case VS::ARRAY_TEX_UV2: {
-
-									for(int k=0;k<count;k++) {
-
-										const float *src_morph = (const float*)&morph[ofs+k*src_stride];
-										float *dst = (float*)&base[ofs+k*dst_stride];
-
-										dst[0]+= src_morph[0]*w;
-										dst[1]+= src_morph[1]*w;
-									}
-
-								} break;
+									} break;
+								}
 							}
 						}
 					}
@@ -9872,7 +10091,10 @@ void RasterizerGLES2::free(const RID& p_rid) {
 
 				for(int i=0;i<mesh->morph_target_count;i++) {
 
-					memdelete_arr(surface->morph_targets_local[i].array);
+					if(surface->morph_targets_local[i].array)
+						memdelete_arr(surface->morph_targets_local[i].array);
+					if(surface->morph_targets_local[i].index_array != NULL)
+						memdelete_arr(surface->morph_targets_local[i].index_array);
 				}
 				memdelete_arr(surface->morph_targets_local);
 				surface->morph_targets_local=NULL;
