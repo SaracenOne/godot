@@ -1282,6 +1282,7 @@ class RasterizerGLES2 : public Rasterizer {
 	Environment *current_env;
 	VS::ScenarioDebugMode current_debug;
 	RID overdraw_material;
+	float shader_time_rollback;
 
 
 	mutable MaterialShaderGLES2 material_shader;
