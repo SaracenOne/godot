@@ -173,6 +173,7 @@
 #include "scene/resources/audio_stream.h"
 #include "scene/resources/gibberish_stream.h"
 #include "scene/resources/bit_mask.h"
+#include "scene/resources/color_ramp.h"
 #include "scene/scene_string_names.h"
 
 
@@ -569,6 +570,7 @@ void register_scene_types() {
 
 	ObjectTypeDB::register_type<PolygonPathFinder>();
 	ObjectTypeDB::register_type<BitMap>();
+	ObjectTypeDB::register_type<ColorRamp>();
 
 	OS::get_singleton()->yield(); //may take time to init
 
