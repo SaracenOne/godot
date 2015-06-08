@@ -442,10 +442,14 @@ String OSWinrt::get_name() {
 	return "WinRT";
 }
 
-OS::Date OSWinrt::get_date() const {
+OS::Date OSWinrt::get_date(bool utc) const {
 
 	SYSTEMTIME systemtime;
-	GetLocalTime(&systemtime);
+	if (utc)
+		GetSystemTime(&systemtime);
+	else
+		GetLocalTime(&systemtime);
+
 	Date date;
 	date.day=systemtime.wDay;
 	date.month=Month(systemtime.wMonth);
@@ -472,9 +476,10 @@ OS::Time OSWinrt::get_time(bool utc) const {
 OS::TimeZoneInfo OS_Windows::get_time_zone_info() const {
 	TIME_ZONE_INFORMATION info;
 	bool daylight = false;
-	if (GetTimeZoneInformation(info) == TIME_ZONE_ID_DAYLIGHT)
+	if (GetTimeZoneInformation(&info) == TIME_ZONE_ID_DAYLIGHT)
 		daylight = true;
 
+	TimeZoneInfo ret;
 	if (daylight) {
 		ret.name = info.DaylightName;
 	} else {
@@ -485,14 +490,11 @@ OS::TimeZoneInfo OS_Windows::get_time_zone_info() const {
 	return ret;
 }
 
-uint64_t OSWinrt::get_unix_time(bool utc) const {
+uint64_t OSWinrt::get_unix_time() const {
 
 	FILETIME ft;
 	SYSTEMTIME st;
-	if (utc)
-		GetSystemTime(&systemtime);
-	else
-		GetLocalTime(&systemtime);
+	GetSystemTime(&systemtime);
 	SystemTimeToFileTime(&st, &ft);
 
 	SYSTEMTIME ep;

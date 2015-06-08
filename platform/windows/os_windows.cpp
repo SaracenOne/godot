@@ -1829,13 +1829,14 @@ String OS_Windows::get_name() {
 	return "Windows";
 }
 
-OS::Date OS_Windows::get_date() const {
+OS::Date OS_Windows::get_date(bool utc) const {
 
 	SYSTEMTIME systemtime;
-	if (local)
+	if (utc)
 		GetSystemTime(&systemtime);
 	else
 		GetLocalTime(&systemtime);
+
 	Date date;
 	date.day=systemtime.wDay;
 	date.month=Month(systemtime.wMonth);
@@ -1858,27 +1859,14 @@ OS::Time OS_Windows::get_time(bool utc) const {
 	time.sec=systemtime.wSecond;
 	return time;
 }
-OS::Time OS_Windows::get_time(bool utc) const {
-
-	SYSTEMTIME systemtime;
-	if (utc)
-		GetSystemTime(&systemtime);
-	else
-		GetLocalTime(&systemtime);
-
-	Time time;
-	time.hour=systemtime.wHour;
-	time.min=systemtime.wMinute;
-	time.sec=systemtime.wSecond;
-	return time;
-}
 
 OS::TimeZoneInfo OS_Windows::get_time_zone_info() const {
 	TIME_ZONE_INFORMATION info;
 	bool daylight = false;
-	if (GetTimeZoneInformation(info) == TIME_ZONE_ID_DAYLIGHT)
+	if (GetTimeZoneInformation(&info) == TIME_ZONE_ID_DAYLIGHT)
 		daylight = true;
 
+	TimeZoneInfo ret;
 	if (daylight) {
 		ret.name = info.DaylightName;
 	} else {
@@ -1889,7 +1877,7 @@ OS::TimeZoneInfo OS_Windows::get_time_zone_info() const {
 	return ret;
 }
 
-uint64_t OS_Windows::get_unix_time(bool local) const {
+uint64_t OS_Windows::get_unix_time() const {
 
 	FILETIME ft;
 	SYSTEMTIME st;
