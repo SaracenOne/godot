@@ -349,7 +349,7 @@ class RasterizerGLES2 : public Rasterizer {
 		MorphTarget* morph_targets_local;
 		int morph_target_count;
 		// Optimization for the new morphing system with multi material meshes
-		uint8_t morph_targets_active;
+		Vector<uint8_t> morph_targets_active;
 
 		AABB aabb;
 
@@ -395,7 +395,6 @@ class RasterizerGLES2 : public Rasterizer {
 			format=0;
 			stride=0;
 			morph_target_count=0;
-			morph_targets_active=0;
 
 			array_local = index_array_local = 0;
 			vertex_id = index_id = 0;

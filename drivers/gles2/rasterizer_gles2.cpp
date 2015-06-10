@@ -2184,7 +2184,7 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 
 					surface->morph_targets_local[i].configured_format=surface->morph_format;
 
-					surface->morph_targets_active++;
+					surface->morph_targets_active.push_back(i);
 				}
 			}
 		}
@@ -5788,7 +5788,7 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Materia
 
 				/* compute morphs */
 
-				if (p_morphs && surf->morph_target_count && can_copy_to_local) {
+				if (p_morphs && surf->morph_targets_active.size() > 0 && can_copy_to_local) {
 
 
 
@@ -5888,8 +5888,9 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Materia
 					}
 
 
-					for(int j=0;j<surf->morph_target_count;j++) {
-						if(surf->morph_targets_local[j].morph_array_len > 0 && p_morphs[j] > 0.0f) {
+					for(int j=0;j<surf->morph_targets_active.size();j++) {
+						uint8_t morph_track = surf->morph_targets_active[j];
+						if(surf->morph_targets_local[morph_track].morph_array_len > 0 && p_morphs[morph_track] > 0.0f) {
 							for(int i=0;i<1;i++) {
 
 								const Surface::ArrayData& ad=surf->array[i];
@@ -5897,17 +5898,17 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Materia
 									continue;
 
 								int ofs = ad.ofs;
-								int src_stride=surf->morph_targets_local[j].morph_stride;
+								int src_stride=surf->morph_targets_local[morph_track].morph_stride;
 								int dst_stride=skeleton_valid?surf->stride:surf->local_stride;
 
-								int count = surf->morph_targets_local[j].morph_array_len;
+								int count = surf->morph_targets_local[morph_track].morph_array_len;
 
-								const uint8_t *morph=			surf->morph_targets_local[j].array;
-								const uint8_t *morph_indices=	surf->morph_targets_local[j].index_array;
+								const uint8_t *morph=			surf->morph_targets_local[morph_track].array;
+								const uint8_t *morph_indices=	surf->morph_targets_local[morph_track].index_array;
 
-								int index_size = surf->morph_targets_local[j].morph_array[VS::MORPH_ARRAY_INDEX].size;
+								int index_size = surf->morph_targets_local[morph_track].morph_array[VS::MORPH_ARRAY_INDEX].size;
 
-								float w = p_morphs[j];
+								float w = p_morphs[morph_track];
 
 								switch(i) {
 
