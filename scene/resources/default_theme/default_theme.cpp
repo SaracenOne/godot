@@ -655,6 +655,8 @@ void make_default_theme() {
 	t->set_icon("increment_hilite","TabContainer",make_icon( scroll_button_right_hl_png));
 	t->set_icon("decrement","TabContainer",make_icon( scroll_button_left_png));
 	t->set_icon("decrement_hilite","TabContainer",make_icon( scroll_button_left_hl_png));
+	t->set_icon("menu","TabContainer",make_icon( tab_menu_png));
+	t->set_icon("menu_hilite","TabContainer",make_icon( tab_menu_hl_png));
 
 	t->set_font("font","TabContainer", default_font );
 
@@ -772,7 +774,8 @@ void make_default_theme() {
 	t->set_constant("separation","HBoxContainer",4);
 	t->set_constant("separation","VBoxContainer",4);
 	t->set_constant("margin","MarginContainer",8);
-	t->set_constant("separation","GridContainer",4);
+	t->set_constant("hseparation","GridContainer",4);
+	t->set_constant("vseparation","GridContainer",4);
 	t->set_constant("separation","HSplitContainer",12);
 	t->set_constant("separation","VSplitContainer",12);
 	t->set_constant("autohide","HSplitContainer",1);
