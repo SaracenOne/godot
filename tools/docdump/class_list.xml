@@ -12852,14 +12852,14 @@
 			<description>
 			</description>
 		</method>
-		<method name="viewport_get_attached_camera" qualifiers="const" >
-			<return type="RID">
-			</return>
-			<argument index="0" name="arg0" type="RID">
-			</argument>
-			<description>
-			</description>
-		</method>
+    <method name="viewport_detach_camera"  >
+      <argument index="0" name="arg0" type="RID">
+      </argument>
+      <argument index="1" name="arg1" type="RID" default="RID()">
+      </argument>
+      <description>
+      </description>
+    </method>
 		<method name="viewport_get_scenario" qualifiers="const" >
 			<return type="RID">
 			</return>

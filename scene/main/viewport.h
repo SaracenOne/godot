@@ -84,7 +84,7 @@ private:
 friend class RenderTargetTexture;
 	Viewport *parent;
 
-	Camera *camera;
+	Array active_cameras;
 	Set<Camera*> cameras;
 
 	RID viewport;
@@ -171,6 +171,7 @@ friend class RenderTargetTexture;
 friend class Camera;
 	void _camera_transform_changed_notify();
 	void _set_camera(Camera* p_camera);
+	void _unset_camera(Camera* p_camera);
 
 protected:	
 	void _notification(int p_what);
@@ -178,7 +179,7 @@ protected:
 public:
 
 
-	Camera* get_camera() const;
+	Array get_cameras() const;
 
 	void set_as_audio_listener(bool p_enable);
 	bool is_audio_listener() const;

@@ -98,6 +98,8 @@ bool Camera::_set(const StringName& p_name, const Variant& p_value) {
 		}
 	} else if (p_name=="visible_layers") {
 		set_visible_layers(p_value);
+	} else if (p_name == "depth") {
+		set_depth(p_value);
 	} else if (p_name=="environment") {
 		set_environment(p_value);
 	} else
@@ -132,6 +134,8 @@ bool Camera::_get(const StringName& p_name,Variant &r_ret) const {
 		}
 	} else if (p_name=="visible_layers") {
 		r_ret=get_visible_layers();
+	} else if (p_name == "depth") {
+		r_ret = get_depth();
 	} else if (p_name=="h_offset") {
 		r_ret=get_h_offset();
 	} else if (p_name=="v_offset") {
@@ -177,6 +181,7 @@ void Camera::_get_property_list( List<PropertyInfo> *p_list) const {
 	p_list->push_back( PropertyInfo( Variant::INT, "keep_aspect",PROPERTY_HINT_ENUM,"Keep Width,Keep Height") );
 	p_list->push_back( PropertyInfo( Variant::BOOL, "current" ) );
 	p_list->push_back( PropertyInfo( Variant::INT, "visible_layers",PROPERTY_HINT_ALL_FLAGS ) );
+	p_list->push_back( PropertyInfo( Variant::INT, "depth"));
 	p_list->push_back( PropertyInfo( Variant::OBJECT, "environment",PROPERTY_HINT_RESOURCE_TYPE,"Environment" ) );
 	p_list->push_back( PropertyInfo( Variant::REAL, "h_offset" ) );
 	p_list->push_back( PropertyInfo( Variant::REAL, "v_offset" ) );
@@ -338,7 +343,7 @@ void Camera::_camera_make_next_current(Node *p_exclude) {
 		return;
 	if (!is_inside_tree())
 		return;
-	if (get_viewport()->get_camera()!=NULL)
+	if (get_viewport()->get_cameras().size())
 		return;
 
 	make_current();
@@ -352,8 +357,8 @@ void Camera::clear_current() {
 		return;
 
 	if (viewport_ptr) {
-		if (viewport_ptr->get_camera()==this) {
-			viewport_ptr->_set_camera(NULL);
+		if (get_viewport()->get_cameras().find(this)!=-1) {
+			viewport_ptr->_unset_camera(this);
 			//a group is used beause this needs to be in order to be deterministic
 			get_tree()->call_group(SceneTree::GROUP_CALL_REALTIME,camera_group,"_camera_make_next_current",this);
 
@@ -365,8 +370,11 @@ void Camera::clear_current() {
 bool Camera::is_current() const {
 
 	if (is_inside_tree()) {
-		if (viewport_ptr)
-			return viewport_ptr->get_camera()==this;
+		if (viewport_ptr) {}
+			if (get_viewport()->get_cameras().find(this) != -1)
+				return true;
+			else
+				return false;
 	} else
 		return current;
 
@@ -740,6 +748,20 @@ uint32_t Camera::get_visible_layers() const{
 	return layers;
 }
 
+void Camera::set_depth(int32_t p_depth) {
+	if(depth!=p_depth) {
+		depth = p_depth;
+		VisualServer::get_singleton()->camera_set_depth(camera, depth);
+		if (current==true && viewport_ptr != NULL) {
+			viewport_ptr->_unset_camera(this);
+			viewport_ptr->_set_camera(this);
+		}
+	}
+}
+
+int32_t Camera::get_depth() const {
+	return depth;
+}
 
 Vector<Plane> Camera::get_frustum() const {
 
@@ -795,9 +817,11 @@ Camera::Camera() {
 	set_perspective(60.0,0.1,100.0);
 	keep_aspect=KEEP_HEIGHT;
 	layers=0xfffff;
+	depth=-1;
 	v_offset=0;
 	h_offset=0;
 	VisualServer::get_singleton()->camera_set_visible_layers(camera,layers);
+	VisualServer::get_singleton()->camera_set_depth(camera, depth);
 	//active=false;
 }
 

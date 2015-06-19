@@ -71,6 +71,7 @@ private:
 	String camera_group;
 
 	uint32_t layers;
+	int8_t depth;
 
 	Viewport *viewport_ptr;
 	Ref<Environment> environment;
@@ -131,6 +132,9 @@ public:
 
 	void set_visible_layers(uint32_t p_layers);
 	uint32_t get_visible_layers() const;
+
+	void set_depth(int32_t p_depth);
+	int32_t get_depth() const;
 
 	Vector<Plane> get_frustum() const;
 
