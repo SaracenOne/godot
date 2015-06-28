@@ -105,6 +105,13 @@ private:
 		Point2 pos_cache;
 		Size2 size_cache;
 
+		Matrix32 mat_cache;
+
+		bool scale_rotate_pivot_changed;
+		float rotation;
+		Vector2 scale;
+		Vector2 pivot;
+
 		float margin[4];
 		AnchorType anchor[4];
 		FocusMode focus_mode;		
@@ -211,7 +218,8 @@ private:
 	void _size_changed();
 	String _get_tooltip() const;
 
-
+public:
+	Vector2 _get_rotation_and_scale_offset(Vector2 p_point, Vector2 p_pivot, Vector2 p_scale, float p_angle) const;
 protected:	
 	bool window_has_modal_stack() const;
 
@@ -299,6 +307,17 @@ public:
 	Rect2 get_rect() const;
 	Rect2 get_global_rect() const;
 	Rect2 get_window_rect() const; ///< use with care, as it blocks waiting for the visual server
+
+	void set_rot(float p_angle);
+	void set_scale(const Size2& p_scale);
+	void set_pivot(const Size2& p_pivot);
+
+	float get_rot() const;
+	Size2 get_scale() const;
+	Size2 get_pivot() const;
+
+	void _set_rotd(float p_angle);
+	float _get_rotd() const;
 	
 	void set_area_as_parent_rect(int p_margin=0);
 	

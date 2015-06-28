@@ -1359,6 +1359,22 @@ void CanvasItemEditor::_viewport_input_event(const InputEvent& p_event) {
 					canvas_item->get_global_transform_with_canvas().affine_inverse().xform(dto) -
 					canvas_item->get_global_transform_with_canvas().affine_inverse().xform(dfrom);
 
+			// Handling dragging vector rotation
+			if (Control *control = canvas_item->cast_to<Control>()) {
+
+				drag_vector *= control->get_scale();
+
+				if (control->get_rot() > 0.0 || control->get_rot() < 0.0)
+				{
+					float cos_val = Math::cos(control->get_rot());
+					float sin_val = Math::sin(control->get_rot());
+
+					float x = cos_val * drag_vector.x - sin_val * drag_vector.y;
+					float y = sin_val * drag_vector.x + cos_val * drag_vector.y;
+
+					drag_vector = Vector2(x, y);
+				}
+			}
 
 			Rect2 local_rect = canvas_item->get_item_rect();
 
