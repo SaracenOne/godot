@@ -1948,6 +1948,9 @@ bool RasterizerDummy::has_feature(VS::Features p_feature) const {
 
 }
 
+void RasterizerDummy::set_swap_buffers_active(const bool p_active) {
+
+}
 
 RasterizerDummy::RasterizerDummy() {
 
