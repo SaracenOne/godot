@@ -66,6 +66,9 @@ public:
 	void set_mesh(const Ref<Mesh>& p_mesh);
 	Ref<Mesh> get_mesh() const;
 
+	void set_morph_track_value(const StringName& p_name, float p_value);
+	float get_morph_track_value(const StringName& p_name) const;
+
 	void set_skeleton_path(const NodePath& p_skeleton);
 	NodePath get_skeleton_path();
 	

@@ -164,6 +164,7 @@ Vector3 Vector3::cross(const Vector3& p_b) const {
 
         return ret;
 }
+
 real_t Vector3::dot(const Vector3& p_b) const {
 
         return x*p_b.x + y*p_b.y + z*p_b.z;

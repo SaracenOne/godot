@@ -113,6 +113,25 @@ Ref<Mesh> MeshInstance::get_mesh() const {
 	return mesh;
 }
 
+void MeshInstance::set_morph_track_value(const StringName& p_name, float p_value)
+{
+	Map<StringName, MorphTrack>::Element *E = morph_tracks.find("morph/"+p_name);
+	if (!E)
+		return;
+
+	E->get().value = p_value;
+	VisualServer::get_singleton()->instance_set_morph_target_weight(get_instance(), E->get().idx, E->get().value);
+}
+
+float MeshInstance::get_morph_track_value(const StringName& p_name) const
+{
+	const Map<StringName, MorphTrack>::Element *E = morph_tracks.find(p_name);
+	if (!E)
+		return 0.0f;
+
+	return E->get().value;
+}
+
 void MeshInstance::_resolve_skeleton_path(){
 
 	if (skeleton_path.is_empty())
@@ -236,6 +255,10 @@ void MeshInstance::_bind_methods() {
 	
 	ObjectTypeDB::bind_method(_MD("set_mesh","mesh:Mesh"),&MeshInstance::set_mesh);
 	ObjectTypeDB::bind_method(_MD("get_mesh:Mesh"),&MeshInstance::get_mesh);
+
+	ObjectTypeDB::bind_method(_MD("set_morph_track_value","name","type"),&MeshInstance::set_morph_track_value);
+	ObjectTypeDB::bind_method(_MD("get_morph_track_value","name"), &MeshInstance::get_morph_track_value);
+
 	ObjectTypeDB::bind_method(_MD("set_skeleton_path","skeleton_path:NodePath"),&MeshInstance::set_skeleton_path);
 	ObjectTypeDB::bind_method(_MD("get_skeleton_path:NodePath"),&MeshInstance::get_skeleton_path);
 	ObjectTypeDB::bind_method(_MD("get_aabb"),&MeshInstance::get_aabb);
