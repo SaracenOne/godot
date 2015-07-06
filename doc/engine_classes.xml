@@ -6170,6 +6170,20 @@
 			<description>
 			</description>
 		</method>
+    <method name="set_morph_track_value"  >
+      <argument index="0" name="arg0" type="String">
+      </argument>
+      <argument index="1" name="arg1" type="float">
+      </argument>
+      <description>
+      </description>
+    </method>
+    <method name="get_morph_track_value" qualifiers="const" >
+      <return type="float">
+      </return>
+      <description>
+      </description>
+    </method>
 		<method name="get_aabb" qualifiers="const" >
 			<return type="AABB">
 			</return>

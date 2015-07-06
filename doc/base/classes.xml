@@ -14887,7 +14887,23 @@
 			Return the current [Mesh] resource for the instance.
 			</description>
 		</method>
-		<method name="set_skeleton_path"  >
+    <method name="set_morph_track_value"  >
+      <argument index="0" name="arg0" type="String">
+      </argument>
+      <argument index="1" name="arg1" type="float">
+      </argument>
+      <description>
+        Set the named morph track value on this instance.
+      </description>
+    </method>
+    <method name="get_morph_track_value" qualifiers="const" >
+      <return type="float">
+      </return>
+      <description>
+        Return the named morph track value on this instance.
+      </description>
+    </method>
+    <method name="set_skeleton_path"  >
 			<argument index="0" name="skeleton_path" type="NodePath">
 			</argument>
 			<description>
