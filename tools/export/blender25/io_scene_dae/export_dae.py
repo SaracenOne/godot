@@ -131,18 +131,18 @@ class DaeExporter:
 
 		def get_tup(self):
 			tup = (self.vertex.x,self.vertex.y,self.vertex.z,self.normal.x,self.normal.y,self.normal.z)
-			#for t in self.uv:
-				#tup = tup + (t.x,t.y)
-			#if (self.color!=None):
-				#tup = tup + (self.color.x,self.color.y,self.color.z)
+			for t in self.uv:
+				tup = tup + (t.x,t.y)
+			if (self.color!=None):
+				tup = tup + (self.color.x,self.color.y,self.color.z)
 			#if (self.tangent!=None):
-				#tup = tup + (self.tangent.x,self.tangent.y,self.tangent.z)
+			#	tup = tup + (self.tangent.x,self.tangent.y,self.tangent.z)
 			#if (self.bitangent!=None):
-				#tup = tup + (self.bitangent.x,self.bitangent.y,self.bitangent.z)
+			#	tup = tup + (self.bitangent.x,self.bitangent.y,self.bitangent.z)
 			#for t in self.bones:
-				#tup = tup + (float(t),)
+			#	tup = tup + (float(t),)
 			#for t in self.weights:
-				#tup = tup + (float(t),)
+			#	tup = tup + (float(t),)
 
 			return tup
 
@@ -372,6 +372,8 @@ class DaeExporter:
 
 	basis_vertex_cache=[]
 	basis_loops_cache=[]
+	basis_uv_layers_cache=[]
+	basis_vertex_colors=[]
 	basis_vertex_map={}
 	
 	def export_mesh(self,node,armature=None,skeyindex=-1,skel_source=None,custom_name=None):
@@ -603,11 +605,19 @@ class DaeExporter:
 					is_close = v.close_to(v_basis)
 					v.vertex-=v_basis.vertex
 						
-				for xt in mesh.uv_layers:
+				for uvi in range(len(mesh.uv_layers)):
+					xt = mesh.uv_layers[uvi]
 					v.uv.append( Vector( xt.data[loop_index].uv ) )
-
+					if(skeyindex>0):
+						xt_c = self.basis_uv_layers_cache[uvi]
+						v_basis.uv.append( Vector( xt_c.data[loop_index].uv ) )
+						v.uv[uvi]-=v_basis.uv[uvi]
+					
 				if (has_colors):
 					v.color = Vector( mesh.vertex_colors[0].data[loop_index].color )
+					if(skeyindex>0):
+						v_basis.color = Vector(self.basis_vertex_colors[0].data[loop_index].color)
+						v.color-=v_basis.color
 
 				v.normal = Vector( ml.normal )
 				if(skeyindex>0):
@@ -617,6 +627,12 @@ class DaeExporter:
 				if (has_tangents):
 					v.tangent = Vector( ml.tangent )
 					v.bitangent = Vector( ml.bitangent )
+					#if(skeyindex>0):
+					#	v_basis.tangent = Vector(self.basis_loops_cache[loop_index].tangent)
+					#	v.tangent-=v_basis.tangent
+					#	v_basis.bitangent = Vector(self.basis_loops_cache[loop_index].bitangent)
+					#	v.bitangent-=v_basis.bitangent
+					
 
 
 			       # if (armature):
@@ -695,6 +711,7 @@ class DaeExporter:
 			self.basis_vertex_cache = mesh.vertices
 			self.basis_loops_cache = mesh.loops
 			self.basis_uv_layers_cache = mesh.uv_layers
+			self.basis_vertex_colors = mesh.vertex_colors
 			self.basis_vertex_map = vertex_map
 
 		meshid = self.new_id("mesh")
