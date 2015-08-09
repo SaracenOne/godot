@@ -44,7 +44,7 @@ protected:
 
 public:
 
-	void set_plane(Plane p_plane);
+	void set_plane(const Plane& p_plane);
 	Plane get_plane() const;
 
 	PlaneShape();

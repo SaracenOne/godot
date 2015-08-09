@@ -240,6 +240,25 @@ struct _GlobalLock {
 #define __STRX(m_index) #m_index
 #define __STR(m_index) __STRX(m_index)
 
+#ifndef GD_ALIGN_16
+
+#if defined(__GNUC__) && (__GNUC__ >= 4 )
+#    define GD_ALIGN16(type) __attribute__ ((__aligned__ (16))) type
+#elif defined(__llvm__)
+#    define GD_ALIGN16(type) __attribute__ ((__aligned__ (16))) type
+#elif defined(_MSC_VER)
+#    define GD_ALIGN16(type) type __declspec(align(16))
+#else
+#    error "GD_ALIGN16: Unknown compiler"
+#endif
+
+#endif
+
+#ifndef GD_CALL_CONV
+#define GD_CALL_CONV __vectorcall
+#endif
+
+#define USE_QUAD_VECTORS
 
 #endif  /* typedefs.h */
 

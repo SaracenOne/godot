@@ -71,6 +71,9 @@ typedef DVector<Vector2> Vector2Array;
 typedef DVector<Vector3> Vector3Array;
 typedef DVector<Color> ColorArray;
 
+#define VARIANT_ALLOCATE_DATA()		_data( *((DataUnion *)memalloc(sizeof(ObjData) > (sizeof(real_t)*5) ? sizeof(ObjData) : (sizeof(real_t)*5))) )
+#define VARIANT_FREE_DATA()			memfree(&_data)
+
 class Variant {
 public:
 
@@ -138,25 +141,27 @@ private:
 	_FORCE_INLINE_ ObjData& _get_obj();
 	_FORCE_INLINE_ const ObjData& _get_obj() const;
 
-	union {
-	
+	union DataUnion {
+
 		bool _bool;
 		int _int;
 		double _real;
 		Matrix32 *_matrix32;
 		AABB* _aabb;
 		Matrix3 *_matrix3;
-		Transform *_transform;	
+		Transform *_transform;
 		RefPtr *_resource;
 		InputEvent *_input_event;
 		Image *_image;
 		void *_ptr; //generic pointer
 #ifdef USE_QUAD_VECTORS		
-		uint8_t _mem[sizeof(ObjData) > (sizeof(real_t)*5) ? sizeof(ObjData) : (sizeof(real_t)*5)]; // plane uses an extra real
+		uint8_t _mem[sizeof(ObjData) > (sizeof(real_t)* 5) ? sizeof(ObjData) : (sizeof(real_t)* 5)]; // plane uses an extra real
 #else
-		uint8_t _mem[sizeof(ObjData) > (sizeof(real_t)*4) ? sizeof(ObjData) : (sizeof(real_t)*4)];
+		uint8_t _mem[sizeof(ObjData) > (sizeof(real_t)* 4) ? sizeof(ObjData) : (sizeof(real_t)* 4)];
 #endif
-	} _data;
+	};
+
+	DataUnion &_data;
 
 
 	void reference(const Variant& p_variant);
@@ -430,8 +435,10 @@ public:
 
 	void operator=(const Variant& p_variant); // only this is enough for all the other types
 	Variant(const Variant& p_variant);
-	_FORCE_INLINE_ Variant() { type=NIL; }
-	_FORCE_INLINE_ ~Variant() { if (type!=Variant::NIL) clear(); }
+
+	_FORCE_INLINE_ Variant() : VARIANT_ALLOCATE_DATA() { type = NIL; }
+
+	_FORCE_INLINE_ ~Variant() { if (type != Variant::NIL) clear(); VARIANT_FREE_DATA(); }
 
 };
 

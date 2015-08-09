@@ -54,7 +54,7 @@ class CommandQueueMT {
 	};
 	
 	template<class T,class M>
-	struct Command0 : public CommandBase {
+	GD_ALIGN16(struct) Command0 : public CommandBase{
 
 		T*instance;
 		M method;
@@ -63,94 +63,227 @@ class CommandQueueMT {
 	};
 	
 	template<class T,class M,class P1>
-	struct Command1 : public CommandBase {
+	GD_ALIGN16(struct) Command1 : public CommandBase {
 	
 		T*instance;
 		M method;
-		typename GetSimpleTypeT<P1>::type_t p1;
+		typename GetSimpleTypeT<P1>::type_t &p1;
 	
 		virtual void call() { (instance->*method)(p1); }
+		_FORCE_INLINE_ Command1() :
+			p1(*((P1 *)memalloc(sizeof(P1))))
+		{
+			memnew_placement(&p1, P1);
+		}
+
+		_FORCE_INLINE_ ~Command1()
+		{
+			memdelete<P1>(&p1);
+		}
 	};
 	
 	template<class T,class M,class P1,class P2>
-	struct Command2 : public CommandBase {
+	GD_ALIGN16(struct) Command2 : public CommandBase{
 	
 		T*instance;
 		M method;
-		typename GetSimpleTypeT<P1>::type_t p1;
-		typename GetSimpleTypeT<P2>::type_t p2;
+		typename GetSimpleTypeT<P1>::type_t &p1;
+		typename GetSimpleTypeT<P2>::type_t &p2;
 	
 		virtual void call() { (instance->*method)(p1,p2); }
+		_FORCE_INLINE_ Command2() :
+			p1(*((P1 *)memalloc(sizeof(P1)))),
+			p2(*((P2 *)memalloc(sizeof(P2))))
+		{
+			memnew_placement(&p1, P1);
+			memnew_placement(&p2, P2);
+		}
+
+		_FORCE_INLINE_ ~Command2()
+		{
+			memdelete<P1>(&p1);
+			memdelete<P2>(&p2);
+		}
 	};
 
 	template<class T,class M,class P1,class P2,class P3>
-	struct Command3 : public CommandBase {
+	GD_ALIGN16(struct) Command3 : public CommandBase{
 	
 		T*instance;
 		M method;
-		typename GetSimpleTypeT<P1>::type_t p1;
-		typename GetSimpleTypeT<P2>::type_t p2;
-		typename GetSimpleTypeT<P3>::type_t p3;
+		typename GetSimpleTypeT<P1>::type_t &p1;
+		typename GetSimpleTypeT<P2>::type_t &p2;
+		typename GetSimpleTypeT<P3>::type_t &p3;
 	
 		virtual void call() { (instance->*method)(p1,p2,p3); }
+		_FORCE_INLINE_ Command3() :
+			p1(*((P1 *)memalloc(sizeof(P1)))),
+			p2(*((P2 *)memalloc(sizeof(P2)))),
+			p3(*((P3 *)memalloc(sizeof(P3))))
+		{
+			memnew_placement(&p1, P1);
+			memnew_placement(&p2, P2);
+			memnew_placement(&p3, P3);
+		}
+
+		_FORCE_INLINE_ ~Command3()
+		{
+			memdelete<P1>(&p1);
+			memdelete<P2>(&p2);
+			memdelete<P3>(&p3);
+		}
 	};
 
 	template<class T,class M,class P1,class P2,class P3,class P4>
-	struct Command4 : public CommandBase {
+	GD_ALIGN16(struct) Command4 : public CommandBase{
 	
 		T*instance;
 		M method;
-		typename GetSimpleTypeT<P1>::type_t p1;
-		typename GetSimpleTypeT<P2>::type_t p2;
-		typename GetSimpleTypeT<P3>::type_t p3;
-		typename GetSimpleTypeT<P4>::type_t p4;
+		typename GetSimpleTypeT<P1>::type_t &p1;
+		typename GetSimpleTypeT<P2>::type_t &p2;
+		typename GetSimpleTypeT<P3>::type_t &p3;
+		typename GetSimpleTypeT<P4>::type_t &p4;
 	
 		virtual void call() { (instance->*method)(p1,p2,p3,p4); }
+		_FORCE_INLINE_ Command4() :
+			p1(*((P1 *)memalloc(sizeof(P1)))),
+			p2(*((P2 *)memalloc(sizeof(P2)))),
+			p3(*((P3 *)memalloc(sizeof(P3)))),
+			p4(*((P4 *)memalloc(sizeof(P4))))
+		{
+			memnew_placement(&p1, P1);
+			memnew_placement(&p2, P2);
+			memnew_placement(&p3, P3);
+			memnew_placement(&p4, P4);
+		}
+
+		_FORCE_INLINE_ ~Command4()
+		{
+			memdelete<P1>(&p1);
+			memdelete<P2>(&p2);
+			memdelete<P3>(&p3);
+			memdelete<P4>(&p4);
+		}
 	};
 
 	template<class T,class M,class P1,class P2,class P3,class P4,class P5>
-	struct Command5 : public CommandBase {
+	GD_ALIGN16(struct) Command5 : public CommandBase{
 	
 		T*instance;
 		M method;
-		typename GetSimpleTypeT<P1>::type_t p1;
-		typename GetSimpleTypeT<P2>::type_t p2;
-		typename GetSimpleTypeT<P3>::type_t p3;
-		typename GetSimpleTypeT<P4>::type_t p4;
-		typename GetSimpleTypeT<P5>::type_t p5;
+		typename GetSimpleTypeT<P1>::type_t &p1;
+		typename GetSimpleTypeT<P2>::type_t &p2;
+		typename GetSimpleTypeT<P3>::type_t &p3;
+		typename GetSimpleTypeT<P4>::type_t &p4;
+		typename GetSimpleTypeT<P5>::type_t &p5;
 	
 		virtual void call() { (instance->*method)(p1,p2,p3,p4,p5); }
+		_FORCE_INLINE_ Command5() :
+			p1(*((P1 *)memalloc(sizeof(P1)))),
+			p2(*((P2 *)memalloc(sizeof(P2)))),
+			p3(*((P3 *)memalloc(sizeof(P3)))),
+			p4(*((P4 *)memalloc(sizeof(P4)))),
+			p5(*((P5 *)memalloc(sizeof(P5))))
+		{
+			memnew_placement(&p1, P1);
+			memnew_placement(&p2, P2);
+			memnew_placement(&p3, P3);
+			memnew_placement(&p4, P4);
+			memnew_placement(&p5, P5);
+		}
+
+		_FORCE_INLINE_ ~Command5()
+		{
+			memdelete<P1>(&p1);
+			memdelete<P2>(&p2);
+			memdelete<P3>(&p3);
+			memdelete<P4>(&p4);
+			memdelete<P5>(&p5);
+		}
 	};
 
 	template<class T,class M,class P1,class P2,class P3,class P4,class P5,class P6>
-	struct Command6 : public CommandBase {
+	GD_ALIGN16(struct) Command6 : public CommandBase{
 	
 		T*instance;
 		M method;
-		typename GetSimpleTypeT<P1>::type_t p1;
-		typename GetSimpleTypeT<P2>::type_t p2;
-		typename GetSimpleTypeT<P3>::type_t p3;
-		typename GetSimpleTypeT<P4>::type_t p4;
-		typename GetSimpleTypeT<P5>::type_t p5;
-		typename GetSimpleTypeT<P6>::type_t p6;
+		typename GetSimpleTypeT<P1>::type_t &p1;
+		typename GetSimpleTypeT<P2>::type_t &p2;
+		typename GetSimpleTypeT<P3>::type_t &p3;
+		typename GetSimpleTypeT<P4>::type_t &p4;
+		typename GetSimpleTypeT<P5>::type_t &p5;
+		typename GetSimpleTypeT<P6>::type_t &p6;
 	
 		virtual void call() { (instance->*method)(p1,p2,p3,p4,p5,p6); }
+		_FORCE_INLINE_ Command6() :
+			p1(*((P1 *)memalloc(sizeof(P1)))),
+			p2(*((P2 *)memalloc(sizeof(P2)))),
+			p3(*((P3 *)memalloc(sizeof(P3)))),
+			p4(*((P4 *)memalloc(sizeof(P4)))),
+			p5(*((P5 *)memalloc(sizeof(P5)))),
+			p6(*((P6 *)memalloc(sizeof(P6))))
+		{
+			memnew_placement(&p1, P1);
+			memnew_placement(&p2, P2);
+			memnew_placement(&p3, P3);
+			memnew_placement(&p4, P4);
+			memnew_placement(&p5, P5);
+			memnew_placement(&p6, P6);
+		}
+
+		_FORCE_INLINE_ ~Command6()
+		{
+			memdelete<P1>(&p1);
+			memdelete<P2>(&p2);
+			memdelete<P3>(&p3);
+			memdelete<P4>(&p4);
+			memdelete<P5>(&p5);
+			memdelete<P6>(&p6);
+		}
 	};
 	
 	template<class T,class M,class P1,class P2,class P3,class P4,class P5,class P6,class P7>
-	struct Command7 : public CommandBase {
+	GD_ALIGN16(struct) Command7 : public CommandBase{
 	
 		T*instance;
 		M method;
-		typename GetSimpleTypeT<P1>::type_t p1;
-		typename GetSimpleTypeT<P2>::type_t p2;
-		typename GetSimpleTypeT<P3>::type_t p3;
-		typename GetSimpleTypeT<P4>::type_t p4;
-		typename GetSimpleTypeT<P5>::type_t p5;
-		typename GetSimpleTypeT<P6>::type_t p6;
-		typename GetSimpleTypeT<P7>::type_t p7;
+		typename GetSimpleTypeT<P1>::type_t &p1;
+		typename GetSimpleTypeT<P2>::type_t &p2;
+		typename GetSimpleTypeT<P3>::type_t &p3;
+		typename GetSimpleTypeT<P4>::type_t &p4;
+		typename GetSimpleTypeT<P5>::type_t &p5;
+		typename GetSimpleTypeT<P6>::type_t &p6;
+		typename GetSimpleTypeT<P7>::type_t &p7;
 	
 		virtual void call() { (instance->*method)(p1,p2,p3,p4,p5,p6,p7); }
+		_FORCE_INLINE_ Command7() :
+			p1(*((P1 *)memalloc(sizeof(P1)))),
+			p2(*((P2 *)memalloc(sizeof(P2)))),
+			p3(*((P3 *)memalloc(sizeof(P3)))),
+			p4(*((P4 *)memalloc(sizeof(P4)))),
+			p5(*((P5 *)memalloc(sizeof(P5)))),
+			p6(*((P6 *)memalloc(sizeof(P6)))),
+			p7(*((P7 *)memalloc(sizeof(P7))))
+		{
+			memnew_placement(&p1, P1);
+			memnew_placement(&p2, P2);
+			memnew_placement(&p3, P3);
+			memnew_placement(&p4, P4);
+			memnew_placement(&p5, P5);
+			memnew_placement(&p6, P6);
+			memnew_placement(&p7, P7);
+		}
+
+		_FORCE_INLINE_ ~Command7()
+		{
+			memdelete<P1>(&p1);
+			memdelete<P2>(&p2);
+			memdelete<P3>(&p3);
+			memdelete<P4>(&p4);
+			memdelete<P5>(&p5);
+			memdelete<P6>(&p6);
+			memdelete<P7>(&p7);
+		}
 	};
 		
 	/* comands that return */
@@ -400,7 +533,7 @@ class CommandQueueMT {
 	};
 
 
-	uint8_t command_mem[COMMAND_MEM_SIZE];
+	uint8_t *command_mem;
 	uint32_t read_ptr;
 	uint32_t write_ptr;
 	SyncSemaphore sync_sems[SYNC_SEMAPHORES];
@@ -410,45 +543,46 @@ class CommandQueueMT {
 	
 	template<class T>
 	T* allocate() {
-	
+
 		// alloc size is size+T+safeguard
-		uint32_t alloc_size=sizeof(T)+sizeof(uint32_t);
-		
-		tryagain:
-		
+		uint32_t alloc_size = sizeof(T)+sizeof(uint32_t);
+
+	tryagain:
+
 		if (write_ptr < read_ptr) {
 			// behind read_ptr, check that there is room
-			if ( (read_ptr-write_ptr) <= alloc_size )
+			if ((read_ptr - write_ptr) <= alloc_size)
 				return NULL;
-		} else if (write_ptr >= read_ptr) {
+		}
+		else if (write_ptr >= read_ptr) {
 			// ahead of read_ptr, check that there is room
-			
-			
-			if ( (COMMAND_MEM_SIZE-write_ptr) < alloc_size+4 ) {
+
+
+			if ((COMMAND_MEM_SIZE - write_ptr) < alloc_size + 4) {
 				// no room at the end, wrap down;
-				
-				if (read_ptr==0) // dont want write_ptr to become read_ptr
+
+				if (read_ptr == 0) // dont want write_ptr to become read_ptr
 					return NULL;
-					
+
 				// if this happens, it's a bug
-				ERR_FAIL_COND_V( (COMMAND_MEM_SIZE-write_ptr) < sizeof(uint32_t), NULL );
+				ERR_FAIL_COND_V((COMMAND_MEM_SIZE - write_ptr) < sizeof(uint32_t), NULL);
 				// zero means, wrap to begining
 
 				uint32_t * p = (uint32_t*)&command_mem[write_ptr];
-				*p=0;
-				write_ptr=0;
+				*p = 0;
+				write_ptr = 0;
 				goto tryagain;
 			}
 		}
 		// allocate the size
 		uint32_t * p = (uint32_t*)&command_mem[write_ptr];
-		*p=sizeof(T);
-		write_ptr+=sizeof(uint32_t);
+		*p = sizeof(T);
+		write_ptr += sizeof(uint32_t);
 		// allocate the command
-		T* cmd = memnew_placement( &command_mem[write_ptr], T );
-		write_ptr+=sizeof(T);
+		T* cmd = memnew_placement(&command_mem[write_ptr], T);
+		write_ptr += sizeof(T);
 		return cmd;
-	
+
 	}
 	
 	template<class T>
@@ -510,7 +644,7 @@ public:
 	/* NORMAL PUSH COMMANDS */
 	
 	template<class T, class M>
-	void push( T * p_instance, M p_method ) {
+	void push( T * p_instance, const M& p_method ) {
 	
 		Command0<T,M> * cmd = allocate_and_lock< Command0<T,M> >();
 		
@@ -523,8 +657,9 @@ public:
 	}
 
 	template<class T, class M, class P1>
-	void push( T * p_instance, M p_method, P1 p1 ) {
+	void push( T * p_instance, const M& p_method, const P1& p1 ) {
 	
+		printf("size1: %u\n", sizeof(Command1<T,M,P1>));
 		Command1<T,M,P1> * cmd = allocate_and_lock< Command1<T,M,P1> >();
 		
 		cmd->instance=p_instance;
@@ -537,8 +672,9 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2>
-	void push( T * p_instance, M p_method, P1 p1, P2 p2 ) {
+	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2 ) {
 	
+		printf("size2: %u\n", sizeof(Command2<T, M, P1, P2>));
 		Command2<T,M,P1,P2> * cmd = allocate_and_lock< Command2<T,M,P1,P2> >();
 		
 		cmd->instance=p_instance;
@@ -552,8 +688,9 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3>
-	void push( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3 ) {
+	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3 ) {
 	
+		printf("size3: %u\n", sizeof(Command3<T, M, P1, P2, P3>));
 		Command3<T,M,P1,P2,P3> * cmd = allocate_and_lock< Command3<T,M,P1,P2,P3> >();
 		
 		cmd->instance=p_instance;
@@ -568,8 +705,9 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4>
-	void push( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4 ) {
+	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4 ) {
 	
+		printf("size4: %u\n", sizeof(Command4<T, M, P1, P2, P3, P4>));
 		Command4<T,M,P1,P2,P3,P4> * cmd = allocate_and_lock< Command4<T,M,P1,P2,P3,P4> >();
 		
 		cmd->instance=p_instance;
@@ -585,8 +723,9 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5>
-	void push( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5 ) {
+	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5 ) {
 	
+		printf("size5: %u\n", sizeof(Command5<T, M, P1, P2, P3, P4, P5>));
 		Command5<T,M,P1,P2,P3,P4,P5> * cmd = allocate_and_lock< Command5<T,M,P1,P2,P3,P4,P5> >();
 		
 		cmd->instance=p_instance;
@@ -603,8 +742,9 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5, class P6>
-	void push( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6 ) {
+	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, const P6& p6 ) {
 	
+		printf("size6: %u\n", sizeof(Command6<T, M, P1, P2, P3, P4, P5, P6>));
 		Command6<T,M,P1,P2,P3,P4,P5,P6> * cmd = allocate_and_lock< Command6<T,M,P1,P2,P3,P4,P5,P6> >();
 		
 		cmd->instance=p_instance;
@@ -622,8 +762,9 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5, class P6, class P7>
-	void push( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7 ) {
+	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, const P6& p6, const P7& p7 ) {
 	
+		printf("size7: %u\n", sizeof(Command7<T, M, P1, P2, P3, P4, P5, P6, P7>));
 		Command7<T,M,P1,P2,P3,P4,P5,P6,P7> * cmd = allocate_and_lock< Command7<T,M,P1,P2,P3,P4,P5,P6,P7> >();
 		
 		cmd->instance=p_instance;
@@ -644,7 +785,7 @@ public:
 	
 	
 	template<class T, class M,class R>
-	void push_and_ret( T * p_instance, M p_method, R* r_ret) {
+	void push_and_ret( T * p_instance, const M& p_method, R* r_ret) {
 	
 		CommandRet0<T,M,R> * cmd = allocate_and_lock< CommandRet0<T,M,R> >();
 		
@@ -661,7 +802,7 @@ public:
 	}
 
 	template<class T, class M, class P1,class R>
-	void push_and_ret( T * p_instance, M p_method, P1 p1, R* r_ret) {
+	void push_and_ret( T * p_instance, const M& p_method, const P1& p1, R* r_ret) {
 	
 		CommandRet1<T,M,P1,R> * cmd = allocate_and_lock< CommandRet1<T,M,P1,R> >();
 		
@@ -680,7 +821,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2,class R>
-	void push_and_ret( T * p_instance, M p_method, P1 p1, P2 p2, R* r_ret) {
+	void push_and_ret( T * p_instance, const M& p_method, const P1& p1, const P2& p2, R* r_ret) {
 	
 		CommandRet2<T,M,P1,P2,R> * cmd = allocate_and_lock< CommandRet2<T,M,P1,P2,R> >();
 		
@@ -699,7 +840,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3,class R>
-	void push_and_ret( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, R* r_ret ) {
+	void push_and_ret( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, R* r_ret ) {
 	
 		CommandRet3<T,M,P1,P2,P3,R> * cmd = allocate_and_lock< CommandRet3<T,M,P1,P2,P3,R> >();
 		
@@ -719,7 +860,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4,class R>
-	void push_and_ret( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, R* r_ret ) {
+	void push_and_ret( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, R* r_ret ) {
 	
 		CommandRet4<T,M,P1,P2,P3,P4,R> * cmd = allocate_and_lock< CommandRet4<T,M,P1,P2,P3,P4,R> >();
 		
@@ -740,7 +881,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5,class R>
-	void push_and_ret( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, R* r_ret ) {
+	void push_and_ret( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, R* r_ret ) {
 	
 		CommandRet5<T,M,P1,P2,P3,P4,P5,R> * cmd = allocate_and_lock< CommandRet5<T,M,P1,P2,P3,P4,P5,R> >();
 		
@@ -762,7 +903,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5, class P6,class R>
-	void push_and_ret( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, R* r_ret ) {
+	void push_and_ret( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, const P6& p6, R* r_ret ) {
 	
 		CommandRet6<T,M,P1,P2,P3,P4,P5,P6,R> * cmd = allocate_and_lock< CommandRet6<T,M,P1,P2,P3,P4,P5,P6,R> >();
 		
@@ -785,7 +926,7 @@ public:
 	}
 	
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5, class P6,class P7,class R>
-	void push_and_ret( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6,P7 p7, R* r_ret ) {
+	void push_and_ret( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, const P6& p6,const P7& p7, R* r_ret ) {
 	
 		CommandRet7<T,M,P1,P2,P3,P4,P5,P6,P7,R> * cmd = allocate_and_lock< CommandRet7<T,M,P1,P2,P3,P4,P5,P6,P7,R> >();
 		
@@ -810,7 +951,7 @@ public:
 
 
 	template<class T, class M>
-	void push_and_sync( T * p_instance, M p_method) {
+	void push_and_sync( T * p_instance, const M& p_method) {
 
 		CommandSync0<T,M> * cmd = allocate_and_lock< CommandSync0<T,M> >();
 
@@ -827,7 +968,7 @@ public:
 	}
 
 	template<class T, class M, class P1>
-	void push_and_sync( T * p_instance, M p_method, P1 p1) {
+	void push_and_sync( T * p_instance, const M& p_method, const P1& p1) {
 
 		CommandSync1<T,M,P1> * cmd = allocate_and_lock< CommandSync1<T,M,P1> >();
 
@@ -845,7 +986,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2>
-	void push_and_sync( T * p_instance, M p_method, P1 p1, P2 p2) {
+	void push_and_sync( T * p_instance, const M& p_method, const P1& p1, const P2& p2) {
 
 		CommandSync2<T,M,P1,P2> * cmd = allocate_and_lock< CommandSync2<T,M,P1,P2> >();
 
@@ -864,7 +1005,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3>
-	void push_and_sync( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3 ) {
+	void push_and_sync( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3 ) {
 
 		CommandSync3<T,M,P1,P2,P3> * cmd = allocate_and_lock< CommandSync3<T,M,P1,P2,P3> >();
 
@@ -884,7 +1025,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4>
-	void push_and_sync( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4 ) {
+	void push_and_sync( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4 ) {
 
 		CommandSync4<T,M,P1,P2,P3,P4> * cmd = allocate_and_lock< CommandSync4<T,M,P1,P2,P3,P4> >();
 
@@ -905,7 +1046,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5>
-	void push_and_sync( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5 ) {
+	void push_and_sync( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5 ) {
 
 		CommandSync5<T,M,P1,P2,P3,P4,P5> * cmd = allocate_and_lock< CommandSync5<T,M,P1,P2,P3,P4,P5> >();
 
@@ -927,7 +1068,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5, class P6>
-	void push_and_sync( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6 ) {
+	void push_and_sync( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, const P6& p6 ) {
 
 		CommandSync6<T,M,P1,P2,P3,P4,P5,P6> * cmd = allocate_and_lock< CommandSync6<T,M,P1,P2,P3,P4,P5,P6> >();
 
@@ -950,7 +1091,7 @@ public:
 	}
 
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5, class P6,class P7>
-	void push_and_sync( T * p_instance, M p_method, P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6,P7 p7 ) {
+	void push_and_sync( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, const P6& p6,const P7& p7 ) {
 
 		CommandSync7<T,M,P1,P2,P3,P4,P5,P6,P7> * cmd = allocate_and_lock< CommandSync7<T,M,P1,P2,P3,P4,P5,P6,P7> >();
 

@@ -84,24 +84,24 @@ public:
 	
 	inline void push_heap(int p_first,int p_hole_idx,int p_top_index, const T& p_value,T* p_array) const {
   
-		T foo = p_value;
+		T value_copy = p_value;
 
 		int parent = (p_hole_idx - 1) / 2;
-		while (p_hole_idx > p_top_index && compare(p_array[p_first + parent], foo)) {
+		while (p_hole_idx > p_top_index && compare(p_array[p_first + parent], value_copy)) {
 		
 			p_array[p_first + p_hole_idx] = p_array[p_first + parent];
 			p_hole_idx = parent;
 			parent = (p_hole_idx - 1) / 2;
 		}
-		p_array[p_first + p_hole_idx] = foo;
+		p_array[p_first + p_hole_idx] = value_copy;
 	}  
 	
 	inline void pop_heap(int p_first, int p_last, int p_result, const T& p_value, T* p_array) const {
 	
-		T foo = p_value;
+		T value_copy = p_value;
 
 		p_array[p_result]=p_array[p_first];
-		adjust_heap(p_first, 0, p_last - p_first, foo, p_array);
+		adjust_heap(p_first, 0, p_last - p_first, value_copy, p_array);
 	}
 	inline void pop_heap(int p_first,int p_last,T* p_array) const {
 	
@@ -110,7 +110,7 @@ public:
 	
 	inline void adjust_heap(int p_first,int p_hole_idx,int p_len, const T& p_value,T* p_array) const {
 	
-		T foo = p_value;
+		T value_copy = p_value;
 
 		int top_index = p_hole_idx;
 		int second_child = 2 * p_hole_idx + 2;
@@ -129,7 +129,7 @@ public:
 			p_array[p_first + p_hole_idx] = p_array[p_first + (second_child - 1)];
 			p_hole_idx = second_child - 1;
 		}
-		push_heap(p_first, p_hole_idx, top_index, foo, p_array);
+		push_heap(p_first, p_hole_idx, top_index, value_copy, p_array);
 	}
 	
 	inline void sort_heap(int p_first,int p_last,T* p_array) const {
@@ -173,13 +173,13 @@ public:
 
 	inline int partitioner(int p_first, int p_last, const T& p_pivot, T* p_array) const {
 	
-		T foo = p_pivot;
+		T value_copy = p_pivot;
 
 		while (true) {
-			while (compare(p_array[p_first], foo))
+			while (compare(p_array[p_first], value_copy))
 				p_first++;
 			p_last--;
-			while (compare(foo, p_array[p_last]))
+			while (compare(value_copy, p_array[p_last]))
 				p_last--;
 	
 			if (!(p_first < p_last))
@@ -253,15 +253,15 @@ public:
 
 	inline void unguarded_linear_insert(int p_last, const T& p_value,T* p_array) const {
 	
-		T foo = p_value;
+		T value_copy = p_value;
 
 		int next = p_last-1;
-		while (compare(foo, p_array[next])) {
+		while (compare(value_copy, p_array[next])) {
 			p_array[p_last]=p_array[next];
 			p_last = next;
 			next--;
 		}
-		p_array[p_last] = foo;
+		p_array[p_last] = value_copy;
 	}
 	
 	inline void linear_insert(int p_first,int p_last,T*p_array) const {
