@@ -246,16 +246,16 @@ void Viewport::update_worlds() {
 }
 
 
-void Viewport::_test_new_mouseover(ObjectID new_collider) {
+void Viewport::_test_new_mouseover(Camera* p_camera, ObjectID new_collider) {
 #ifndef _3D_DISABLED
-	if (new_collider!=physics_object_over) {
+	if (new_collider != p_camera->physics_object_over) {
 
-		if (physics_object_over) {
-			Object *obj = ObjectDB::get_instance(physics_object_over);
+		if (p_camera->physics_object_over) {
+			Object *obj = ObjectDB::get_instance(p_camera->physics_object_over);
 			if (obj) {
 				CollisionObject *co = obj->cast_to<CollisionObject>();
 				if (co) {
-					co->_mouse_exit();
+					co->_mouse_exit(p_camera);
 				}
 			}
 		}
@@ -265,14 +265,14 @@ void Viewport::_test_new_mouseover(ObjectID new_collider) {
 			if (obj) {
 				CollisionObject *co = obj->cast_to<CollisionObject>();
 				if (co) {
-					co->_mouse_enter();
+					co->_mouse_enter(p_camera);
 
 				}
 			}
 
 		}
 
-		physics_object_over=new_collider;
+		p_camera->physics_object_over = new_collider;
 
 	}
 #endif
@@ -451,27 +451,29 @@ void Viewport::_notification(int p_what) {
 #ifndef _3D_DISABLED
 					bool captured=false;
 
-					if (physics_object_capture!=0) {
+					for (int i = 0; i < active_cameras.size(); i++) {
+						Node *cam_node = active_cameras.get(i);
+						Camera *camera = (Camera *)cam_node;
+						if (camera->physics_object_capture != 0) {
 
 
-						Object *obj = ObjectDB::get_instance(physics_object_capture);
-						if (obj) {
-							CollisionObject *co = obj->cast_to<CollisionObject>();
-							if (co) {
-								for (int i = 0; i < active_cameras.size(); i++) {
-									Node *cam_node = active_cameras.get(i);
+							Object *obj = ObjectDB::get_instance(camera->physics_object_capture);
+							if (obj) {
+								CollisionObject *co = obj->cast_to<CollisionObject>();
+								if (co) {
+								
 									co->_input_event(cam_node, ev, Vector3(), Vector3(), 0);
 									captured = true;
 									if (ev.type == InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index == 1 && !ev.mouse_button.pressed) {
-										physics_object_capture = 0;
+										camera->physics_object_capture = 0;
 									}
-								}
 
+								} else {
+									camera->physics_object_capture = 0;
+								}
 							} else {
-								physics_object_capture=0;
+								camera->physics_object_capture = 0;
 							}
-						} else {
-							physics_object_capture=0;
 						}
 					}
 
@@ -485,9 +487,10 @@ void Viewport::_notification(int p_what) {
 								//good, exists
 								for (int i = 0; i < active_cameras.size(); i++) {
 									Node *cam_node = active_cameras.get(i);
+									Camera *camera = (Camera *)cam_node;
 									last_object->_input_event(cam_node, ev, result.position, result.normal, result.shape);
 									if (last_object->get_capture_input_on_drag() && ev.type == InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index == 1 && ev.mouse_button.pressed) {
-										physics_object_capture = last_id;
+										camera->physics_object_capture = last_id;
 									}
 								}
 
@@ -506,32 +509,33 @@ void Viewport::_notification(int p_what) {
 								Vector3 from = camera->project_ray_origin(pos);
 								Vector3 dir = camera->project_ray_normal(pos);
 
+								if (camera->get_raycast_layers() > 0) {
 								PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
-								if (space) {
+									if (space) {
+										bool col = space->intersect_ray(from,from + dir*10000,result,Set<RID>(),camera->get_raycast_layers(),0xFFFFFFFF);
+										ObjectID new_collider = 0;
+										if (col) {
 
-									bool col = space->intersect_ray(from, from + dir * 10000, result, Set<RID>(), 0xFFFFFFFF, 0xFFFFFFFF);
-									ObjectID new_collider = 0;
-									if (col) {
+											if (result.collider) {
 
-										if (result.collider) {
+												CollisionObject *co = result.collider->cast_to<CollisionObject>();
+												if (co) {
 
-											CollisionObject *co = result.collider->cast_to<CollisionObject>();
-											if (co) {
+													co->_input_event(active_cameras.get(i), ev, result.position, result.normal, result.shape);
+													last_object = co;
+													last_id = result.collider_id;
+													new_collider = last_id;
+													if (co->get_capture_input_on_drag() && ev.type == InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index == 1 && ev.mouse_button.pressed) {
+														camera->physics_object_capture = last_id;
+													}
 
-												co->_input_event(active_cameras.get(i), ev, result.position, result.normal, result.shape);
-												last_object = co;
-												last_id = result.collider_id;
-												new_collider = last_id;
-												if (co->get_capture_input_on_drag() && ev.type == InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index == 1 && ev.mouse_button.pressed) {
-													physics_object_capture = last_id;
 												}
-
 											}
 										}
-									}
 
-									if (ev.type == InputEvent::MOUSE_MOTION) {
-										_test_new_mouseover(new_collider);
+										if (ev.type == InputEvent::MOUSE_MOTION) {
+											_test_new_mouseover(camera, new_collider);
+										}
 									}
 								}
 
@@ -549,23 +553,25 @@ void Viewport::_notification(int p_what) {
 						Vector3 from = camera->project_ray_origin(physics_last_mousepos);
 						Vector3 dir = camera->project_ray_normal(physics_last_mousepos);
 
-						PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
-						if (space) {
+						if (camera->get_raycast_layers() > 0) {
+							PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
+							if (space) {
 
-							bool col = space->intersect_ray(from,from+dir*10000,result,Set<RID>(),0xFFFFFFFF,0xFFFFFFFF);
-							ObjectID new_collider=0;
-							if (col) {
-								if (result.collider) {
-									CollisionObject *co = result.collider->cast_to<CollisionObject>();
-									if (co) {
-										new_collider=result.collider_id;
+								bool col = space->intersect_ray(from, from + dir * 10000, result, Set<RID>(), camera->get_raycast_layers(), 0xFFFFFFFF);
+								ObjectID new_collider = 0;
+								if (col) {
+									if (result.collider) {
+										CollisionObject *co = result.collider->cast_to<CollisionObject>();
+										if (co) {
+											new_collider = result.collider_id;
 
+										}
 									}
 								}
+
+								_test_new_mouseover(camera, new_collider);
+
 							}
-
-							_test_new_mouseover(new_collider);
-
 						}
 					}
 #endif
@@ -1492,8 +1498,6 @@ Viewport::Viewport() {
 	render_target_texture = Ref<RenderTargetTexture>( memnew( RenderTargetTexture(this) ) );
 
 	physics_object_picking=false;
-	physics_object_capture=0;
-	physics_object_over=0;
 	physics_last_mousepos=Vector2(1e20,1e20);
 
 

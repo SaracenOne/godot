@@ -510,6 +510,17 @@ bool Area::overlaps_body(Node* p_body) const{
 
 }
 
+void Area::set_layer_mask(uint32_t p_mask) {
+
+	layer_mask = p_mask;
+	PhysicsServer::get_singleton()->area_set_layer_mask(get_rid(), p_mask);
+}
+
+uint32_t Area::get_layer_mask() const {
+
+	return layer_mask;
+}
+
 void Area::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("_body_enter_tree","id"),&Area::_body_enter_tree);
@@ -555,6 +566,9 @@ void Area::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("_body_inout"),&Area::_body_inout);
 	ObjectTypeDB::bind_method(_MD("_area_inout"),&Area::_area_inout);
 
+	ObjectTypeDB::bind_method(_MD("set_layer_mask", "mask"), &Area::set_layer_mask);
+	ObjectTypeDB::bind_method(_MD("get_layer_mask"), &Area::get_layer_mask);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "layers", PROPERTY_HINT_ALL_FLAGS), _SCS("set_layer_mask"), _SCS("get_layer_mask"));
 
 	ADD_SIGNAL( MethodInfo("body_enter_shape",PropertyInfo(Variant::INT,"body_id"),PropertyInfo(Variant::OBJECT,"body"),PropertyInfo(Variant::INT,"body_shape"),PropertyInfo(Variant::INT,"area_shape")));
 	ADD_SIGNAL( MethodInfo("body_exit_shape",PropertyInfo(Variant::INT,"body_id"),PropertyInfo(Variant::OBJECT,"body"),PropertyInfo(Variant::INT,"body_shape"),PropertyInfo(Variant::INT,"area_shape")));
@@ -580,6 +594,7 @@ void Area::_bind_methods() {
 
 Area::Area() : CollisionObject(PhysicsServer::get_singleton()->area_create(),true) {
 
+	layer_mask = 1;
 	space_override=SPACE_OVERRIDE_DISABLED;
 	set_gravity(9.8);;
 	locked=false;

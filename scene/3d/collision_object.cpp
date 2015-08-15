@@ -185,21 +185,21 @@ void CollisionObject::_input_event(Node *p_camera, const InputEvent& p_input_eve
 	emit_signal(SceneStringNames::get_singleton()->input_event,p_camera,p_input_event,p_pos,p_normal,p_shape);
 }
 
-void CollisionObject::_mouse_enter() {
+void CollisionObject::_mouse_enter(Node *p_camera) {
 
 	if (get_script_instance()) {
-		get_script_instance()->call(SceneStringNames::get_singleton()->_mouse_enter);
+		get_script_instance()->call(SceneStringNames::get_singleton()->_mouse_enter,p_camera);
 	}
-	emit_signal(SceneStringNames::get_singleton()->mouse_enter);
+	emit_signal(SceneStringNames::get_singleton()->mouse_enter,p_camera);
 }
 
 
-void CollisionObject::_mouse_exit() {
+void CollisionObject::_mouse_exit(Node *p_camera) {
 
 	if (get_script_instance()) {
-		get_script_instance()->call(SceneStringNames::get_singleton()->_mouse_exit);
+		get_script_instance()->call(SceneStringNames::get_singleton()->_mouse_exit,p_camera);
 	}
-	emit_signal(SceneStringNames::get_singleton()->mouse_exit);
+	emit_signal(SceneStringNames::get_singleton()->mouse_exit,p_camera);
 
 }
 
@@ -247,8 +247,8 @@ void CollisionObject::_bind_methods() {
 	BIND_VMETHOD( MethodInfo("_input_event",PropertyInfo(Variant::OBJECT,"camera"),PropertyInfo(Variant::INPUT_EVENT,"event"),PropertyInfo(Variant::VECTOR3,"click_pos"),PropertyInfo(Variant::VECTOR3,"click_normal"),PropertyInfo(Variant::INT,"shape_idx")));
 
 	ADD_SIGNAL( MethodInfo("input_event",PropertyInfo(Variant::OBJECT,"camera"),PropertyInfo(Variant::INPUT_EVENT,"event"),PropertyInfo(Variant::VECTOR3,"click_pos"),PropertyInfo(Variant::VECTOR3,"click_normal"),PropertyInfo(Variant::INT,"shape_idx")));
-	ADD_SIGNAL( MethodInfo("mouse_enter"));
-	ADD_SIGNAL( MethodInfo("mouse_exit"));
+	ADD_SIGNAL( MethodInfo("mouse_enter",PropertyInfo(Variant::OBJECT,"camera")));
+	ADD_SIGNAL( MethodInfo("mouse_exit",PropertyInfo(Variant::OBJECT,"camera")));
 
 	ADD_PROPERTY( PropertyInfo(Variant::BOOL,"input/ray_pickable"),_SCS("set_ray_pickable"),_SCS("is_ray_pickable"));
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL,"input/capture_on_drag"),_SCS("set_capture_input_on_drag"),_SCS("get_capture_input_on_drag"));

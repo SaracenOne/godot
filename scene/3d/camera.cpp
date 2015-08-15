@@ -98,6 +98,8 @@ bool Camera::_set(const StringName& p_name, const Variant& p_value) {
 		}
 	} else if (p_name=="visible_layers") {
 		set_visible_layers(p_value);
+	} else if (p_name=="raycast_layers") {
+		set_raycast_layers(p_value);
 	} else if (p_name == "depth") {
 		set_depth(p_value);
 	} else if (p_name=="environment") {
@@ -134,6 +136,8 @@ bool Camera::_get(const StringName& p_name,Variant &r_ret) const {
 		}
 	} else if (p_name=="visible_layers") {
 		r_ret=get_visible_layers();
+	} else if (p_name=="raycast_layers") {
+		r_ret=get_raycast_layers();
 	} else if (p_name == "depth") {
 		r_ret = get_depth();
 	} else if (p_name=="h_offset") {
@@ -181,6 +185,7 @@ void Camera::_get_property_list( List<PropertyInfo> *p_list) const {
 	p_list->push_back( PropertyInfo( Variant::INT, "keep_aspect",PROPERTY_HINT_ENUM,"Keep Width,Keep Height") );
 	p_list->push_back( PropertyInfo( Variant::BOOL, "current" ) );
 	p_list->push_back( PropertyInfo( Variant::INT, "visible_layers",PROPERTY_HINT_ALL_FLAGS ) );
+	p_list->push_back( PropertyInfo( Variant::INT, "raycast_layers", PROPERTY_HINT_ALL_FLAGS ) );
 	p_list->push_back( PropertyInfo( Variant::INT, "depth"));
 	p_list->push_back( PropertyInfo( Variant::OBJECT, "environment",PROPERTY_HINT_RESOURCE_TYPE,"Environment" ) );
 	p_list->push_back( PropertyInfo( Variant::REAL, "h_offset" ) );
@@ -696,6 +701,8 @@ void Camera::_bind_methods() {
 	ObjectTypeDB::bind_method( _MD("get_projection"),&Camera::get_projection );
 	ObjectTypeDB::bind_method( _MD("set_visible_layers","mask"),&Camera::set_visible_layers );
 	ObjectTypeDB::bind_method( _MD("get_visible_layers"),&Camera::get_visible_layers );
+	ObjectTypeDB::bind_method(_MD("set_raycast_layers", "mask"), &Camera::set_raycast_layers);
+	ObjectTypeDB::bind_method(_MD("get_raycast_layers"), &Camera::get_raycast_layers);
 	ObjectTypeDB::bind_method(_MD("set_environment","env:Environment"),&Camera::set_environment);
 	ObjectTypeDB::bind_method(_MD("get_environment:Environment"),&Camera::get_environment);
 	ObjectTypeDB::bind_method(_MD("set_keep_aspect_mode","mode"),&Camera::set_keep_aspect_mode);
@@ -739,13 +746,23 @@ Camera::Projection Camera::get_projection() const {
 
 void Camera::set_visible_layers(uint32_t p_layers) {
 
-	layers=p_layers;
-	VisualServer::get_singleton()->camera_set_visible_layers(camera,layers);
+	visible_layers=p_layers;
+	VisualServer::get_singleton()->camera_set_visible_layers(camera,visible_layers);
 }
 
 uint32_t Camera::get_visible_layers() const{
 
-	return layers;
+	return visible_layers;
+}
+
+void Camera::set_raycast_layers(uint32_t p_layers) {
+
+	raycast_layers = p_layers;
+}
+
+uint32_t Camera::get_raycast_layers() const{
+
+	return raycast_layers;
 }
 
 void Camera::set_depth(int32_t p_depth) {
@@ -806,6 +823,8 @@ float Camera::get_h_offset() const {
 Camera::Camera() {
 
 	camera = VisualServer::get_singleton()->camera_create();
+	physics_object_capture = 0;
+	physics_object_over = 0;
 	size=1;
 	fov=0;
 	near=0;
@@ -816,11 +835,12 @@ Camera::Camera() {
 	mode=PROJECTION_PERSPECTIVE;
 	set_perspective(60.0,0.1,100.0);
 	keep_aspect=KEEP_HEIGHT;
-	layers=0xfffff;
+	visible_layers=0xfffff;
+	raycast_layers = 0xfffff;
 	depth=-1;
 	v_offset=0;
 	h_offset=0;
-	VisualServer::get_singleton()->camera_set_visible_layers(camera,layers);
+	VisualServer::get_singleton()->camera_set_visible_layers(camera,visible_layers);
 	VisualServer::get_singleton()->camera_set_depth(camera, depth);
 	//active=false;
 }

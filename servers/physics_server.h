@@ -346,6 +346,7 @@ public:
 
 	virtual void area_set_ray_pickable(RID p_area,bool p_enable)=0;
 	virtual bool area_is_ray_pickable(RID p_area) const=0;
+	virtual void area_set_layer_mask(RID p_area,uint32_t p_mask)=0;
 
 	/* BODY API */
 

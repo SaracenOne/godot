@@ -35,6 +35,8 @@
 class Area : public CollisionObject {
 
 	OBJ_TYPE( Area, CollisionObject );
+
+	uint32_t layer_mask;
 public:
 
 	enum SpaceOverride {
@@ -157,6 +159,8 @@ public:
 	bool overlaps_area(Node* p_area) const;
 	bool overlaps_body(Node* p_body) const;
 
+	void set_layer_mask(uint32_t p_mask);
+	uint32_t get_layer_mask() const;
 
 	Area();
 	~Area();

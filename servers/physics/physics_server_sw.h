@@ -132,6 +132,7 @@ public:
 
 	virtual void area_set_monitor_callback(RID p_area,Object *p_receiver,const StringName& p_method);
 	virtual void area_set_area_monitor_callback(RID p_area,Object *p_receiver,const StringName& p_method);
+	virtual void area_set_layer_mask(RID p_area,uint32_t p_mask);
 
 
 	/* BODY API */

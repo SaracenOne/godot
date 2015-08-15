@@ -440,6 +440,15 @@ void PhysicsServerSW::area_set_area_monitor_callback(RID p_area,Object *p_receiv
 	area->set_area_monitor_callback(p_receiver?p_receiver->get_instance_ID():0,p_method);
 }
 
+
+void PhysicsServerSW::area_set_layer_mask(RID p_area, uint32_t p_mask) {
+
+	AreaSW *area = area_owner.get(p_area);
+	ERR_FAIL_COND(!area);
+
+	area->set_layer_mask(p_mask);
+}
+
 /* BODY API */
 
 RID PhysicsServerSW::body_create(BodyMode p_mode,bool p_init_sleeping) {

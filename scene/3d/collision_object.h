@@ -71,8 +71,8 @@ protected:
 	static void _bind_methods();
 friend class Viewport;
 	virtual void _input_event(Node* p_camera,const InputEvent& p_input_event,const Vector3& p_pos, const Vector3& p_normal, int p_shape);
-	virtual void _mouse_enter();
-	virtual void _mouse_exit();
+	virtual void _mouse_enter(Node *p_camera);
+	virtual void _mouse_exit(Node *p_camera);
 
 public:
 
