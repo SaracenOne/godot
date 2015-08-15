@@ -6184,7 +6184,7 @@
 		</method>
 		<method name="get_morph_track_value" qualifiers="const" >
 			<return type="float">
-			/return>
+			</return>
 			<description>
 			</description>
 		</method>
