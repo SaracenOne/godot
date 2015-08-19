@@ -128,6 +128,7 @@ class VisualServerRaster : public VisualServer {
 		uint32_t visible_layers;
 		int32_t depth;
 		bool vaspect;
+		bool room_cull_enabled;
 		RID env;
 		
 		Transform transform;
@@ -141,6 +142,7 @@ class VisualServerRaster : public VisualServer {
 			znear=0.1; zfar=100;
 			size=1.0;
 			vaspect=false;
+			room_cull_enabled=true;
 		
  		}
  	};
@@ -973,6 +975,9 @@ public:
 
 	virtual void camera_set_use_vertical_aspect(RID p_camera,bool p_enable);
 	virtual bool camera_is_using_vertical_aspect(RID p_camera,bool p_enable) const;
+
+	virtual void camera_set_room_cull_enabled(RID p_camera, bool p_enable);
+	virtual bool camera_is_room_cull_enabled(RID p_camera) const;
 
 	/* VIEWPORT API */
 

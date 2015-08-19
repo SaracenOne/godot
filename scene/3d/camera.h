@@ -157,6 +157,9 @@ public:
 	void set_h_offset(float p_offset);
 	float get_h_offset() const;
 
+	void set_room_cull_enabled(bool p_room_cull_enabled);
+	bool is_room_cull_enabled() const;
+
 
 	Camera();	
 	~Camera();

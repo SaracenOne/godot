@@ -1487,7 +1487,20 @@ bool VisualServerRaster::camera_is_using_vertical_aspect(RID p_camera,bool p_ena
 	return camera->vaspect;
 
 }
+void VisualServerRaster::camera_set_room_cull_enabled(RID p_camera, bool p_enable){
 
+	Camera *camera = camera_owner.get(p_camera);
+	ERR_FAIL_COND(!camera);
+	camera->room_cull_enabled = p_enable;
+
+}
+bool VisualServerRaster::camera_is_room_cull_enabled(RID p_camera) const{
+
+	const Camera *camera = camera_owner.get(p_camera);
+	ERR_FAIL_COND_V(!camera, false);
+	return camera->room_cull_enabled;
+
+}
 
 /* VIEWPORT API */
 
@@ -6422,7 +6435,7 @@ void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, S
 	exterior_visited=false;
 	exterior_portal_cull_count=0;
 
-	if (room_cull_enabled) {
+	if (room_cull_enabled && p_camera->room_cull_enabled) {
 		for(int i=0;i<cull_count;i++) {
 
 			Instance *ins = instance_cull_result[i];
@@ -6542,7 +6555,7 @@ void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, S
 
 				// test if this geometry should be visible
 
-				if (room_cull_enabled) {
+				if (room_cull_enabled && p_camera->room_cull_enabled) {
 
 
 					if (ins->visible_in_all_rooms) {

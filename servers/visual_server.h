@@ -656,6 +656,9 @@ public:
 	virtual void camera_set_use_vertical_aspect(RID p_camera,bool p_enable)=0;
 	virtual bool camera_is_using_vertical_aspect(RID p_camera,bool p_enable) const=0;
 
+	virtual void camera_set_room_cull_enabled(RID p_camera, bool p_enable)=0;
+	virtual bool camera_is_room_cull_enabled(RID p_camera) const=0;
+
 /*
 	virtual void camera_add_layer(RID p_camera);
 	virtual void camera_layer_move_up(RID p_camera,int p_layer);

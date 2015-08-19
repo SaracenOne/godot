@@ -410,6 +410,9 @@ public:
 	FUNC2(camera_set_use_vertical_aspect,RID,bool);
 	FUNC2RC(bool,camera_is_using_vertical_aspect,RID,bool);
 
+	FUNC2(camera_set_room_cull_enabled,RID,bool);
+	FUNC1RC(bool, camera_is_room_cull_enabled, RID);
+
 
 	/* VIEWPORT API */
 
