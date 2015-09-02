@@ -1521,7 +1521,9 @@ void RichTextLabel::scroll_to_line(int p_line) {
 
 }
 
-int RichTextLabel::get_line_count() const {
+int RichTextLabel::get_line_count() {
+
+	_validate_line_caches();
 
 	return lines.size();
 }
@@ -1767,7 +1769,9 @@ int RichTextLabel::get_visible_characters() const {
 
 	return visible_characters;
 }
-int RichTextLabel::get_total_character_count() const {
+int RichTextLabel::get_total_character_count() {
+
+	_validate_line_caches();
 
 	int tc=0;
 	for(int i=0;i<lines.size();i++)

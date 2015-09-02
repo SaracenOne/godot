@@ -289,7 +289,7 @@ public:
 	bool search(const String& p_string,bool p_from_selection=false);
 
 	void scroll_to_line(int p_line);
-	int get_line_count() const;
+	int get_line_count();
 
 	VScrollBar *get_v_scroll() { return vscroll; }
 
@@ -311,7 +311,8 @@ public:
 
 	void set_visible_characters(int p_visible);
 	int get_visible_characters() const;
-	int get_total_character_count() const;
+
+	int get_total_character_count();
 
 	RichTextLabel();
 	~RichTextLabel();
