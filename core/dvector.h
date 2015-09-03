@@ -85,7 +85,7 @@ class DVector {
 		
 		*rc=1;
 		
-		T * dst = (T*)(rc + 1 );
+		T * dst = (T*)(rc + (DVECTOR_DATA_OFFSET / sizeof(int)));
 		
 		T * src = (T*)((uint8_t*)(lock.data()) + DVECTOR_DATA_OFFSET);
 
