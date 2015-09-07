@@ -593,7 +593,9 @@ void SceneTree::_notification(int p_notification) {
 		} break;
 		case NOTIFICATION_OS_MEMORY_WARNING:
 		case NOTIFICATION_WM_FOCUS_IN:
-		case NOTIFICATION_WM_FOCUS_OUT: {
+		case NOTIFICATION_WM_FOCUS_OUT:
+		case NOTIFICATION_WM_MOUSE_ENTER:
+		case NOTIFICATION_WM_MOUSE_EXIT: {
 
 			get_root()->propagate_notification(p_notification);
 		} break;

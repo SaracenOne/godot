@@ -324,6 +324,8 @@ LRESULT OS_Windows::WndProc(HWND hWnd,UINT uMsg, WPARAM	wParam,	LPARAM	lParam) {
 
 			old_invalid=true;
 			outside=true;
+			if (main_loop)
+				main_loop->notification(MainLoop::NOTIFICATION_WM_MOUSE_EXIT);
 
 		} break;
 		case WM_MOUSEMOVE: {
@@ -343,6 +345,8 @@ LRESULT OS_Windows::WndProc(HWND hWnd,UINT uMsg, WPARAM	wParam,	LPARAM	lParam) {
 				tme.dwHoverTime=HOVER_DEFAULT;
 				TrackMouseEvent(&tme);
 
+				if (main_loop)
+					main_loop->notification(MainLoop::NOTIFICATION_WM_MOUSE_ENTER);
 			}
 
 			/*
