@@ -69,6 +69,7 @@ extern "C" {
 //#define STDOUT_FILE
 
 extern HINSTANCE godot_hinstance;
+HCURSOR current_cursor = NULL;
 
 void RedirectIOToConsole() {
 
@@ -1435,7 +1436,17 @@ void OS_Windows::set_mouse_mode(MouseMode p_mode) {
 
 	if (mouse_mode==p_mode)
 		return;
-	ShowCursor(p_mode==MOUSE_MODE_VISIBLE);
+
+	if (p_mode == MOUSE_MODE_VISIBLE)
+	{
+		SetCursor(current_cursor);
+	}
+	else
+	{
+		SetCursor(NULL);
+
+	}
+
 	mouse_mode=p_mode;
 	if (p_mode==MOUSE_MODE_CAPTURED) {
 		RECT clipRect;
@@ -1974,7 +1985,16 @@ void OS_Windows::set_cursor_shape(CursorShape p_shape) {
 		IDC_HELP
 	};
 
-	SetCursor(LoadCursor(hInstance,win_cursors[p_shape]));
+	current_cursor = LoadCursor(hInstance, win_cursors[p_shape]);
+
+	if(mouse_mode == MOUSE_MODE_VISIBLE)
+	{
+		SetCursor(current_cursor);
+	}
+	else
+	{
+		SetCursor(NULL);
+	}
 	cursor_shape=p_shape;
 }
 
