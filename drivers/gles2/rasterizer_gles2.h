@@ -1704,6 +1704,8 @@ public:
 	void reload_vram();
 
 	virtual bool has_feature(VS::Features p_feature) const;
+	
+	virtual void restore_framebuffer();
 
 	virtual void set_swap_buffers_active(const bool p_active);
 

@@ -69,7 +69,7 @@ func _integrate_forces( state ):
 	var lv = state.get_linear_velocity() # linear velocity
 	var g = state.get_total_gravity()
 	var delta = state.get_step()
-	var d = 1.0 - delta*state.get_total_density()
+	var d = 1.0 - delta*state.get_total_linear_damp()
 	if (d<0):
 		d=0
 	lv += g * delta #apply gravity
