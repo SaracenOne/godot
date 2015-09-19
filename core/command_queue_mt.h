@@ -659,7 +659,6 @@ public:
 	template<class T, class M, class P1>
 	void push( T * p_instance, const M& p_method, const P1& p1 ) {
 	
-		printf("size1: %u\n", sizeof(Command1<T,M,P1>));
 		Command1<T,M,P1> * cmd = allocate_and_lock< Command1<T,M,P1> >();
 		
 		cmd->instance=p_instance;
@@ -674,7 +673,6 @@ public:
 	template<class T, class M, class P1, class P2>
 	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2 ) {
 	
-		printf("size2: %u\n", sizeof(Command2<T, M, P1, P2>));
 		Command2<T,M,P1,P2> * cmd = allocate_and_lock< Command2<T,M,P1,P2> >();
 		
 		cmd->instance=p_instance;
@@ -690,7 +688,6 @@ public:
 	template<class T, class M, class P1, class P2, class P3>
 	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3 ) {
 	
-		printf("size3: %u\n", sizeof(Command3<T, M, P1, P2, P3>));
 		Command3<T,M,P1,P2,P3> * cmd = allocate_and_lock< Command3<T,M,P1,P2,P3> >();
 		
 		cmd->instance=p_instance;
@@ -707,7 +704,6 @@ public:
 	template<class T, class M, class P1, class P2, class P3, class P4>
 	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4 ) {
 	
-		printf("size4: %u\n", sizeof(Command4<T, M, P1, P2, P3, P4>));
 		Command4<T,M,P1,P2,P3,P4> * cmd = allocate_and_lock< Command4<T,M,P1,P2,P3,P4> >();
 		
 		cmd->instance=p_instance;
@@ -725,7 +721,6 @@ public:
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5>
 	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5 ) {
 	
-		printf("size5: %u\n", sizeof(Command5<T, M, P1, P2, P3, P4, P5>));
 		Command5<T,M,P1,P2,P3,P4,P5> * cmd = allocate_and_lock< Command5<T,M,P1,P2,P3,P4,P5> >();
 		
 		cmd->instance=p_instance;
@@ -744,7 +739,6 @@ public:
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5, class P6>
 	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, const P6& p6 ) {
 	
-		printf("size6: %u\n", sizeof(Command6<T, M, P1, P2, P3, P4, P5, P6>));
 		Command6<T,M,P1,P2,P3,P4,P5,P6> * cmd = allocate_and_lock< Command6<T,M,P1,P2,P3,P4,P5,P6> >();
 		
 		cmd->instance=p_instance;
@@ -764,7 +758,6 @@ public:
 	template<class T, class M, class P1, class P2, class P3, class P4, class P5, class P6, class P7>
 	void push( T * p_instance, const M& p_method, const P1& p1, const P2& p2, const P3& p3, const P4& p4, const P5& p5, const P6& p6, const P7& p7 ) {
 	
-		printf("size7: %u\n", sizeof(Command7<T, M, P1, P2, P3, P4, P5, P6, P7>));
 		Command7<T,M,P1,P2,P3,P4,P5,P6,P7> * cmd = allocate_and_lock< Command7<T,M,P1,P2,P3,P4,P5,P6,P7> >();
 		
 		cmd->instance=p_instance;
