@@ -50,6 +50,8 @@ class CollisionShape : public Spatial {
 	RID indicator_instance;
 	*/
 
+	Node* debug_shape;
+
 	void resource_changed(RES res);
 
 	bool updating_body;
@@ -65,6 +67,8 @@ class CollisionShape : public Spatial {
 
 	void _set_update_shape_index(int p_index);
 	int _get_update_shape_index() const;
+
+	void _create_debug_shape();
 
 protected:
 

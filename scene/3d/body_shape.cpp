@@ -43,7 +43,7 @@
 
 void CollisionShape::_update_body() {
 
-	if (!get_tree() || !can_update_body)
+	if (!is_inside_tree() || !can_update_body)
 		return;
 	if (!get_tree()->is_editor_hint())
 		return;
@@ -331,6 +331,10 @@ void CollisionShape::_notification(int p_what) {
 			can_update_body=get_tree()->is_editor_hint();
 			set_notify_local_transform(!can_update_body);
 
+			if (get_tree()->is_debugging_collisions_hint()) {
+				_create_debug_shape();
+			}
+
 			//indicator_instance = VisualServer::get_singleton()->instance_create2(indicator,get_world()->get_scenario());
 		} break;
 		case NOTIFICATION_TRANSFORM_CHANGED: {
@@ -346,6 +350,10 @@ void CollisionShape::_notification(int p_what) {
 			}*/
 			can_update_body=false;
 			set_notify_local_transform(false);
+			if (debug_shape) {
+				debug_shape->queue_delete();
+				debug_shape=NULL;
+			}
 		} break;
 		case NOTIFICATION_UNPARENTED: {
 			unparenting=true;
@@ -473,12 +481,37 @@ CollisionShape::CollisionShape() {
 	update_shape_index=-1;
 	trigger=false;
 	can_update_body=false;
+	debug_shape=NULL;
 }
 
 CollisionShape::~CollisionShape() {
 	if (!shape.is_null())
 		shape->unregister_owner(this);
 	//VisualServer::get_singleton()->free(indicator);
+}
+
+void CollisionShape::_create_debug_shape() {
+
+
+	if (debug_shape) {
+		debug_shape->queue_delete();;
+		debug_shape=NULL;
+	}
+
+	Ref<Shape> s = get_shape();
+
+	if (s.is_null())
+		return;
+
+
+	Ref<Mesh> mesh = s->get_debug_mesh();
+
+	MeshInstance *mi = memnew( MeshInstance );
+	mi->set_mesh(mesh);
+
+	add_child(mi);
+	debug_shape=mi;
+
 }
 
 #if 0

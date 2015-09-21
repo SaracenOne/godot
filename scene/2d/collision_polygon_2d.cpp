@@ -134,23 +134,33 @@ void CollisionPolygon2D::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_DRAW: {
+
+			if (!get_tree()->is_editor_hint() && !get_tree()->is_debugging_collisions_hint()) {
+				break;
+			}
+
+
 			for(int i=0;i<polygon.size();i++) {
 
 				Vector2 p = polygon[i];
 				Vector2 n = polygon[(i+1)%polygon.size()];
-				draw_line(p,n,Color(0,0.6,0.7,0.5),3);
+				draw_line(p,n,Color(0.9,0.2,0.0,0.8),3);
 			}
+//#define DEBUG_DECOMPOSE
+#if defined(TOOLS_ENABLED) && defined (DEBUG_DECOMPOSE)
 
 			Vector< Vector<Vector2> > decomp = Geometry::decompose_polygon(polygon);
-#define DEBUG_DECOMPOSE
-#ifdef DEBUG_DECOMPOSE
 			Color c(0.4,0.9,0.1);
 			for(int i=0;i<decomp.size();i++) {
 
 				c.set_hsv( Math::fmod(c.get_h() + 0.738,1),c.get_s(),c.get_v(),0.5);
 				draw_colored_polygon(decomp[i],c);
 			}
+#else
+			draw_colored_polygon(polygon,get_tree()->get_debug_collisions_color());
 #endif
+
+
 		} break;
 		case NOTIFICATION_UNPARENTED: {
 			unparenting = true;
