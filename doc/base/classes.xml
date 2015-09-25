@@ -14976,26 +14976,28 @@
 			<argument index="0" name="align" type="int">
 			</argument>
 			<description>
-			Set the alignmend mode to any of the ALIGN_* enumeration values.
+			Sets the alignment mode to any of the ALIGN_* enumeration values.
 			</description>
 		</method>
 		<method name="get_align" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
-			Return the alignmend mode (any of the ALIGN_* enumeration values).
+			Return the alignment mode (any of the ALIGN_* enumeration values).
 			</description>
 		</method>
 		<method name="set_valign">
 			<argument index="0" name="valign" type="int">
 			</argument>
 			<description>
+			Sets the vertical alignment mode to any of the VALIGN_* enumeration values.
 			</description>
 		</method>
 		<method name="get_valign" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the vertical alignment mode (any of the VALIGN_* enumeration values).
 			</description>
 		</method>
 		<method name="set_text">
@@ -15026,16 +15028,32 @@
 			Return the state of the [i]autowrap[/i] mode (see [method set_autowrap]).
 			</description>
 		</method>
+		<method name="set_clip_text">
+			<argument index="0" name="enable" type="bool">
+			</argument>
+			<description>
+			Cuts off the rest of the text if it is too wide.
+			</description>
+		</method>
+		<method name="is_clipping_text" qualifiers="const">
+			<return type="bool">
+			</return>
+			<description>
+			Return true if text would be cut off if it is too wide.
+			</description>
+		</method>
 		<method name="set_uppercase">
 			<argument index="0" name="enable" type="bool">
 			</argument>
 			<description>
+			Display text in all capitals.
 			</description>
 		</method>
 		<method name="is_uppercase" qualifiers="const">
 			<return type="bool">
 			</return>
 			<description>
+			Return true if text is displayed in all capitals.
 			</description>
 		</method>
 		<method name="get_line_height" qualifiers="const">
@@ -15056,24 +15074,63 @@
 			<return type="int">
 			</return>
 			<description>
+			Return the total length of the text.
 			</description>
 		</method>
 		<method name="set_visible_characters">
-			<argument index="0" name="arg0" type="int">
+			<argument index="0" name="amount" type="int">
 			</argument>
 			<description>
+			Restricts the number of characters to display. Set to -1 to disable.
+			</description>
+		</method>
+		<method name="get_visible_characters" qualifiers="const">
+			<return type="int">
+			</return>
+			<description>
+			Return the restricted number of characters to display. Returns -1 if unrestricted.
 			</description>
 		</method>
 		<method name="set_percent_visible">
 			<argument index="0" name="percent_visible" type="float">
 			</argument>
 			<description>
+			Restricts the number of characters to display (as a percentage of the total text).
 			</description>
 		</method>
 		<method name="get_percent_visible" qualifiers="const">
 			<return type="float">
 			</return>
 			<description>
+			Return the restricted number of characters to display (as a percentage of the total text).
+			</description>
+		</method>
+		<method name="set_max_lines_visible">
+			<argument index="0" name="lines_visible" type="int">
+			</argument>
+			<description>
+			Restricts the number of lines to display. Set to -1 to disable.
+			</description>
+		</method>
+		<method name="get_max_lines_visible" qualifiers="const">
+			<return type="int">
+			</return>
+			<description>
+			Return the restricted number of lines to display. Returns -1 if unrestricted.
+			</description>
+		</method>
+		<method name="set_lines_skipped">
+			<argument index="0" name="lines_skipped" type="int">
+			</argument>
+			<description>
+			Sets the number of lines to skip before displaying. Useful for scrolling text.
+			</description>
+		</method>
+		<method name="get_lines_skipped" qualifiers="const">
+			<return type="int">
+			</return>
+			<description>
+			Return the the number of lines to skipped before displaying.
 			</description>
 		</method>
 	</methods>
@@ -34378,10 +34435,10 @@
 </class>
 <class name="TileMap" inherits="Node2D" category="Core">
 	<brief_description>
-	Node for 2D Tile-Based games.
+	Node for 2D tile-based games.
 	</brief_description>
 	<description>
-	Node for 2D Tile-Based games. Tilemaps use a TileSet which contain a list of tiles (textures, their rect and a collision) and are used to create complex grid-based maps.
+	Node for 2D tile-based games. Tilemaps use a [TileSet] which contain a list of tiles (textures, their rect and a collision) and are used to create complex grid-based maps.
 	To optimize drawing and culling (sort of like [GridMap]), you can specify a quadrant size, so chunks of the map will be batched together at drawing time.
 	</description>
 	<methods>
@@ -34403,36 +34460,43 @@
 			<argument index="0" name="mode" type="int">
 			</argument>
 			<description>
+			Set the orientation mode as square, isometric or custom (use MODE_* constants as argument).
 			</description>
 		</method>
 		<method name="get_mode" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the orientation mode.
 			</description>
 		</method>
 		<method name="set_half_offset">
 			<argument index="0" name="half_offset" type="int">
 			</argument>
 			<description>
+			Set an half offset on the X coordinate, Y coordinate, or none (use HALF_OFFSET_* constants as argument).
+			Half offset sets every other tile off by a half tile size in the specified direction.
 			</description>
 		</method>
 		<method name="get_half_offset" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the current half offset configuration.
 			</description>
 		</method>
 		<method name="set_custom_transform">
 			<argument index="0" name="custom_transform" type="Matrix32">
 			</argument>
 			<description>
+			Set custom transform matrix, to use in combination with the custom orientation mode.
 			</description>
 		</method>
 		<method name="get_custom_transform" qualifiers="const">
 			<return type="Matrix32">
 			</return>
 			<description>
+			Return the custom transform matrix.
 			</description>
 		</method>
 		<method name="set_cell_size">
@@ -34454,25 +34518,28 @@
 			</argument>
 			<description>
 			Set the quadrant size, this optimizes drawing by batching chunks of map at draw/cull time.
+			Allowed values are integers ranging from 1 to 128.
 			</description>
 		</method>
 		<method name="get_quadrant_size" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
-			Return the quadrant size, this optimizes drawing by batching chunks of map at draw/cull time.
+			Return the quadrant size.
 			</description>
 		</method>
 		<method name="set_tile_origin">
 			<argument index="0" name="origin" type="int">
 			</argument>
 			<description>
+			Set the tile origin to the tile center or its top-left corner (use TILE_ORIGIN_* constants as argument).
 			</description>
 		</method>
 		<method name="get_tile_origin" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the tile origin configuration.
 			</description>
 		</method>
 		<method name="set_center_x">
@@ -34507,72 +34574,89 @@
 			<argument index="0" name="enable" type="bool">
 			</argument>
 			<description>
+			Set the Y sort mode. Enabled Y sort mode means that children of the tilemap will be drawn in the order defined by their Y coordinate.
+			A tile with a higher Y coordinate will therefore be drawn later, potentially covering up the tile(s) above it if its sprite is higher than its cell size.
 			</description>
 		</method>
 		<method name="is_y_sort_mode_enabled" qualifiers="const">
 			<return type="bool">
 			</return>
 			<description>
+			Return the Y sort mode.
 			</description>
 		</method>
 		<method name="set_collision_use_kinematic">
 			<argument index="0" name="use_kinematic" type="bool">
 			</argument>
 			<description>
+			Set the tilemap to handle collisions as a kinematic body (enabled) or a static body (disabled).
 			</description>
 		</method>
 		<method name="get_collision_use_kinematic" qualifiers="const">
 			<return type="bool">
 			</return>
 			<description>
+			Return whether the tilemap handles collisions as a kinematic body.
 			</description>
 		</method>
 		<method name="set_collision_layer">
 			<argument index="0" name="mask" type="int">
 			</argument>
 			<description>
+			Set the collision layer.
+			Layers are referenced by binary indexes, so allowable values to describe the 20 available layers range from 0 to 2^20-1.
 			</description>
 		</method>
 		<method name="get_collision_layer" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the collision layer.
 			</description>
 		</method>
 		<method name="set_collision_mask">
 			<argument index="0" name="mask" type="int">
 			</argument>
 			<description>
+			Set the collision masks.
+			Masks are referenced by binary indexes, so allowable values to describe the 20 available masks range from 0 to 2^20-1.
 			</description>
 		</method>
 		<method name="get_collision_mask" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the collision mask.
 			</description>
 		</method>
 		<method name="set_collision_friction">
 			<argument index="0" name="value" type="float">
 			</argument>
 			<description>
+			Set the collision friction parameter.
+			Allowable values range from 0 to 1.
 			</description>
 		</method>
 		<method name="get_collision_friction" qualifiers="const">
 			<return type="float">
 			</return>
 			<description>
+			Return the collision friction parameter.
 			</description>
 		</method>
 		<method name="set_collision_bounce">
 			<argument index="0" name="value" type="float">
 			</argument>
 			<description>
+			Set the collision bounce parameter.
+			Allowable values range from 0 to 1.
 			</description>
 		</method>
 		<method name="get_collision_bounce" qualifiers="const">
 			<return type="float">
 			</return>
 			<description>
+			Return the collision bounce parameter.
 			</description>
 		</method>
 		<method name="set_cell">
@@ -34589,6 +34673,9 @@
 			<argument index="5" name="transpose" type="bool" default="false">
 			</argument>
 			<description>
+			Set the tile index for the cell referenced by its grid-based X and Y coordinates.
+			A tile index of -1 clears the cell.
+			Optionally, the tile can also be flipped over the X and Y coordinates or transposed.
 			</description>
 		</method>
 		<method name="set_cellv">
@@ -34603,6 +34690,9 @@
 			<argument index="4" name="transpose" type="bool" default="false">
 			</argument>
 			<description>
+			Set the tile index for the cell referenced by a Vector2 of grid-based coordinates.
+			A tile index of -1 clears the cell.
+			Optionally, the tile can also be flipped over the X and Y axes or transposed.
 			</description>
 		</method>
 		<method name="get_cell" qualifiers="const">
@@ -34613,7 +34703,7 @@
 			<argument index="1" name="y" type="int">
 			</argument>
 			<description>
-			Return the contents of a cell.
+			Return the tile index of the referenced cell.
 			</description>
 		</method>
 		<method name="is_cell_x_flipped" qualifiers="const">
@@ -34624,7 +34714,7 @@
 			<argument index="1" name="y" type="int">
 			</argument>
 			<description>
-			Return if a given cell is flipped in x axis.
+			Return whether the referenced cell is flipped over the X axis.
 			</description>
 		</method>
 		<method name="is_cell_y_flipped" qualifiers="const">
@@ -34635,7 +34725,7 @@
 			<argument index="1" name="y" type="int">
 			</argument>
 			<description>
-			Return if a given cell is flipped in y axis.
+			Return whether the referenced cell is flipped over the Y axis.
 			</description>
 		</method>
 		<method name="clear">
@@ -34647,6 +34737,7 @@
 			<return type="Array">
 			</return>
 			<description>
+			Return an array of all cells containing a tile from the tileset (i.e. a tile index different from -1).
 			</description>
 		</method>
 		<method name="map_to_world" qualifiers="const">
@@ -34657,6 +34748,8 @@
 			<argument index="1" name="ignore_half_ofs" type="bool" default="false">
 			</argument>
 			<description>
+			Return the absolute world position corresponding to the tilemap (grid-based) coordinates given as an argument.
+			Optionally, the tilemap's potential half offset can be ignored.
 			</description>
 		</method>
 		<method name="world_to_map" qualifiers="const">
@@ -34665,12 +34758,14 @@
 			<argument index="0" name="worldpos" type="Vector2">
 			</argument>
 			<description>
+			Return the tilemap (grid-based) coordinates corresponding to the absolute world position given as an argument.
 			</description>
 		</method>
 	</methods>
 	<signals>
 		<signal name="settings_changed">
 			<description>
+			Signal indicating that a tilemap setting has changed.
 			</description>
 		</signal>
 	</signals>
@@ -34679,20 +34774,28 @@
 			Returned when a cell doesn't exist.
 		</constant>
 		<constant name="MODE_SQUARE" value="0">
+			Orthogonal orientation mode.
 		</constant>
 		<constant name="MODE_ISOMETRIC" value="1">
+			Isometric orientation mode.
 		</constant>
 		<constant name="MODE_CUSTOM" value="2">
+			Custom orientation mode.
 		</constant>
 		<constant name="HALF_OFFSET_X" value="0">
+			Half offset on the X coordinate.
 		</constant>
 		<constant name="HALF_OFFSET_Y" value="1">
+			Half offset on the Y coordinate.
 		</constant>
 		<constant name="HALF_OFFSET_DISABLED" value="2">
+			Half offset disabled.
 		</constant>
 		<constant name="TILE_ORIGIN_TOP_LEFT" value="0">
+			Tile origin at its top-left corner.
 		</constant>
 		<constant name="TILE_ORIGIN_CENTER" value="1">
+			Tile origin at its center.
 		</constant>
 	</constants>
 </class>
