@@ -36,6 +36,7 @@
 #include "resources/default_theme/default_theme.h"
 #include "object_type_db.h"
 #include "scene/main/canvas_layer.h"
+#include "scene/main/instance_placeholder.h"
 #include "scene/main/viewport.h"
 #include "scene/gui/control.h"
 #include "scene/gui/texture_progress.h"
@@ -218,7 +219,7 @@
 #include "scene/3d/collision_polygon.h"
 #endif
 
-
+#include "scene/resources/scene_format_text.h"
 
 static ResourceFormatLoaderImage *resource_loader_image=NULL;
 static ResourceFormatLoaderWAV *resource_loader_wav=NULL;
@@ -230,6 +231,8 @@ static ResourceFormatLoaderBitMap *resource_loader_bitmap=NULL;
 #endif
 static ResourceFormatLoaderTheme *resource_loader_theme=NULL;
 static ResourceFormatLoaderShader *resource_loader_shader=NULL;
+
+static ResourceFormatSaverText *resource_saver_text=NULL;
 
 //static SceneStringNames *string_names;
 
@@ -269,6 +272,7 @@ void register_scene_types() {
 	ObjectTypeDB::register_type<Object>();
 
 	ObjectTypeDB::register_type<Node>();
+	ObjectTypeDB::register_virtual_type<InstancePlaceholder>();
 
 	ObjectTypeDB::register_type<Viewport>();
 	ObjectTypeDB::register_virtual_type<RenderTargetTexture>();
@@ -614,6 +618,9 @@ void register_scene_types() {
 	OS::get_singleton()->yield(); //may take time to init
 
 
+	resource_saver_text = memnew( ResourceFormatSaverText );
+	ResourceSaver::add_resource_format_saver(resource_saver_text);
+
 }
 
 void unregister_scene_types() {
@@ -631,5 +638,9 @@ void unregister_scene_types() {
 
 	memdelete( resource_loader_theme );
 	memdelete( resource_loader_shader );
+
+	if (resource_saver_text) {
+		memdelete(resource_saver_text);
+	}
 	SceneStringNames::free();
 }
