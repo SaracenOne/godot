@@ -1285,19 +1285,6 @@ Error ColladaImport::_create_mesh_surfaces(bool p_optimize,Ref<Mesh>& p_mesh,con
 
 			Array mr;
 
-
-			for (int o = 0; o < index_array.size(); o++)
-			{
-				int foo = index_array[o];
-				foo = foo;
-			}
-
-			for (int o = 0; o < final_vertex_array.size(); o++)
-			{
-				Vector3 foo = final_vertex_array[o];
-				foo = foo;
-			}
-
 			////////////////////////////
 			// THEN THE MORPH TARGETS //
 			////////////////////////////
@@ -2352,19 +2339,119 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 		int normal_ofs = 0;
 		int normal_ofs_basis = 0;
 
+
 		if (p.sources.has("NORMAL")) {
 
 			String normal_source_id = p.sources["NORMAL"].source;
 			String normal_source_id_basis = p_basis.sources["NORMAL"].source;
 
-			normal_ofs = p.sources["NORMAL"].offset;
-			normal_ofs_basis = p_basis.sources["NORMAL"].offset;
+			normal_ofs = p_basis.sources["NORMAL"].offset;
+			normal_ofs_basis = p.sources["NORMAL"].offset;
+
 			
 			ERR_FAIL_COND_V(!morphmeshdata.sources.has(normal_source_id), ERR_INVALID_DATA);
 			ERR_FAIL_COND_V(!meshdata.sources.has(normal_source_id_basis), ERR_INVALID_DATA);
 
 			normal_src = &morphmeshdata.sources[normal_source_id];
 			normal_src_basis = &meshdata.sources[normal_source_id_basis];
+		}
+
+		const Collada::MeshData::Source *binormal_src = NULL;
+		const Collada::MeshData::Source *binormal_src_basis = NULL;
+
+		int binormal_ofs = 0;
+
+		if (p.sources.has("TEXBINORMAL")) {
+
+			String binormal_source_id = p.sources["TEXBINORMAL"].source;
+			String binormal_source_id_basis = p_basis.sources["TEXBINORMAL"].source;
+
+			binormal_ofs = p.sources["TEXBINORMAL"].offset;
+
+			ERR_FAIL_COND_V(!morphmeshdata.sources.has(binormal_source_id), ERR_INVALID_DATA);
+			ERR_FAIL_COND_V(!meshdata.sources.has(binormal_source_id_basis), ERR_INVALID_DATA);
+
+			binormal_src = &morphmeshdata.sources[binormal_source_id];
+			binormal_src_basis = &meshdata.sources[binormal_source_id_basis];
+		}
+
+		const Collada::MeshData::Source *tangent_src = NULL;
+		const Collada::MeshData::Source *tangent_src_basis = NULL;
+
+		int tangent_ofs = 0;
+
+		if (p.sources.has("TEXTANGENT")) {
+
+			String tangent_source_id = p.sources["TEXTANGENT"].source;
+			String tangent_source_id_basis = p_basis.sources["TEXTANGENT"].source;
+
+			tangent_ofs = p.sources["TEXTANGENT"].offset;
+
+			ERR_FAIL_COND_V(!morphmeshdata.sources.has(tangent_source_id), ERR_INVALID_DATA);
+			ERR_FAIL_COND_V(!meshdata.sources.has(tangent_source_id_basis), ERR_INVALID_DATA);
+
+
+			tangent_src = &morphmeshdata.sources[tangent_source_id];
+			tangent_src_basis = &meshdata.sources[tangent_source_id_basis];
+
+		}
+
+		const Collada::MeshData::Source *uv_src = NULL;
+		const Collada::MeshData::Source *uv_src_basis = NULL;
+
+		int uv_ofs = 0;
+
+		if (p.sources.has("TEXCOORD0")) {
+
+			String uv_source_id = p.sources["TEXCOORD0"].source;
+			String uv_source_id_basis = p_basis.sources["TEXCOORD0"].source;
+
+			uv_ofs = p.sources["TEXCOORD0"].offset;
+
+			ERR_FAIL_COND_V(!morphmeshdata.sources.has(uv_source_id), ERR_INVALID_DATA);
+			ERR_FAIL_COND_V(!meshdata.sources.has(uv_source_id_basis), ERR_INVALID_DATA);
+
+			uv_src = &morphmeshdata.sources[uv_source_id];
+			uv_src_basis = &meshdata.sources[uv_source_id_basis];
+		}
+
+		const Collada::MeshData::Source *uv2_src = NULL;
+		const Collada::MeshData::Source *uv2_src_basis = NULL;
+
+		int uv2_ofs = 0;
+
+		if (p.sources.has("TEXCOORD1")) {
+
+			String uv2_source_id = p.sources["TEXCOORD1"].source;
+			String uv2_source_id_basis = p_basis.sources["TEXCOORD1"].source;
+
+			uv2_ofs = p.sources["TEXCOORD1"].offset;
+
+			ERR_FAIL_COND_V(!morphmeshdata.sources.has(uv2_source_id), ERR_INVALID_DATA);
+			ERR_FAIL_COND_V(!meshdata.sources.has(uv2_source_id_basis), ERR_INVALID_DATA);
+
+			uv2_src = &morphmeshdata.sources[uv2_source_id];
+			uv2_src_basis = &meshdata.sources[uv2_source_id_basis];
+		}
+
+
+		const Collada::MeshData::Source *color_src = NULL;
+		const Collada::MeshData::Source *color_src_basis = NULL;
+
+		int color_ofs = 0;
+
+		if (p.sources.has("COLOR")) {
+
+			String color_source_id = p.sources["COLOR"].source;
+			String color_source_id_basis = p_basis.sources["COLOR"].source;
+
+			color_ofs = p.sources["COLOR"].offset;
+
+			ERR_FAIL_COND_V(!morphmeshdata.sources.has(color_source_id), ERR_INVALID_DATA);
+			ERR_FAIL_COND_V(!meshdata.sources.has(color_source_id_basis), ERR_INVALID_DATA);
+
+			color_src = &morphmeshdata.sources[color_source_id];
+			color_src_basis = &meshdata.sources[color_source_id];
 		}
 
 		Set<Collada::Vertex> vertex_set; //vertex set will be the vertices
@@ -2427,6 +2514,42 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 					ERR_FAIL_INDEX_V(normal_pos, normal_src_basis->array.size(), ERR_INVALID_DATA);
 					vertex.normal = Vector3(normal_src_basis->array[normal_pos + 0], normal_src_basis->array[normal_pos + 1], normal_src_basis->array[normal_pos + 2]);
 					vertex.normal=vertex.normal.snapped(0.001);
+
+					if (tangent_src_basis && binormal_src_basis) {
+
+						int binormal_pos = (binormal_src_basis->stride ? binormal_src_basis->stride : 3) * p_basis.indices[src + binormal_ofs];
+						ERR_FAIL_INDEX_V(binormal_pos, binormal_src_basis->array.size(), ERR_INVALID_DATA);
+						Vector3 binormal = Vector3(binormal_src_basis->array[binormal_pos + 0], binormal_src_basis->array[binormal_pos + 1], binormal_src_basis->array[binormal_pos + 2]);
+
+						int tangent_pos = (tangent_src_basis->stride ? tangent_src_basis->stride : 3) * p_basis.indices[src + tangent_ofs];
+						ERR_FAIL_INDEX_V(tangent_pos, tangent_src_basis->array.size(), ERR_INVALID_DATA);
+						Vector3 tangent = Vector3(tangent_src_basis->array[tangent_pos + 0], tangent_src_basis->array[tangent_pos + 1], tangent_src_basis->array[tangent_pos + 2]);
+
+						vertex.tangent.normal = tangent;
+						vertex.tangent.d = vertex.normal.cross(tangent).dot(binormal) > 0 ? 1 : -1;
+					}
+
+				}
+
+				if (uv_src_basis) {
+
+					int uv_pos = (uv_src_basis->stride ? uv_src_basis->stride : 2) * p_basis.indices[src + uv_ofs];
+					ERR_FAIL_INDEX_V(uv_pos, uv_src_basis->array.size(), ERR_INVALID_DATA);
+					vertex.uv = Vector3(uv_src_basis->array[uv_pos + 0], 1.0 - uv_src_basis->array[uv_pos + 1], 0);
+				}
+
+				if (uv2_src_basis) {
+
+					int uv2_pos = (uv2_src_basis->stride ? uv2_src_basis->stride : 2) * p_basis.indices[src + uv2_ofs];
+					ERR_FAIL_INDEX_V(uv2_pos, uv2_src_basis->array.size(), ERR_INVALID_DATA);
+					vertex.uv2 = Vector3(uv2_src_basis->array[uv2_pos + 0], 1.0 - uv2_src_basis->array[uv2_pos + 1], 0);
+				}
+
+				if (color_src_basis) {
+
+					int color_pos = (color_src_basis->stride ? color_src_basis->stride : 3) * p_basis.indices[src + color_ofs]; // colors are RGB in collada..
+					ERR_FAIL_INDEX_V(color_pos, color_src_basis->array.size(), ERR_INVALID_DATA);
+					vertex.color = Color(color_src_basis->array[color_pos + 0], color_src_basis->array[color_pos + 1], color_src_basis->array[color_pos + 2], (color_src_basis->stride>3) ? color_src_basis->array[color_pos + 3] : 1.0);
 
 				}
 
