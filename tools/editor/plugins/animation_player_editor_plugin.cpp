@@ -1401,6 +1401,7 @@ AnimationPlayerEditor::AnimationPlayerEditor(EditorNode *p_editor) {
 	add_child(file);
 
 	name_dialog = memnew( ConfirmationDialog );
+	name_dialog->set_title("Create New Animation");
 	name_dialog->set_hide_on_ok(false);
 	add_child(name_dialog);
 	name = memnew( LineEdit );

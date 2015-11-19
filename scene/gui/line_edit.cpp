@@ -208,6 +208,9 @@ void LineEdit::_input_event(InputEvent p_event) {
 						}
 
 					} break;
+					case (KEY_A): { //Select All
+						select();
+					} break;
 					default: { handled=false;}
 				}
 
