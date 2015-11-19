@@ -243,11 +243,11 @@ struct _GlobalLock {
 #ifndef GD_ALIGN_16
 
 #if defined(__GNUC__) && (__GNUC__ >= 4 )
-#    define GD_ALIGN16(type) __attribute__ ((__aligned__ (16))) type
+#    define GD_ALIGN16(type) type __attribute__ ((aligned (16)))
 #elif defined(__llvm__)
-#    define GD_ALIGN16(type) __attribute__ ((__aligned__ (16))) type
+#    define GD_ALIGN16(type) type __attribute__ ((aligned (16)))
 #elif defined(_MSC_VER)
-#    define GD_ALIGN16(type) type __declspec(align(16))
+#    define GD_ALIGN16(type) __declspec(align(16)) type
 #else
 #    error "GD_ALIGN16: Unknown compiler"
 #endif

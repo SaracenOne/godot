@@ -29,24 +29,18 @@
 #ifndef MATH_DEFS_H
 #define MATH_DEFS_H
 
-
+#if defined(i386) || defined(__i386) || defined(__i386__) || defined(_M_IX86)
+#define CPU_TYPE_I386 1
+#elif defined(__x86_64) || defined(__x86_64__) || defined(__amd64) || defined(__amd64__) || defined(_M_X64) || defined(_M_AMD64)
+#define CPU_TYPE_X86_64 2
+#endif
 
 #if 1
-	#if 1
+	#if defined(CPU_TYPE_I386) || defined(CPU_TYPE_X86_64)
 		#ifndef USE_SSE
 			#define USE_SSE
 		#endif
-	#elif defined (__ARM_NEON__)
-		#ifdef __clang__
-			#ifndef USE_NEON
-				#define USE_NEON
-			#endif
-		#endif
 	#endif
-
-	#define ATTRIBUTE_ALIGNED16(a) a __attribute__ ((aligned (16)))
-#else
-	#define ATTRIBUTE_ALIGNED16(a) a
 #endif
 
 

@@ -54,7 +54,7 @@ class CommandQueueMT {
 	};
 	
 	template<class T,class M>
-	GD_ALIGN16(struct) Command0 : public CommandBase{
+	struct Command0 : public CommandBase{
 
 		T*instance;
 		M method;
@@ -63,7 +63,7 @@ class CommandQueueMT {
 	};
 	
 	template<class T,class M,class P1>
-	GD_ALIGN16(struct) Command1 : public CommandBase {
+	struct Command1 : public CommandBase {
 	
 		T*instance;
 		M method;
@@ -83,7 +83,7 @@ class CommandQueueMT {
 	};
 	
 	template<class T,class M,class P1,class P2>
-	GD_ALIGN16(struct) Command2 : public CommandBase{
+	struct Command2 : public CommandBase{
 	
 		T*instance;
 		M method;
@@ -107,7 +107,7 @@ class CommandQueueMT {
 	};
 
 	template<class T,class M,class P1,class P2,class P3>
-	GD_ALIGN16(struct) Command3 : public CommandBase{
+	struct Command3 : public CommandBase{
 	
 		T*instance;
 		M method;
@@ -135,7 +135,7 @@ class CommandQueueMT {
 	};
 
 	template<class T,class M,class P1,class P2,class P3,class P4>
-	GD_ALIGN16(struct) Command4 : public CommandBase{
+	struct Command4 : public CommandBase{
 	
 		T*instance;
 		M method;
@@ -167,7 +167,7 @@ class CommandQueueMT {
 	};
 
 	template<class T,class M,class P1,class P2,class P3,class P4,class P5>
-	GD_ALIGN16(struct) Command5 : public CommandBase{
+	struct Command5 : public CommandBase{
 	
 		T*instance;
 		M method;
@@ -203,7 +203,7 @@ class CommandQueueMT {
 	};
 
 	template<class T,class M,class P1,class P2,class P3,class P4,class P5,class P6>
-	GD_ALIGN16(struct) Command6 : public CommandBase{
+	struct Command6 : public CommandBase{
 	
 		T*instance;
 		M method;
@@ -243,7 +243,7 @@ class CommandQueueMT {
 	};
 	
 	template<class T,class M,class P1,class P2,class P3,class P4,class P5,class P6,class P7>
-	GD_ALIGN16(struct) Command7 : public CommandBase{
+	struct Command7 : public CommandBase{
 	
 		T*instance;
 		M method;
