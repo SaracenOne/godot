@@ -1740,8 +1740,10 @@ void EditorNode::_run(bool p_current,const String& p_custom) {
 	}
 
 	play_button->set_pressed(false);
+	play_button->set_icon(gui_base->get_icon("Play","EditorIcons"));
 	//pause_button->set_pressed(false);
 	play_scene_button->set_pressed(false);
+	play_scene_button->set_icon(gui_base->get_icon("PlayScene","EditorIcons"));
 
 	String current_filename;
 	String run_filename;
@@ -1859,8 +1861,10 @@ void EditorNode::_run(bool p_current,const String& p_custom) {
 	emit_signal("play_pressed");
 	if (p_current) {
 		play_scene_button->set_pressed(true);
+		play_scene_button->set_icon(gui_base->get_icon("Reload","EditorIcons"));
 	} else {
 		play_button->set_pressed(true);
+		play_button->set_icon(gui_base->get_icon("Reload","EditorIcons"));
 	}
 
 	_playing_edited=p_current;
@@ -2008,6 +2012,11 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 
 
 		} break;
+		case SCENE_TAB_CLOSE: {
+			_remove_scene(tab_closing);
+			_update_scene_tabs();
+			current_option = -1;
+		} break;
 		case FILE_SAVE_SCENE: {
 
 
@@ -2019,7 +2028,7 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 				return;
 			};
 			// fallthrough to save_as
-		};
+		} break;
 		case FILE_SAVE_AS_SCENE: {
 			
 			Node *scene = editor_data.get_edited_scene_root();
@@ -2577,12 +2586,12 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 			call_dialog->popup_centered_ratio();
 		} break;
 		case RUN_PLAY: {
-
+			_menu_option_confirm(RUN_STOP,true);
 			_run(false);
 
 		} break;
 		case RUN_PLAY_CUSTOM_SCENE: {
-
+			_menu_option_confirm(RUN_STOP,true);
 			quick_run->popup("PackedScene",true);
 			quick_run->set_title("Quick Run Scene..");
 
@@ -2599,18 +2608,20 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 
 			editor_run.stop();
 			play_button->set_pressed(false);
+			play_button->set_icon(gui_base->get_icon("Play","EditorIcons"));
 			play_scene_button->set_pressed(false);
+			play_scene_button->set_icon(gui_base->get_icon("PlayScene","EditorIcons"));
 			//pause_button->set_pressed(false);
 			emit_signal("stop_pressed");
 
 		} break;
 		case RUN_PLAY_SCENE: {
-
+			_menu_option_confirm(RUN_STOP,true);
 			_run(true);
 
 		} break;
 		case RUN_PLAY_NATIVE: {
-
+			_menu_option_confirm(RUN_STOP,true);
 			emit_signal("play_pressed");
 			editor_run.run_native_notify();
 
@@ -2951,23 +2962,23 @@ void EditorNode::_remove_edited_scene() {
 	_update_title();
 	_update_scene_tabs();
 
-	if (editor_data.get_edited_scene_count()==1) {
-		//make new scene appear saved
-		set_current_version(editor_data.get_undo_redo().get_version());
-		unsaved_cache=false;
-	}
+//	if (editor_data.get_edited_scene_count()==1) {
+//		//make new scene appear saved
+//		set_current_version(editor_data.get_undo_redo().get_version());
+//		unsaved_cache=false;
+//	}
 }
 
 void EditorNode::_remove_scene(int index) {
 //	printf("Attempting to remove scene %d (current is %d)\n", index, editor_data.get_edited_scene());
+
 	if (editor_data.get_edited_scene() == index) {
 		//Scene to remove is current scene
 		_remove_edited_scene();
 	}
 	else {
-		// Scene to remove is not active scene.");
+		// Scene to remove is not active scene
 		editor_data.remove_scene(index);
-		editor_data.get_undo_redo().clear_history();
 	}
 }
 
@@ -3045,7 +3056,7 @@ Error EditorNode::save_translatable_strings(const String& p_to_file) {
 	OS::Time time = OS::get_singleton()->get_time();
 	f->store_line("# Translation Strings Dump.");
 	f->store_line("# Created By.");
-	f->store_line("# \t"VERSION_FULL_NAME" (c) 2008-2015 Juan Linietsky, Ariel Manzur.");
+	f->store_line("# \t" VERSION_FULL_NAME " (c) 2008-2015 Juan Linietsky, Ariel Manzur.");
 	f->store_line("# From Scene: ");
 	f->store_line("# \t"+get_edited_scene()->get_filename());
 	f->store_line("");
@@ -3811,9 +3822,7 @@ void EditorNode::_quick_run(const String& p_resource) {
 
 void EditorNode::notify_child_process_exited() {
 
-	play_button->set_pressed(false);
-	play_scene_button->set_pressed(false);
-	//pause_button->set_pressed(false);
+	_menu_option_confirm(RUN_STOP,false);
 	stop_button->set_pressed(false);
 	editor_run.stop();
 
@@ -4463,8 +4472,19 @@ void EditorNode::_scene_tab_script_edited(int p_tab) {
 }
 
 void EditorNode::_scene_tab_closed(int p_tab) {
- 	_remove_scene(p_tab);
-	_update_scene_tabs();
+	current_option = SCENE_TAB_CLOSE;
+	tab_closing = p_tab;
+	if (unsaved_cache) {
+		confirmation->get_ok()->set_text("Yes");
+		//confirmation->get_cancel()->show();
+		confirmation->set_text("Close scene? (Unsaved changes will be lost)");
+		confirmation->popup_centered_minsize();
+	}
+	else {
+		_remove_scene(p_tab);
+		//_update_scene_tabs();
+	}
+
 }
 
 
@@ -4685,6 +4705,9 @@ EditorNode::EditorNode() {
 	right_l_vsplit->add_child(dock_slot[DOCK_SLOT_RIGHT_UL]);
 	dock_slot[DOCK_SLOT_RIGHT_BL]=memnew( TabContainer );
 	right_l_vsplit->add_child(dock_slot[DOCK_SLOT_RIGHT_BL]);
+	//right_l_vsplit->hide();
+	//dock_slot[DOCK_SLOT_RIGHT_UL]->hide();
+	//dock_slot[DOCK_SLOT_RIGHT_BL]->hide();
 
 	right_r_vsplit = memnew( VSplitContainer );
 	right_hsplit->add_child(right_r_vsplit);
@@ -4693,8 +4716,8 @@ EditorNode::EditorNode() {
 	dock_slot[DOCK_SLOT_RIGHT_BR]=memnew( TabContainer );
 	right_r_vsplit->add_child(dock_slot[DOCK_SLOT_RIGHT_BR]);
 	right_r_vsplit->hide();
-	//dock_slot[DOCK_SLOT_RIGHT_UL]->hide();
-	//dock_slot[DOCK_SLOT_RIGHT_BL]->hide();
+	dock_slot[DOCK_SLOT_RIGHT_UR]->hide();
+	dock_slot[DOCK_SLOT_RIGHT_BR]->hide();
 
 	left_l_vsplit->connect("dragged",this,"_dock_split_dragged");
 	left_r_vsplit->connect("dragged",this,"_dock_split_dragged");
