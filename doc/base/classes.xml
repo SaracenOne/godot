@@ -4371,7 +4371,7 @@
 			Stop a given voice.
 			</description>
 		</method>
-		<method name="free">
+		<method name="free_rid">
 			<argument index="0" name="rid" type="RID">
 			</argument>
 			<description>
@@ -16735,11 +16735,11 @@ returns:= "username=user&amp;password=pass"
 		</method>
 	</methods>
 	<members>
-		<member name="x" type="float">
+		<member name="x" type="Vector2">
 		</member>
-		<member name="y" type="float">
+		<member name="y" type="Vector2">
 		</member>
-		<member name="o" type="float">
+		<member name="o" type="Vector2">
 		</member>
 	</members>
 	<constants>
@@ -37639,7 +37639,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="vec" type="Vector2">
 			</argument>
 			<description>
-			Reflects/mirrors the vector around another vector.
+			Like "slide", but reflects the Vector instead of continuing along the wall.
 			</description>
 		</method>
 		<method name="rotated">
@@ -37703,10 +37703,10 @@ This method controls whether the position between two cached points is interpola
 </class>
 <class name="Vector2Array" category="Built-In Types">
 	<brief_description>
-	An Array of Vector2's.
+	An Array of Vector2.
 	</brief_description>
 	<description>
-	An Array specifically designed to hold Vector2's.
+	An Array specifically designed to hold Vector2.
 	</description>
 	<methods>
 		<method name="get">
@@ -37715,21 +37715,21 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="idx" type="int">
 			</argument>
 			<description>
-			Get the Vector2 at the given index.
+			Returns the Vector2 at the given index.
 			</description>
 		</method>
 		<method name="push_back">
 			<argument index="0" name="vector2" type="Vector2">
 			</argument>
 			<description>
-			Insert a new Vector2.
+			Inserts a Vector2 at the end.
 			</description>
 		</method>
 		<method name="resize">
 			<argument index="0" name="idx" type="int">
 			</argument>
 			<description>
-			Set the size of the Vector2Array. If larger than the current size it will reserve some space beforehand, and if it is smaller it will cut off the array.
+			Sets the size of the Vector2Array. If larger than the current size it will reserve some space beforehand, and if it is smaller it will cut off the array.
 			</description>
 		</method>
 		<method name="set">
@@ -37738,7 +37738,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="1" name="vector2" type="Vector2">
 			</argument>
 			<description>
-			Set the Vector2 at the given index.
+			Changes the Vector2 at the given index.
 			</description>
 		</method>
 		<method name="size">
@@ -37773,12 +37773,14 @@ This method controls whether the position between two cached points is interpola
 			<return type="Vector3">
 			</return>
 			<description>
+			Returns a new vector with all components in absolute values (e.g. positive).
 			</description>
 		</method>
 		<method name="ceil">
 			<return type="Vector3">
 			</return>
 			<description>
+			Returns a new vector with all components rounded up.
 			</description>
 		</method>
 		<method name="cross">
@@ -37802,7 +37804,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="3" name="t" type="float">
 			</argument>
 			<description>
-			Perform a cubic interpolation between vectors a,b,c,d (b is current), by the given amount (i).
+			Perform a cubic interpolation between vectors pre_a, a, b, post_b (a is current), by the given amount (t).
 			</description>
 		</method>
 		<method name="distance_squared_to">
@@ -37811,7 +37813,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="b" type="Vector3">
 			</argument>
 			<description>
-			Return the squared distance (distance minus the last square root) to b.
+			Return the squared distance (distance minus the last square root) to b. Prefer this function over distance_to if you need to sort vectors or need the squared distance for some formula.
 			</description>
 		</method>
 		<method name="distance_to">
@@ -37836,13 +37838,14 @@ This method controls whether the position between two cached points is interpola
 			<return type="Vector3">
 			</return>
 			<description>
+			Returns a new vector with all components rounded down.
 			</description>
 		</method>
 		<method name="inverse">
 			<return type="Vector3">
 			</return>
 			<description>
-			Returns the inverse of the vector. this is the same as Vector3( 1.0 / v.x, 1.0 / v.y, 1.0 / v.z )
+			Returns the inverse of the vector. This is the same as Vector3( 1.0 / v.x, 1.0 / v.y, 1.0 / v.z )
 			</description>
 		</method>
 		<method name="length">
@@ -37856,7 +37859,7 @@ This method controls whether the position between two cached points is interpola
 			<return type="float">
 			</return>
 			<description>
-			Return the length of the vector, squared.
+			Return the length of the vector, squared. Prefer this function over "length" if you need to sort vectors or need the squared length for some formula.
 			</description>
 		</method>
 		<method name="linear_interpolate">
@@ -37867,26 +37870,28 @@ This method controls whether the position between two cached points is interpola
 			<argument index="1" name="t" type="float">
 			</argument>
 			<description>
-			Linearly interpolates the vector to a given one (b), by the given amount (i).
+			Linearly interpolates the vector to a given one (b), by the given amount (t).
 			</description>
 		</method>
 		<method name="max_axis">
 			<return type="int">
 			</return>
 			<description>
+			Returns AXIS_X, AXIS_Y or AXIS_Z depending on which axis is the largest.
 			</description>
 		</method>
 		<method name="min_axis">
 			<return type="int">
 			</return>
 			<description>
+			Returns AXIS_X, AXIS_Y or AXIS_Z depending on which axis is the smallest.
 			</description>
 		</method>
 		<method name="normalized">
 			<return type="Vector3">
 			</return>
 			<description>
-			Return a copy of the normalized vector to unit length. This is the same as v / v.length()
+			Return a copy of the normalized vector to unit length. This is the same as v / v.length().
 			</description>
 		</method>
 		<method name="reflect">
@@ -37895,6 +37900,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="by" type="Vector3">
 			</argument>
 			<description>
+			Like "slide", but reflects the Vector instead of continuing along the wall.
 			</description>
 		</method>
 		<method name="rotated">
@@ -37905,6 +37911,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="1" name="phi" type="float">
 			</argument>
 			<description>
+			Rotates the vector around some axis by phi radians.
 			</description>
 		</method>
 		<method name="slide">
@@ -37913,6 +37920,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="by" type="Vector3">
 			</argument>
 			<description>
+			Slides the vector along a wall.
 			</description>
 		</method>
 		<method name="snapped">
@@ -37934,6 +37942,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="2" name="z" type="float">
 			</argument>
 			<description>
+			Returns a Vector3 with the given components.
 			</description>
 		</method>
 	</methods>
@@ -37947,17 +37956,22 @@ This method controls whether the position between two cached points is interpola
 	</members>
 	<constants>
 		<constant name="AXIS_X" value="0">
+			Enumerated value for the X axis. Returned by functions like max_axis or min_axis.
 		</constant>
 		<constant name="AXIS_Y" value="1">
+			Enumerated value for the Y axis.
 		</constant>
 		<constant name="AXIS_Z" value="2">
+			Enumerated value for the Z axis.
 		</constant>
 	</constants>
 </class>
 <class name="Vector3Array" category="Built-In Types">
 	<brief_description>
+	An Array of Vector3.
 	</brief_description>
 	<description>
+	An Array specifically designed to hold Vector3.
 	</description>
 	<methods>
 		<method name="get">
@@ -37966,18 +37980,21 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="idx" type="int">
 			</argument>
 			<description>
+			Returns the Vector3 at the given index.
 			</description>
 		</method>
 		<method name="push_back">
 			<argument index="0" name="vector3" type="Vector3">
 			</argument>
 			<description>
+			Inserts a Vector3 at the end.
 			</description>
 		</method>
 		<method name="resize">
 			<argument index="0" name="idx" type="int">
 			</argument>
 			<description>
+			Sets the size of the Vector3Array. If larger than the current size it will reserve some space beforehand, and if it is smaller it will cut off the array.
 			</description>
 		</method>
 		<method name="set">
@@ -37986,12 +38003,14 @@ This method controls whether the position between two cached points is interpola
 			<argument index="1" name="vector3" type="Vector3">
 			</argument>
 			<description>
+			Changes the Vector3 at the given index.
 			</description>
 		</method>
 		<method name="size">
 			<return type="int">
 			</return>
 			<description>
+			Returns the size of the array.
 			</description>
 		</method>
 		<method name="Vector3Array">
@@ -38000,6 +38019,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="from" type="Array">
 			</argument>
 			<description>
+			Constructs a new Vector3Array. Optionally, you can pass in an Array that will be converted.
 			</description>
 		</method>
 	</methods>
