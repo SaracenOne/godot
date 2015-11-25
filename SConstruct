@@ -84,6 +84,9 @@ env_base.__class__.disable_module = methods.disable_module
 
 env_base.__class__.add_source_files = methods.add_source_files
 
+env_base["x86_opt_gcc"]=False
+env_base["x86_opt_vc"]=False
+
 customs = ['custom.py']
 
 profile = ARGUMENTS.get("profile", False)
@@ -106,7 +109,7 @@ opts.Add('opus','Build Opus Audio Format Support: (yes/no)','yes')
 opts.Add('minizip','Build Minizip Archive Support: (yes/no)','yes')
 opts.Add('squish','Squish BC Texture Compression in editor (yes/no)','yes')
 opts.Add('theora','Theora Video (yes/no)','yes')
-opts.Add('use_theoraplayer_binary', "Use precompiled binaries from libtheoraplayer for ogg/theora/vorbis (yes/no)", "no")
+opts.Add('theoralib','Theora Video (yes/no)','no')
 opts.Add('freetype','Freetype support in editor','yes')
 opts.Add('speex','Speex Audio (yes/no)','yes')
 opts.Add('xml','XML Save/Load support (yes/no)','yes')
@@ -304,8 +307,12 @@ if selected_platform in platform_list:
 	if (env['opus']=='yes'):
 		env.Append(CPPFLAGS=['-DOPUS_ENABLED']);
 
+
 	if (env['theora']=='yes'):
-		env.Append(CPPFLAGS=['-DTHEORA_ENABLED']);
+		env['theoralib']='yes'
+		env.Append(CPPFLAGS=['-DTHEORA_ENABLED']);		
+	if (env['theoralib']=='yes'):
+		env.Append(CPPFLAGS=['-DTHEORALIB_ENABLED']);
 
 	if (env['png']=='yes'):
 		env.Append(CPPFLAGS=['-DPNG_ENABLED']);
