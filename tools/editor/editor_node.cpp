@@ -2388,6 +2388,10 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 				log->add_message("REDO: "+action);
 
 		} break;
+		case TOOLS_ORPHAN_RESOURCES: {
+
+			orphan_resources->show();
+		} break;
 
 		case EDIT_REVERT: {
 
@@ -3543,13 +3547,14 @@ Error EditorNode::load_scene(const String& p_scene, bool p_ignore_broken_deps,bo
 
 	if (p_set_inherited) {
 		Ref<SceneState> state = sdata->get_state();
-		state->set_path(lpath);
+		state->set_path(lpath);		
 		new_scene->set_scene_inherited_state(state);
 		new_scene->set_filename(String());
-		if (new_scene->get_scene_instance_state().is_valid())
-			new_scene->get_scene_instance_state()->set_path(String());
+		//if (new_scene->get_scene_instance_state().is_valid())
+		//	new_scene->get_scene_instance_state()->set_path(String());
 	}
 
+	new_scene->set_scene_instance_state(Ref<SceneState>());
 
 	set_edited_scene(new_scene);
 	_get_scene_metadata();
@@ -5047,6 +5052,17 @@ EditorNode::EditorNode() {
 	p=import_menu->get_popup();
 	p->connect("item_pressed",this,"_menu_option");
 
+	tool_menu = memnew( MenuButton );
+	tool_menu->set_tooltip("Miscelaneous project or scene wide tools.");
+	tool_menu->set_text("Tools");
+
+	//tool_menu->set_icon(gui_base->get_icon("Save","EditorIcons"));
+	left_menu_hb->add_child( tool_menu );
+
+	p=tool_menu->get_popup();
+	p->connect("item_pressed",this,"_menu_option");
+	p->add_item("Orphan Resource Explorer",TOOLS_ORPHAN_RESOURCES);
+
 	export_button = memnew( ToolButton );
 	export_button->set_tooltip("Export the project to many platforms.");
 	export_button->set_text("Export");
@@ -5475,7 +5491,8 @@ EditorNode::EditorNode() {
 
 
 
-
+	orphan_resources = memnew( OrphanResourcesDialog );
+	gui_base->add_child(orphan_resources);
 
 
 
