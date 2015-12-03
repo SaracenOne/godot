@@ -91,6 +91,7 @@ class RasterizerGLES2 : public Rasterizer {
 	bool srgb_supported;
 	bool float_supported;
 	bool float_linear_supported;
+	bool use_16bits_fbo;
 
 	ShadowFilterTechnique shadow_filter;
 
@@ -1716,6 +1717,8 @@ public:
 	virtual void set_swap_buffers_active(const bool p_active);
 
 	static RasterizerGLES2* get_singleton();
+
+	virtual void set_force_16_bits_fbo(bool p_force);
 
 	RasterizerGLES2(bool p_compress_arrays=false,bool p_keep_ram_copy=true,bool p_default_fragment_lighting=true,bool p_use_reload_hooks=false);
 	virtual ~RasterizerGLES2();
