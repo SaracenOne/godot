@@ -110,6 +110,9 @@ class RasterizerGLES2 : public Rasterizer {
 
 	bool swap_buffers_active;
 
+	int msaa_multisamples;
+	int msaa_multisamples_prev;
+
 	Vector<float> skel_default;
 
 	Image _get_gl_image_and_format(const Image& p_image, Image::Format p_format, uint32_t p_flags,GLenum& r_gl_format,GLenum& r_gl_internal_format,int &r_gl_components,bool &r_has_alpha_cache,bool &r_compressed);
@@ -643,6 +646,7 @@ class RasterizerGLES2 : public Rasterizer {
 		RID projector;
 		bool volumetric_enabled;
 		Color volumetric_color;
+		bool room_specific;
 		VS::LightOmniShadowMode omni_shadow_mode;
 		VS::LightDirectionalShadowMode directional_shadow_mode;
 		float directional_shadow_param[3];
@@ -664,6 +668,7 @@ class RasterizerGLES2 : public Rasterizer {
 			colors[VS::LIGHT_COLOR_SPECULAR]=Color(1,1,1);
 			shadow_enabled=false;
 			volumetric_enabled=false;
+			room_specific=false;
 
 			directional_shadow_param[VS::LIGHT_DIRECTIONAL_SHADOW_PARAM_PSSM_SPLIT_WEIGHT]=0.5;
 			directional_shadow_param[VS::LIGHT_DIRECTIONAL_SHADOW_PARAM_MAX_DISTANCE]=0;
@@ -721,6 +726,7 @@ class RasterizerGLES2 : public Rasterizer {
 			fx_param[VS::ENV_FX_PARAM_BCS_BRIGHTNESS]=1.0;
 			fx_param[VS::ENV_FX_PARAM_BCS_CONTRAST]=1.0;
 			fx_param[VS::ENV_FX_PARAM_BCS_SATURATION]=1.0;
+			fx_param[VS::ENV_FX_PARAM_MULTISAMPLES] = 1;
 
 		}
 
@@ -1140,10 +1146,15 @@ class RasterizerGLES2 : public Rasterizer {
 		GLuint color;
 		GLuint depth;
 
+		GLuint ms_fbo;
+		GLuint ms_color;
+		GLuint ms_depth;
 
 		int width,height;
 		int scale;
+
 		bool active;
+		bool ms_active;
 
 		int blur_size;
 
