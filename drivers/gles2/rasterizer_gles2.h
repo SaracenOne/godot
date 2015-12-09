@@ -726,7 +726,6 @@ class RasterizerGLES2 : public Rasterizer {
 			fx_param[VS::ENV_FX_PARAM_BCS_BRIGHTNESS]=1.0;
 			fx_param[VS::ENV_FX_PARAM_BCS_CONTRAST]=1.0;
 			fx_param[VS::ENV_FX_PARAM_BCS_SATURATION]=1.0;
-			fx_param[VS::ENV_FX_PARAM_MULTISAMPLES] = 1;
 
 		}
 
