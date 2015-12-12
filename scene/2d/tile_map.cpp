@@ -32,6 +32,8 @@
 #include "method_bind_ext.inc"
 #include "os/os.h"
 
+
+
 int TileMap::_get_quadrant_size() const {
 
 	if (y_sort_mode)
@@ -299,6 +301,7 @@ void TileMap::_update_dirty_quadrants() {
 		q.occluder_instances.clear();
 		Ref<CanvasItemMaterial> prev_material;
 		RID prev_canvas_item;
+		RID prev_debug_canvas_item;
 
 		for(int i=0;i<q.cells.size();i++) {
 
@@ -319,6 +322,7 @@ void TileMap::_update_dirty_quadrants() {
 			Ref<CanvasItemMaterial> mat = tile_set->tile_get_material(c.id);
 
 			RID canvas_item;
+			RID debug_canvas_item;
 
 			if (prev_canvas_item==RID() || prev_material!=mat) {
 
@@ -331,11 +335,24 @@ void TileMap::_update_dirty_quadrants() {
 				vs->canvas_item_set_transform( canvas_item, xform );
 				q.canvas_items.push_back(canvas_item);
 
+				if (debug_shapes) {
+
+					debug_canvas_item=vs->canvas_item_create();
+					vs->canvas_item_set_parent( debug_canvas_item, canvas_item );
+					vs->canvas_item_set_z_as_relative_to_parent(debug_canvas_item,false);
+					vs->canvas_item_set_z(debug_canvas_item,VS::CANVAS_ITEM_Z_MAX-1);
+					q.canvas_items.push_back(debug_canvas_item);
+					prev_debug_canvas_item=debug_canvas_item;
+				}
+
 				prev_canvas_item=canvas_item;
 				prev_material=mat;
 
 			} else {
 				canvas_item=prev_canvas_item;
+				if (debug_shapes) {
+					debug_canvas_item=prev_debug_canvas_item;
+				}
 			}
 
 
@@ -407,18 +424,14 @@ void TileMap::_update_dirty_quadrants() {
 
 					_fix_cell_transform(xform,c,shape_ofs+center_ofs,s);
 
-					if (debug_shapes) {
-						vs->canvas_item_add_set_transform(canvas_item,xform);
-						shape->draw(canvas_item,debug_collision_color);
+					if (debug_canvas_item) {
+						shape->draw(debug_canvas_item,debug_collision_color);
 
 					}
 					ps->body_add_shape(q.body,shape->get_rid(),xform);					
 					ps->body_set_shape_metadata(q.body,shape_idx++,Vector2(E->key().x,E->key().y));
 
 				}
-			}
-			if (debug_shapes) {
-				vs->canvas_item_add_set_transform(canvas_item,Matrix32());
 			}
 
 			if (navigation) {
@@ -452,6 +465,7 @@ void TileMap::_update_dirty_quadrants() {
 				VS::get_singleton()->canvas_light_occluder_set_transform(orid,get_global_transform() * xform);
 				VS::get_singleton()->canvas_light_occluder_set_polygon(orid,occluder->get_rid());
 				VS::get_singleton()->canvas_light_occluder_attach_to_canvas(orid,get_canvas());
+				VS::get_singleton()->canvas_light_occluder_set_light_mask(orid,occluder_light_mask);
 				Quadrant::Occluder oc;
 				oc.xform=xform;
 				oc.id=orid;
@@ -1075,6 +1089,24 @@ Array TileMap::get_used_cells() const {
 	return a;
 }
 
+void TileMap::set_occluder_light_mask(int p_mask) {
+
+	occluder_light_mask=p_mask;
+	for (Map<PosKey,Quadrant>::Element *E=quadrant_map.front();E;E=E->next()) {
+
+		for (Map<PosKey,Quadrant::Occluder>::Element *F=E->get().occluder_instances.front();F;F=F->next()) {
+			VisualServer::get_singleton()->canvas_light_occluder_set_light_mask(F->get().id,occluder_light_mask);
+		}
+	}
+}
+
+int TileMap::get_occluder_light_mask() const{
+
+	return occluder_light_mask;
+}
+
+
+
 void TileMap::_bind_methods() {
 
 
@@ -1126,6 +1158,9 @@ void TileMap::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("set_collision_bounce","value"),&TileMap::set_collision_bounce);
 	ObjectTypeDB::bind_method(_MD("get_collision_bounce"),&TileMap::get_collision_bounce);
 
+	ObjectTypeDB::bind_method(_MD("set_occluder_light_mask","mask"),&TileMap::set_occluder_light_mask);
+	ObjectTypeDB::bind_method(_MD("get_occluder_light_mask"),&TileMap::get_occluder_light_mask);
+
 	ObjectTypeDB::bind_method(_MD("set_cell","x","y","tile","flip_x","flip_y","transpose"),&TileMap::set_cell,DEFVAL(false),DEFVAL(false),DEFVAL(false));
 	ObjectTypeDB::bind_method(_MD("set_cellv","pos","tile","flip_x","flip_y","transpose"),&TileMap::set_cellv,DEFVAL(false),DEFVAL(false),DEFVAL(false));
 	ObjectTypeDB::bind_method(_MD("get_cell","x","y"),&TileMap::get_cell);
@@ -1160,6 +1195,7 @@ void TileMap::_bind_methods() {
 	ADD_PROPERTY( PropertyInfo(Variant::REAL,"collision/bounce",PROPERTY_HINT_RANGE,"0,1,0.01"),_SCS("set_collision_bounce"),_SCS("get_collision_bounce"));
 	ADD_PROPERTY( PropertyInfo(Variant::INT,"collision/layers",PROPERTY_HINT_ALL_FLAGS),_SCS("set_collision_layer"),_SCS("get_collision_layer"));
 	ADD_PROPERTY( PropertyInfo(Variant::INT,"collision/mask",PROPERTY_HINT_ALL_FLAGS),_SCS("set_collision_mask"),_SCS("get_collision_mask"));
+	ADD_PROPERTY( PropertyInfo(Variant::INT,"occluder/light_mask",PROPERTY_HINT_ALL_FLAGS),_SCS("set_occluder_light_mask"),_SCS("get_occluder_light_mask"));
 
 	ADD_PROPERTY( PropertyInfo(Variant::OBJECT,"tile_data",PROPERTY_HINT_NONE,"",PROPERTY_USAGE_NOEDITOR),_SCS("_set_tile_data"),_SCS("_get_tile_data"));
 
@@ -1197,6 +1233,7 @@ TileMap::TileMap() {
 	use_kinematic=false;
 	navigation=NULL;
 	y_sort_mode=false;
+	occluder_light_mask=1;
 
 	fp_adjust=0.00001;
 	tile_origin=TILE_ORIGIN_TOP_LEFT;

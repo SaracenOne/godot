@@ -450,6 +450,9 @@ static void _call_##m_type##_##m_method(Variant& r_ret,Variant& p_self,const Var
 	VCALL_LOCALMEM0(Array,clear);
 	VCALL_LOCALMEM0R(Array,hash);
 	VCALL_LOCALMEM1(Array,push_back);
+	VCALL_LOCALMEM1(Array,push_front);
+	VCALL_LOCALMEM0(Array,pop_back);
+	VCALL_LOCALMEM0(Array,pop_front);
 	VCALL_LOCALMEM1(Array,append);
 	VCALL_LOCALMEM1(Array,resize);
 	VCALL_LOCALMEM2(Array,insert);
@@ -1426,12 +1429,15 @@ _VariantCall::addfunc(Variant::m_vtype,Variant::m_ret,_SCS(#m_method),VCALL(m_cl
 	ADDFUNC0(ARRAY,NIL,Array,clear,varray());
 	ADDFUNC0(ARRAY,INT,Array,hash,varray());
 	ADDFUNC1(ARRAY,NIL,Array,push_back,NIL,"value",varray());
+	ADDFUNC1(ARRAY,NIL,Array,push_front,NIL,"value",varray());
 	ADDFUNC1(ARRAY,NIL,Array,append,NIL,"value",varray());
 	ADDFUNC1(ARRAY,NIL,Array,resize,INT,"pos",varray());
 	ADDFUNC2(ARRAY,NIL,Array,insert,INT,"pos",NIL,"value",varray());
 	ADDFUNC1(ARRAY,NIL,Array,remove,INT,"pos",varray());
 	ADDFUNC1(ARRAY,NIL,Array,erase,NIL,"value",varray());
 	ADDFUNC1(ARRAY,INT,Array,find,NIL,"value",varray());
+	ADDFUNC0(ARRAY,NIL,Array,pop_back,varray());
+	ADDFUNC0(ARRAY,NIL,Array,pop_front,varray());
 	ADDFUNC0(ARRAY,NIL,Array,sort,varray());
 	ADDFUNC2(ARRAY,NIL,Array,sort_custom,OBJECT,"obj",STRING,"func",varray());
 	ADDFUNC0(ARRAY,NIL,Array,invert,varray());
