@@ -644,6 +644,7 @@ void Label::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_lines_skipped"),&Label::get_lines_skipped);
 	ObjectTypeDB::bind_method(_MD("set_max_lines_visible","lines_visible"),&Label::set_max_lines_visible);
 	ObjectTypeDB::bind_method(_MD("get_max_lines_visible"),&Label::get_max_lines_visible);
+	ObjectTypeDB::bind_method(_MD("get_longest_line_width"),&Label::get_longest_line_width);
 
 	BIND_CONSTANT( ALIGN_LEFT );
 	BIND_CONSTANT( ALIGN_CENTER );
