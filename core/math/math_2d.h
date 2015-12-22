@@ -249,6 +249,20 @@ struct Rect2 {
 			return dist;
 	}
 
+	inline bool has_point_2(const Point2& p_point) const {
+		if (p_point.x < pos.x)
+			return false;
+		if (p_point.y < pos.y)
+			return false;
+
+		if (p_point.x >= (pos.x + size.x))
+			return false;
+		if (p_point.y >= (pos.y + size.y))
+			return false;
+
+		return true;
+	}
+
 	_FORCE_INLINE_ bool intersects_transformed(const Matrix32& p_xform, const Rect2& p_rect) const;
 
 	bool intersects_segment(const Point2& p_from, const Point2& p_to, Point2* r_pos=NULL, Point2* r_normal=NULL) const;
