@@ -5010,7 +5010,7 @@ void RasterizerGLES2::_add_geometry( const Geometry* p_geometry, const InstanceD
 
 	if (shadow) {
 
-		if (has_blend_alpha || (has_base_alpha && m->depth_draw_mode!=VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA))
+		if (m->flags[VS::MATERIAL_FLAG_SKIP_SHADOW_CASTING] || has_blend_alpha || (has_base_alpha && m->depth_draw_mode != VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA))
 			return; //bye
 
 		if (m->shader_cache && !m->shader_cache->writes_vertex && !m->shader_cache->uses_discard && m->depth_draw_mode!=VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA) {

@@ -37,7 +37,8 @@ static const char*_flag_names[Material::FLAG_MAX]={
 	"unshaded",
 	"on_top",
 	"lightmap_on_uv2",
-	"colarray_is_srgb"
+	"colarray_is_srgb",
+	"skip_shadow_casting"
 };
 
 
@@ -49,6 +50,8 @@ static const Material::Flag _flag_indices[Material::FLAG_MAX]={
 	Material::FLAG_ONTOP,
 	Material::FLAG_LIGHTMAP_ON_UV2,
 	Material::FLAG_COLOR_ARRAY_SRGB,
+	Material::FLAG_SKIP_SHADOW_CASTING,
+
 };
 
 
@@ -131,6 +134,7 @@ void Material::_bind_methods() {
 
 	BIND_CONSTANT( FLAG_VISIBLE );
 	BIND_CONSTANT( FLAG_DOUBLE_SIDED );
+	BIND_CONSTANT( FLAG_SKIP_SHADOW_CASTING );
 	BIND_CONSTANT( FLAG_INVERT_FACES );
 	BIND_CONSTANT( FLAG_UNSHADED );
 	BIND_CONSTANT( FLAG_ONTOP );
@@ -162,6 +166,7 @@ Material::Material(const RID& p_material) {
 	flags[FLAG_ONTOP]=false;
 	flags[FLAG_LIGHTMAP_ON_UV2]=true;
 	flags[FLAG_COLOR_ARRAY_SRGB]=false;
+	flags[FLAG_SKIP_SHADOW_CASTING]=false;
 
 	depth_draw_mode=DEPTH_DRAW_OPAQUE_ONLY;
 
