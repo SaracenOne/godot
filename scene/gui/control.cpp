@@ -579,10 +579,7 @@ void Control::_notification(int p_notification) {
 			emit_signal(SceneStringNames::get_singleton()->resized);
 		} break;
 		case NOTIFICATION_DRAW: {
-
-			Matrix32 xform=Matrix32(data.rotation,get_pos());
-			xform.scale_basis(data.scale);
-			VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(),xform);
+			VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(),data.mat_cache);
 			VisualServer::get_singleton()->canvas_item_set_custom_rect( get_canvas_item(),true, Rect2(Point2(),get_size()));
 			//emit_signal(SceneStringNames::get_singleton()->draw);
 
@@ -1699,11 +1696,26 @@ void Control::_size_changed() {
 	new_size_cache.y = MAX( minimum_size.y, new_size_cache.y );
 
 
-	if (new_pos_cache == data.pos_cache && new_size_cache == data.size_cache)
+	if (new_pos_cache == data.pos_cache && new_size_cache == data.size_cache && data.scale_rotate_pivot_changed == false)
 		return; // did not change, don't emit signal
+
+	data.scale_rotate_pivot_changed = false;
 
 	data.pos_cache=new_pos_cache;
 	data.size_cache=new_size_cache;
+
+	// Cache matrix
+	Vector2 pos_point = get_pos() + get_size() * get_pivot();
+	Vector2 pivot_point = get_pos() + get_size() * get_pivot();
+	Vector2 scale_point = get_scale() * get_size() * get_pivot();
+
+	Vector2 rotation_scale_offset = _get_rotation_and_scale_offset(pos_point, pivot_point, scale_point, get_rotation());
+
+	Matrix32 xform;
+	xform.translate(rotation_scale_offset);
+	xform.set_rotation_and_scale(-get_rotation(), get_scale());
+	data.mat_cache = xform;
+	//
 
 	notification(NOTIFICATION_RESIZED);
 	item_rect_changed();
@@ -2412,15 +2424,31 @@ Control::CursorShape Control::get_cursor_shape(const Point2& p_pos) const {
 }
 
 Matrix32 Control::get_transform() const {
-
-	Matrix32 xform=Matrix32(data.rotation,get_pos());
-	xform.scale_basis(data.scale);
-	return xform;
+ 
+	return data.mat_cache;
 }
 
 String Control::_get_tooltip() const {
 
 	return data.tooltip;
+}
+
+Vector2 Control::_get_rotation_and_scale_offset(Vector2 p_point, Vector2 p_pivot, Vector2 p_scale, float p_angle) const {
+	if (p_angle > 0.0 || p_angle < 0.0)
+	{
+		float cos_val = Math::cos(p_angle);
+		float sin_val = Math::sin(p_angle);
+		Vector2 d = p_point - p_pivot - p_scale;
+
+		float x = cos_val * d.x - sin_val * d.y + p_pivot.x;
+		float y = sin_val * d.x + cos_val * d.y + p_pivot.y;
+
+		return Vector2(round(x), round(y));
+	}
+	else
+	{
+		return (p_point - p_scale);
+	}
 }
 
 void Control::set_focus_neighbour(Margin p_margin, const NodePath &p_neighbour) {
@@ -2740,9 +2768,13 @@ float Control::_get_rotation_deg() const {
 
 void Control::set_rotation(float p_rotation) {
 
-	data.rotation=p_rotation;
-	update();
-	_notify_transform();
+	if (p_rotation != data.rotation)
+	{
+		data.scale_rotate_pivot_changed = true;
+		data.rotation = p_rotation;
+		_size_changed();
+		_change_notify("rect/rotation");
+	}
 }
 
 float Control::get_rotation() const{
@@ -2752,13 +2784,50 @@ float Control::get_rotation() const{
 
 void Control::set_scale(const Vector2& p_scale){
 
-	data.scale=p_scale;
-	update();
-	_notify_transform();
+	if (p_scale != data.scale)
+	{
+		data.scale_rotate_pivot_changed = true;
+		data.scale = p_scale;
+		_size_changed();
+		_change_notify("rect/scale");
+	}
 }
 Vector2 Control::get_scale() const{
 
 	return data.scale;
+}
+
+void Control::set_pivot(const Size2& p_pivot)
+{
+	if (p_pivot != data.pivot)
+	{
+		data.scale_rotate_pivot_changed = true;
+
+		Vector2 pos_point = get_pos() + get_size() * get_pivot();
+		Vector2 pivot_point = get_pos() + get_size() * get_pivot();
+		Vector2 scale_point = get_scale() * get_size() * get_pivot();
+
+		Vector2 original_offset = _get_rotation_and_scale_offset(pos_point, pivot_point, scale_point, get_rotation());
+
+		data.pivot = p_pivot;
+
+		pos_point = get_pos() + get_size() * get_pivot();
+		pivot_point = get_pos() + get_size() * get_pivot();
+		scale_point = get_scale() * get_size() * get_pivot();
+
+		Vector2 modified_offset = _get_rotation_and_scale_offset(pos_point, pivot_point, scale_point, get_rotation());
+
+		set_pos(get_pos() + (original_offset - modified_offset));
+
+		_size_changed();
+		_change_notify("rect/pivot");
+	}
+}
+
+
+Size2 Control::get_pivot() const
+{
+	return data.pivot;
 }
 
 
@@ -2813,6 +2882,9 @@ void Control::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("grab_focus"),&Control::grab_focus);
 	ObjectTypeDB::bind_method(_MD("release_focus"),&Control::release_focus);
 	ObjectTypeDB::bind_method(_MD("get_focus_owner:Control"),&Control::get_focus_owner);
+
+	ObjectTypeDB::bind_method(_MD("set_pivot", "pivot"), &Control::set_pivot);
+	ObjectTypeDB::bind_method(_MD("get_pivot"), &Control::get_pivot);
 
 	ObjectTypeDB::bind_method(_MD("set_h_size_flags","flags"),&Control::set_h_size_flags);
 	ObjectTypeDB::bind_method(_MD("get_h_size_flags"),&Control::get_h_size_flags);
@@ -2872,6 +2944,8 @@ void Control::_bind_methods() {
 	BIND_VMETHOD(MethodInfo(Variant::OBJECT,"get_drag_data",PropertyInfo(Variant::VECTOR2,"pos")));
 	BIND_VMETHOD(MethodInfo(Variant::BOOL,"can_drop_data",PropertyInfo(Variant::VECTOR2,"pos"),PropertyInfo(Variant::NIL,"data")));
 	BIND_VMETHOD(MethodInfo("drop_data",PropertyInfo(Variant::VECTOR2,"pos"),PropertyInfo(Variant::NIL,"data")));
+
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "rect/pivot"), _SCS("set_pivot"), _SCS("get_pivot"));
 
 	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/left", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("set_anchor"),_SCS("get_anchor"), MARGIN_LEFT );
 	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/top", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("set_anchor"),_SCS("get_anchor"), MARGIN_TOP );
@@ -2972,6 +3046,8 @@ Control::Control() {
 	data.pending_min_size_update=false;
 	data.rotation=0;
 	data.scale=Vector2(1,1);
+	data.pivot = Vector2(0.0, 0.0);
+	data.scale_rotate_pivot_changed=true;
 
 
 	for (int i=0;i<4;i++) {

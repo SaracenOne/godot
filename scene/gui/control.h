@@ -111,6 +111,10 @@ private:
 
 		float rotation;
 		Vector2 scale;
+		Vector2 pivot;
+
+		Matrix32 mat_cache;
+		bool scale_rotate_pivot_changed;
 
 		bool pending_resize;
 
@@ -214,6 +218,8 @@ private:
 	void _size_changed();
 	String _get_tooltip() const;
 
+	Vector2 _get_rotation_and_scale_offset(Vector2 p_point, Vector2 p_pivot, Vector2 p_scale, float p_angle) const;
+
 	void _set_rotation_deg(float p_rot);
 	float _get_rotation_deg() const;
 
@@ -311,6 +317,8 @@ public:
 	void set_scale(const Vector2& p_scale);
 	Vector2 get_scale() const;
 
+	void set_pivot(const Size2& p_pivot);
+	Size2 get_pivot() const;
 	
 	void set_area_as_parent_rect(int p_margin=0);
 	

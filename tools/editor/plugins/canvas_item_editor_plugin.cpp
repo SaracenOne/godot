@@ -1530,10 +1530,10 @@ void CanvasItemEditor::_viewport_input_event(const InputEvent& p_event) {
 
 				drag_vector *= control->get_scale();
 
-				if (control->get_rot() > 0.0 || control->get_rot() < 0.0)
+				if (control->get_rotation() > 0.0 || control->get_rotation() < 0.0)
 				{
-					float cos_val = Math::cos(control->get_rot());
-					float sin_val = Math::sin(control->get_rot());
+					float cos_val = Math::cos(control->get_rotation());
+					float sin_val = Math::sin(control->get_rotation());
 
 					float x = cos_val * drag_vector.x - sin_val * drag_vector.y;
 					float y = sin_val * drag_vector.x + cos_val * drag_vector.y;
