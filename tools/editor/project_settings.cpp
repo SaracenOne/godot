@@ -338,6 +338,15 @@ void ProjectSettings::_action_button_pressed(Object* p_obj, int p_column,int p_i
 		add_at="input/"+ti->get_text(0);
 
 	} else if (p_id==2) {
+		//rename
+
+		add_at="input/"+ti->get_text(0);
+		rename_action->popup_centered();
+		rename_action->get_line_edit()->set_text(ti->get_text(0));
+		rename_action->get_line_edit()->set_cursor_pos(ti->get_text(0).length());
+		rename_action->get_line_edit()->select_all();
+
+	} else if (p_id==3) {
 		//remove
 
 		if (ti->get_parent()==input_editor->get_root()) {
@@ -418,7 +427,10 @@ void ProjectSettings::_update_actions() {
 		item->set_cell_mode(0,TreeItem::CELL_MODE_CHECK);
 		item->set_text(0,name);
 		item->add_button(0,get_icon("Add","EditorIcons"),1);
-		item->add_button(0,get_icon("Remove","EditorIcons"),2);
+		if (!Globals::get_singleton()->get_input_presets().find(pi.name)) {
+			item->add_button(0,get_icon("Rename","EditorIcons"),2);
+			item->add_button(0,get_icon("Remove","EditorIcons"),3);
+		}
 		item->set_custom_bg_color(0,get_color("prop_subsection","Editor"));
 		item->set_editable(0,true);
 		item->set_checked(0,pi.usage&PROPERTY_USAGE_CHECKED);
@@ -486,7 +498,7 @@ void ProjectSettings::_update_actions() {
 					action->set_icon(0,get_icon("JoyAxis","EditorIcons"));
 				} break;
 			}
-			action->add_button(0,get_icon("Remove","EditorIcons"),2);
+			action->add_button(0,get_icon("Remove","EditorIcons"),3);
 			action->set_metadata(0,i);
 		}
 	}
@@ -507,7 +519,7 @@ void ProjectSettings::popup_project_settings() {
 void ProjectSettings::_item_selected() {
 
 
-	TreeItem *ti = globals_editor->get_scene_tree()->get_selected();
+	TreeItem *ti = globals_editor->get_property_editor()->get_scene_tree()->get_selected();
 	if (!ti)
 		return;
 	if (!ti->get_parent())
@@ -551,7 +563,7 @@ void ProjectSettings::_item_add() {
 
 	String name = catname+"/"+propname;
 	Globals::get_singleton()->set(name,value);
-	globals_editor->update_tree();
+	globals_editor->get_property_editor()->update_tree();
 }
 
 void ProjectSettings::_item_del() {
@@ -563,7 +575,7 @@ void ProjectSettings::_item_del() {
 
 	String name = catname+"/"+propname;
 	Globals::get_singleton()->set(name,Variant());
-	globals_editor->update_tree();
+	globals_editor->get_property_editor()->update_tree();
 
 }
 
@@ -616,14 +628,57 @@ void ProjectSettings::_action_add() {
 
 }
 
+void ProjectSettings::_action_rename(const String &p_name) {
+
+
+	if (p_name.find("/")!=-1 || p_name.find(":")!=-1 || p_name=="") {
+		message->set_text("Invalid Action (Anything goes but / or :).");
+		message->popup_centered(Size2(300,100));
+		return;
+	}
+
+	String new_name = "input/"+p_name;
+
+	if (Globals::get_singleton()->has(new_name)) {
+		message->set_text("Action '"+p_name+"' already exists!.");
+		message->popup_centered(Size2(300,100));
+		return;
+	}
+
+	int order = Globals::get_singleton()->get_order(add_at);
+	Array va = Globals::get_singleton()->get(add_at);
+	bool persisting = Globals::get_singleton()->is_persisting(add_at);
+
+	undo_redo->create_action("Rename Input Action Event");
+	undo_redo->add_do_method(Globals::get_singleton(),"clear",add_at);
+	undo_redo->add_do_method(Globals::get_singleton(),"set",new_name,va);
+	undo_redo->add_do_method(Globals::get_singleton(),"set_persisting",new_name,persisting);
+	undo_redo->add_do_method(Globals::get_singleton(),"set_order",new_name,order);
+	undo_redo->add_undo_method(Globals::get_singleton(),"clear",new_name);
+	undo_redo->add_undo_method(Globals::get_singleton(),"set",add_at,va);
+	undo_redo->add_undo_method(Globals::get_singleton(),"set_persisting",add_at,persisting);
+	undo_redo->add_undo_method(Globals::get_singleton(),"set_order",add_at,order);
+	undo_redo->add_do_method(this,"_update_actions");
+	undo_redo->add_undo_method(this,"_update_actions");
+	undo_redo->add_do_method(this,"_settings_changed");
+	undo_redo->add_undo_method(this,"_settings_changed");
+	undo_redo->commit_action();
+
+	rename_action->hide();
+}
+
 
 void ProjectSettings::_item_checked(const String& p_item, bool p_check) {
 
 	undo_redo->create_action("Toggle Persisting");
-	undo_redo->add_do_method(Globals::get_singleton(),"set_persisting",p_item,p_check);
-	undo_redo->add_undo_method(Globals::get_singleton(),"set_persisting",p_item,!p_check);
+	String full_item = globals_editor->get_full_item_path(p_item);
+
+	undo_redo->add_do_method(Globals::get_singleton(),"set_persisting",full_item,p_check);
+	undo_redo->add_undo_method(Globals::get_singleton(),"set_persisting",full_item,!p_check);
 	undo_redo->add_do_method(this,"_settings_changed");
 	undo_redo->add_undo_method(this,"_settings_changed");
+	undo_redo->add_do_method(globals_editor->get_property_editor(),"update_tree");
+	undo_redo->add_undo_method(globals_editor->get_property_editor(),"update_tree");
 	undo_redo->commit_action();
 
 }
@@ -641,10 +696,10 @@ void ProjectSettings::_save() {
 void ProjectSettings::_settings_prop_edited(const String& p_name) {
 
 	if (!Globals::get_singleton()->is_persisting(p_name)) {
-
-		Globals::get_singleton()->set_persisting(p_name,true);
+		String full_item = globals_editor->get_full_item_path(p_name);
+		Globals::get_singleton()->set_persisting(full_item,true);
 //		globals_editor->update_property(p_name);
-		globals_editor->update_tree();
+		globals_editor->get_property_editor()->update_tree();
 	}
 	_settings_changed();
 }
@@ -679,7 +734,7 @@ void ProjectSettings::_copy_to_platform(int p_which) {
 	name = catname+"/"+propname;
 
 	Globals::get_singleton()->set(name,value);
-	globals_editor->update_tree();
+	globals_editor->get_property_editor()->update_tree();
 
 }
 
@@ -1183,7 +1238,7 @@ void ProjectSettings::_update_autoload() {
 
 void ProjectSettings::_toggle_search_bar(bool p_pressed) {
 
-	globals_editor->set_use_filter(p_pressed);
+	globals_editor->get_property_editor()->set_use_filter(p_pressed);
 
 	if (p_pressed) {
 
@@ -1204,7 +1259,7 @@ void ProjectSettings::_clear_search_box() {
 		return;
 
 	search_box->clear();
-	globals_editor->update_tree();
+	globals_editor->get_property_editor()->update_tree();
 }
 
 void ProjectSettings::_bind_methods() {
@@ -1219,6 +1274,7 @@ void ProjectSettings::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("_action_adds"),&ProjectSettings::_action_adds);
 	ObjectTypeDB::bind_method(_MD("_action_persist_toggle"),&ProjectSettings::_action_persist_toggle);
 	ObjectTypeDB::bind_method(_MD("_action_button_pressed"),&ProjectSettings::_action_button_pressed);
+	ObjectTypeDB::bind_method(_MD("_action_rename"),&ProjectSettings::_action_rename);
 	ObjectTypeDB::bind_method(_MD("_update_actions"),&ProjectSettings::_update_actions);
 	ObjectTypeDB::bind_method(_MD("_wait_for_key"),&ProjectSettings::_wait_for_key);
 	ObjectTypeDB::bind_method(_MD("_add_item"),&ProjectSettings::_add_item);
@@ -1346,15 +1402,15 @@ ProjectSettings::ProjectSettings(EditorData *p_data) {
 	search_bar->add_child(clear_button);
 	clear_button->connect("pressed",this,"_clear_search_box");
 
-	globals_editor = memnew( PropertyEditor );
+	globals_editor = memnew( SectionedPropertyEditor );
 	props_base->add_child(globals_editor);
-	globals_editor->hide_top_label();
+	//globals_editor->hide_top_label();
 	globals_editor->set_v_size_flags(Control::SIZE_EXPAND_FILL);
-	globals_editor->register_text_enter(search_box);
-	globals_editor->set_capitalize_paths(false);
-	globals_editor->get_scene_tree()->connect("cell_selected",this,"_item_selected");
-	globals_editor->connect("property_toggled",this,"_item_checked");
-	globals_editor->connect("property_edited",this,"_settings_prop_edited");
+	globals_editor->get_property_editor()->register_text_enter(search_box);
+	globals_editor->get_property_editor()->set_capitalize_paths(false);
+	globals_editor->get_property_editor()->get_scene_tree()->connect("cell_selected",this,"_item_selected");
+	globals_editor->get_property_editor()->connect("property_toggled",this,"_item_checked",varray(),CONNECT_DEFERRED);
+	globals_editor->get_property_editor()->connect("property_edited",this,"_settings_prop_edited");
 
 /*
 	Button *save = memnew( Button );
@@ -1438,11 +1494,16 @@ ProjectSettings::ProjectSettings(EditorData *p_data) {
 	add_child(popup_add);
 	popup_add->connect("item_pressed",this,"_add_item");
 
+	rename_action = memnew( EditorNameDialog );
+	add_child(rename_action);
+	rename_action->set_hide_on_ok(false);
+	rename_action->set_size(Size2(200, 70));
+	rename_action->set_title("Rename Input Action");
+	rename_action->connect("name_confirmed", this,"_action_rename");
+
 	press_a_key = memnew( ConfirmationDialog );
 	press_a_key->set_focus_mode(FOCUS_ALL);
 	add_child(press_a_key);
-
-
 
 	l = memnew( Label );
 	l->set_text("Press a Key..");

@@ -132,8 +132,12 @@ bool Globals::_set(const StringName& p_name, const Variant& p_value) {
 		if (props.has(p_name)) {
 			if (!props[p_name].overrided)
 				props[p_name].variant=p_value;
+
+			if (props[p_name].order>=NO_ORDER_BASE && registering_order) {
+				props[p_name].order=last_order++;
+			}
 		} else {
-			props[p_name]=VariantContainer(p_value,last_order++);
+			props[p_name]=VariantContainer(p_value,last_order++ + registering_order?0:NO_ORDER_BASE);
 		}
 	}
 
@@ -741,6 +745,10 @@ static Variant _decode_variant(const String& p_string) {
 	return Variant();
 }
 
+void Globals::set_registering_order(bool p_enable) {
+
+	registering_order=p_enable;
+}
 
 Error Globals::_load_settings_binary(const String p_path) {
 
@@ -759,6 +767,8 @@ Error Globals::_load_settings_binary(const String p_path) {
 		ERR_EXPLAIN("Corrupted header in binary engine.cfb (not ECFG)");
 		ERR_FAIL_V(ERR_FILE_CORRUPT;)
 	}
+
+	set_registering_order(false);
 
 	uint32_t count=f->get_32();
 
@@ -784,6 +794,9 @@ Error Globals::_load_settings_binary(const String p_path) {
 		set_persisting(key,true);
 	}
 
+	set_registering_order(true);
+
+
 	return OK;
 }
 Error Globals::_load_settings(const String p_path) {
@@ -801,6 +814,8 @@ Error Globals::_load_settings(const String p_path) {
 	String line;
 	String section;
 	String subpath;
+
+	set_registering_order(false);
 
 	int line_count = 0;
 
@@ -877,6 +892,7 @@ Error Globals::_load_settings(const String p_path) {
 
 	memdelete(f);
 
+	set_registering_order(true);
 
 	return OK;
 }
@@ -1388,7 +1404,7 @@ Globals::Globals() {
 	singleton=this;
 	last_order=0;
 	disable_platform_override=false;
-
+	registering_order=true;
 
 
 	Array va;
@@ -1414,6 +1430,7 @@ Globals::Globals() {
 	joyb.joy_button.button_index=JOY_BUTTON_0;
 	va.push_back(joyb);
 	set("input/ui_accept",va);
+	input_presets.push_back("input/ui_accept");
 
 	va=Array();
 	key.key.scancode=KEY_SPACE;
@@ -1421,6 +1438,7 @@ Globals::Globals() {
 	joyb.joy_button.button_index=JOY_BUTTON_3;
 	va.push_back(joyb);
 	set("input/ui_select",va);
+	input_presets.push_back("input/ui_select");
 
 	va=Array();
 	key.key.scancode=KEY_ESCAPE;
@@ -1428,17 +1446,20 @@ Globals::Globals() {
 	joyb.joy_button.button_index=JOY_BUTTON_1;
 	va.push_back(joyb);
 	set("input/ui_cancel",va);
+	input_presets.push_back("input/ui_cancel");
 
 	va=Array();
 	key.key.scancode=KEY_TAB;
 	va.push_back(key);
 	set("input/ui_focus_next",va);
+	input_presets.push_back("input/ui_focus_next");
 
 	va=Array();
 	key.key.scancode=KEY_TAB;
 	key.key.mod.shift=true;
 	va.push_back(key);
 	set("input/ui_focus_prev",va);
+	input_presets.push_back("input/ui_focus_prev");
 	key.key.mod.shift=false;
 
 	va=Array();
@@ -1447,6 +1468,7 @@ Globals::Globals() {
 	joyb.joy_button.button_index=JOY_DPAD_LEFT;
 	va.push_back(joyb);
 	set("input/ui_left",va);
+	input_presets.push_back("input/ui_left");
 
 	va=Array();
 	key.key.scancode=KEY_RIGHT;
@@ -1454,6 +1476,7 @@ Globals::Globals() {
 	joyb.joy_button.button_index=JOY_DPAD_RIGHT;
 	va.push_back(joyb);
 	set("input/ui_right",va);
+	input_presets.push_back("input/ui_right");
 
 	va=Array();
 	key.key.scancode=KEY_UP;
@@ -1461,6 +1484,7 @@ Globals::Globals() {
 	joyb.joy_button.button_index=JOY_DPAD_UP;
 	va.push_back(joyb);
 	set("input/ui_up",va);
+	input_presets.push_back("input/ui_up");
 
 	va=Array();
 	key.key.scancode=KEY_DOWN;
@@ -1468,17 +1492,20 @@ Globals::Globals() {
 	joyb.joy_button.button_index=JOY_DPAD_DOWN;
 	va.push_back(joyb);
 	set("input/ui_down",va);
+	input_presets.push_back("input/ui_down");
 
 
 	va=Array();
 	key.key.scancode=KEY_PAGEUP;
 	va.push_back(key);
 	set("input/ui_page_up",va);
+	input_presets.push_back("input/ui_page_up");
 
 	va=Array();
 	key.key.scancode=KEY_PAGEDOWN;
 	va.push_back(key);
 	set("input/ui_page_down",va);
+	input_presets.push_back("input/ui_page_down");
 
 //	set("display/orientation", "landscape");
 

@@ -915,15 +915,25 @@ void CustomPropertyEditor::_color_changed(const Color& p_color) {
 
 void CustomPropertyEditor::_node_path_selected(NodePath p_path) {
 
-	if (owner && owner->is_type("Node")) {
+	if (owner) {
 
-		Node *node = owner->cast_to<Node>();
-		Node *tonode=node->get_node(p_path);
-		if (tonode) {
+		Node *node=NULL;
 
-			p_path=node->get_path_to(tonode);
+		if (owner->is_type("Node"))
+			node = owner->cast_to<Node>();
+		else if (owner->is_type("ArrayPropertyEdit"))
+			node = owner->cast_to<ArrayPropertyEdit>()->get_node();
+
+		if (!node) {
+			v=p_path;
+			emit_signal("variant_changed");
+			return;
 		}
 
+		Node *tonode=node->get_node(p_path);
+		if (tonode) {
+			p_path=node->get_path_to(tonode);
+		}
 	}
 
 	v=p_path;
@@ -3476,6 +3486,7 @@ void PropertyEditor::_bind_methods() {
 	ObjectTypeDB::bind_method( "_draw_flags",&PropertyEditor::_draw_flags);
 	ObjectTypeDB::bind_method( "_set_range_def",&PropertyEditor::_set_range_def);
 	ObjectTypeDB::bind_method( "_filter_changed",&PropertyEditor::_filter_changed);
+	ObjectTypeDB::bind_method( "update_tree",&PropertyEditor::update_tree);
 
 	ADD_SIGNAL( MethodInfo("property_toggled",PropertyInfo( Variant::STRING, "property"),PropertyInfo( Variant::BOOL, "value")));
 	ADD_SIGNAL( MethodInfo("resource_selected", PropertyInfo( Variant::OBJECT, "res"),PropertyInfo( Variant::STRING, "prop") ) );
@@ -3628,3 +3639,196 @@ PropertyEditor::~PropertyEditor()
 }
 
 
+/////////////////////////////
+
+
+
+
+
+class SectionedPropertyEditorFilter : public Object {
+
+	OBJ_TYPE( SectionedPropertyEditorFilter, Object );
+
+	Object *edited;
+	String section;
+
+	bool _set(const StringName& p_name, const Variant& p_value) {
+
+		if (!edited)
+			return false;
+
+		String name=p_name;
+		if (section!="") {
+			name=section+"/"+name;
+		}
+
+		bool valid;
+		edited->set(name,p_value,&valid);
+		return valid;
+	}
+
+	bool _get(const StringName& p_name,Variant &r_ret) const{
+
+		if (!edited)
+			return false;
+
+		String name=p_name;
+		if (section!="") {
+			name=section+"/"+name;
+		}
+
+		bool valid=false;
+
+		r_ret=edited->get(name,&valid);
+		return valid;
+
+
+	}
+	void _get_property_list(List<PropertyInfo> *p_list) const{
+
+		if (!edited)
+			return;
+
+		List<PropertyInfo> pinfo;
+		edited->get_property_list(&pinfo);
+		for (List<PropertyInfo>::Element *E=pinfo.front();E;E=E->next()) {
+
+			PropertyInfo pi=E->get();
+			int sp = pi.name.find("/");
+			if (sp!=-1) {
+				String ss = pi.name.substr(0,sp);
+
+				if (ss==section) {
+					pi.name=pi.name.substr(sp+1,pi.name.length());
+					p_list->push_back(pi);
+				}
+			} else {
+				if (section=="")
+					p_list->push_back(pi);
+			}
+		}
+
+	}
+public:
+
+	void set_section(const String& p_section) {
+
+		section=p_section;
+		_change_notify();
+	}
+
+	void set_edited(Object* p_edited) {
+		edited=p_edited;
+		_change_notify();
+	}
+
+	SectionedPropertyEditorFilter() {
+		edited=NULL;
+	}
+
+};
+
+
+void SectionedPropertyEditor::_bind_methods() {
+
+	ObjectTypeDB::bind_method("_section_selected",&SectionedPropertyEditor::_section_selected);
+}
+
+void SectionedPropertyEditor::_section_selected(int p_which) {
+
+	filter->set_section( sections->get_item_metadata(p_which) );
+}
+
+String SectionedPropertyEditor::get_full_item_path(const String& p_item) {
+
+	String base = sections->get_item_metadata( sections->get_current() );
+	if (base!="")
+		return base+"/"+p_item;
+	else
+		return p_item;
+}
+
+void SectionedPropertyEditor::edit(Object* p_object) {
+
+	List<PropertyInfo> pinfo;
+	if (p_object)
+		p_object->get_property_list(&pinfo);
+	sections->clear();
+
+	Set<String> existing_sections;
+	for (List<PropertyInfo>::Element *E=pinfo.front();E;E=E->next()) {
+
+		PropertyInfo pi=E->get();
+		if (pi.usage&PROPERTY_USAGE_CATEGORY)
+			continue;
+		if (pi.name.find(":")!=-1 || pi.name=="script/script")
+			continue;
+		int sp = pi.name.find("/");
+		if (sp!=-1) {
+			String sname=pi.name.substr(0,sp);
+			if (!existing_sections.has(sname)) {
+				existing_sections.insert(sname);
+				sections->add_item(sname.capitalize());
+				sections->set_item_metadata(sections->get_item_count()-1,sname);
+			}
+
+		} else {
+			if (!existing_sections.has("")) {
+				existing_sections.insert("");
+				sections->add_item("Global");
+				sections->set_item_metadata(sections->get_item_count()-1,"");
+			}
+		}
+
+
+	}
+
+	//sections->sort_items_by_text();
+
+
+	filter->set_edited(p_object);
+	editor->edit(filter);
+
+	sections->select(0);
+	_section_selected(0);
+
+}
+
+PropertyEditor *SectionedPropertyEditor::get_property_editor() {
+
+	return editor;
+}
+
+SectionedPropertyEditor::SectionedPropertyEditor() {
+
+	VBoxContainer *left_vb = memnew( VBoxContainer);
+	left_vb->set_custom_minimum_size(Size2(160,0));
+	add_child(left_vb);
+
+	sections = memnew( ItemList );
+	sections->set_v_size_flags(SIZE_EXPAND_FILL);
+
+	left_vb->add_margin_child("Sections:",sections,true);
+
+	VBoxContainer *right_vb = memnew( VBoxContainer);
+	right_vb->set_h_size_flags(SIZE_EXPAND_FILL);
+	add_child(right_vb);
+
+	filter = memnew( SectionedPropertyEditorFilter );
+	editor = memnew( PropertyEditor );
+	editor->set_v_size_flags(SIZE_EXPAND_FILL);
+	right_vb->add_margin_child("Properties:",editor,true);
+
+	editor->get_scene_tree()->set_column_titles_visible(false);
+	add_child(editor);
+
+	editor->hide_top_label();
+
+	sections->connect("item_selected",this,"_section_selected");
+
+}
+
+SectionedPropertyEditor::~SectionedPropertyEditor() {
+
+	memdelete(filter);
+}

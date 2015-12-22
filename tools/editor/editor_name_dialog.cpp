@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  editor_node.cpp                                                      */
+/*  editor_name_dialog.cpp                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -27,33 +27,63 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "editor_layout_dialog.h"
+#include "editor_name_dialog.h"
 #include "object_type_db.h"
+#include "os/keyboard.h"
 
-void EditorLayoutDialog::clear_layout_name() {
+void EditorNameDialog::_line_input_event(const InputEvent& p_event) {
 
-	layout_name->clear();
-}
+	if (p_event.type == InputEvent::KEY) {
 
-void EditorLayoutDialog::ok_pressed() {
+		if (!p_event.key.pressed)
+			return;
 
-	if (layout_name->get_text()!="") {
-		emit_signal("layout_selected", layout_name->get_text());
+		switch (p_event.key.scancode) {
+			case KEY_ENTER:
+			case KEY_RETURN: {
+
+				if (get_hide_on_ok())
+					hide();
+				ok_pressed();
+				accept_event();
+			} break;
+			case KEY_ESCAPE: {
+
+				hide();
+				accept_event();
+			} break;
+		}
 	}
 }
 
-void EditorLayoutDialog::_bind_methods() {
+void EditorNameDialog::_post_popup() {
 
-	ADD_SIGNAL(MethodInfo("layout_selected",PropertyInfo( Variant::STRING,"layout_name")));
+	ConfirmationDialog::_post_popup();
+	name->clear();
+	name->grab_focus();
 }
 
-EditorLayoutDialog::EditorLayoutDialog()
-{
+void EditorNameDialog::ok_pressed() {
 
-	layout_name = memnew( LineEdit );
-	layout_name->set_margin(MARGIN_TOP,5);
-	layout_name->set_anchor_and_margin(MARGIN_LEFT,ANCHOR_BEGIN,5);
-	layout_name->set_anchor_and_margin(MARGIN_RIGHT,ANCHOR_END,5);
-	add_child(layout_name);
-	move_child(layout_name, get_label()->get_index()+1);
+	if (name->get_text()!="") {
+		emit_signal("name_confirmed", name->get_text());
+	}
+}
+
+void EditorNameDialog::_bind_methods() {
+
+	ObjectTypeDB::bind_method("_line_input_event",&EditorNameDialog::_line_input_event);
+
+	ADD_SIGNAL(MethodInfo("name_confirmed",PropertyInfo( Variant::STRING,"name")));
+}
+
+EditorNameDialog::EditorNameDialog()
+{
+	name = memnew( LineEdit );
+	add_child(name);
+	move_child(name, get_label()->get_index()+1);
+	name->set_margin(MARGIN_TOP,5);
+	name->set_anchor_and_margin(MARGIN_LEFT,ANCHOR_BEGIN,5);
+	name->set_anchor_and_margin(MARGIN_RIGHT,ANCHOR_END,5);
+	name->connect("input_event", this, "_line_input_event");
 }

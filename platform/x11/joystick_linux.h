@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  editor_layout_dialog.h                                                        */
+/*  joystick_linux.h                                                     */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -27,27 +27,67 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef EDITOR_LAYOUT_DIALOG_H
-#define EDITOR_LAYOUT_DIALOG_H
+//author: Andreas Haas <hondres,  liugam3@gmail.com>
+#ifndef JOYSTICK_LINUX_H
+#define JOYSTICK_LINUX_H
+#ifdef __linux__
+#include "main/input_default.h"
+#include "os/thread.h"
+#include "os/mutex.h"
 
-#include "scene/gui/dialogs.h"
-#include "scene/gui/line_edit.h"
+struct input_absinfo;
 
-class EditorLayoutDialog : public ConfirmationDialog {
-
-	OBJ_TYPE( EditorLayoutDialog, ConfirmationDialog );
-
-	LineEdit *layout_name;
-
-protected:
-
-	static void _bind_methods();
-	virtual void ok_pressed();
-
+class joystick_linux
+{
 public:
-	void clear_layout_name();
+	joystick_linux(InputDefault *in);
+	~joystick_linux();
+	uint32_t process_joysticks(uint32_t p_event_id);
+private:
 
-	EditorLayoutDialog();
+	enum {
+		JOYSTICKS_MAX = 16,
+		MAX_ABS = 63,
+		MAX_KEY = 767,   // Hack because <linux/input.h> can't be included here
+		BT_MISC = 256,
+		HAT_MAX = 4,
+	};
+
+	struct Joystick {
+		int key_map[MAX_KEY - BT_MISC];
+		int abs_map[MAX_ABS];
+		int num_buttons;
+		int num_axes;
+		int dpad;
+		int fd;
+
+		String devpath;
+		struct libevdev *dev;
+
+		Joystick();
+		void reset();
+	};
+
+	bool exit_udev;
+	Mutex *joy_mutex;
+	Thread *joy_thread;
+	InputDefault *input;
+	Joystick joysticks[JOYSTICKS_MAX];
+
+	static void joy_thread_func(void *p_user);
+
+	int get_joy_from_path(String path) const;
+	int get_free_joy_slot() const;
+
+	void setup_joystick_properties(int p_id);
+	void close_joystick(int p_id = -1);
+	void enumerate_joysticks(struct udev *_udev);
+	void monitor_joysticks(struct udev *_udev);
+	void run_joystick_thread();
+	void open_joystick(const char* path);
+
+	InputDefault::JoyAxis axis_correct(const input_absinfo *abs, int value) const;
 };
 
-#endif // EDITOR_LAYOUT_DIALOG_H
+#endif
+#endif // JOYSTICK_LINUX_H

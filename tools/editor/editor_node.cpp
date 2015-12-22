@@ -955,7 +955,23 @@ void EditorNode::_save_scene(String p_file) {
 
 
 	_set_scene_metadata();
-	Ref<PackedScene> sdata = memnew( PackedScene );
+
+
+	Ref<PackedScene> sdata;
+
+	if (ResourceCache::has(p_file)) {
+		// something may be referencing this resource and we are good with that.
+		// we must update it, but also let the previous scene state go, as
+		// old version still work for referencing changes in instanced or inherited scenes
+
+		sdata = Ref<PackedScene>( ResourceCache::get(p_file)->cast_to<PackedScene>() );
+		if (sdata.is_valid())
+			sdata->recreate_state();
+		else
+			sdata.instance();
+	} else {
+		sdata.instance();
+	}
 	Error err = sdata->pack(scene);
 
 
@@ -3414,7 +3430,17 @@ void EditorNode::set_current_version(uint64_t p_version) {
 bool EditorNode::is_changing_scene() const {
 	return changing_scene;
 }
+
+void EditorNode::_clear_undo_history() {
+
+	get_undo_redo()->clear_history();
+}
+
 void EditorNode::set_current_scene(int p_idx) {
+
+	if (editor_data.check_and_update_scene(p_idx)) {
+		call_deferred("_clear_undo_history");
+	}
 
 	changing_scene=true;
 	editor_data.save_edited_scene_state(editor_selection,&editor_history,_get_main_scene_state());
@@ -4014,9 +4040,9 @@ void EditorNode::progress_add_task(const String& p_task,const String& p_label, i
 	singleton->progress_dialog->add_task(p_task,p_label,p_steps);
 }
 
-void EditorNode::progress_task_step(const String& p_task, const String& p_state, int p_step) {
+void EditorNode::progress_task_step(const String& p_task, const String& p_state, int p_step,bool p_force_redraw) {
 
-	singleton->progress_dialog->task_step(p_task,p_state,p_step);
+	singleton->progress_dialog->task_step(p_task,p_state,p_step,p_force_redraw);
 
 }
 
@@ -4098,7 +4124,6 @@ void EditorNode::_bind_methods() {
 	ObjectTypeDB::bind_method("_dock_move_right",&EditorNode::_dock_move_right);
 
 	ObjectTypeDB::bind_method("_layout_menu_option",&EditorNode::_layout_menu_option);
-	ObjectTypeDB::bind_method("_layout_dialog_action",&EditorNode::_dialog_action);
 
 	ObjectTypeDB::bind_method("set_current_scene",&EditorNode::set_current_scene);
 	ObjectTypeDB::bind_method("set_current_version",&EditorNode::set_current_version);
@@ -4113,6 +4138,7 @@ void EditorNode::_bind_methods() {
 
 	ObjectTypeDB::bind_method("_toggle_search_bar",&EditorNode::_toggle_search_bar);
 	ObjectTypeDB::bind_method("_clear_search_box",&EditorNode::_clear_search_box);
+	ObjectTypeDB::bind_method("_clear_undo_history",&EditorNode::_clear_undo_history);
 
 	ObjectTypeDB::bind_method(_MD("add_editor_import_plugin", "plugin"), &EditorNode::add_editor_import_plugin);
 	ObjectTypeDB::bind_method(_MD("remove_editor_import_plugin", "plugin"), &EditorNode::remove_editor_import_plugin);
@@ -4597,7 +4623,6 @@ void EditorNode::_layout_menu_option(int p_id) {
 		case SETTINGS_LAYOUT_SAVE: {
 
 			current_option=p_id;
-			layout_dialog->clear_layout_name();
 			layout_dialog->set_title("Save Layout");
 			layout_dialog->get_ok()->set_text("Save");
 			layout_dialog->popup_centered();
@@ -4605,7 +4630,6 @@ void EditorNode::_layout_menu_option(int p_id) {
 		case SETTINGS_LAYOUT_DELETE: {
 
 			current_option=p_id;
-			layout_dialog->clear_layout_name();
 			layout_dialog->set_title("Delete Layout");
 			layout_dialog->get_ok()->set_text("Delete");
 			layout_dialog->popup_centered();
@@ -4624,8 +4648,7 @@ void EditorNode::_layout_menu_option(int p_id) {
 				return; //no config
 			}
 
-			int idx=editor_layouts->get_item_index(p_id);
-			_load_docks_from_config(config, editor_layouts->get_item_text(idx));
+			_load_docks_from_config(config, editor_layouts->get_item_text(p_id));
 			_save_docks();
 
 		}
@@ -4743,6 +4766,7 @@ EditorNode::EditorNode() {
 	ResourceLoader::set_abort_on_missing_resources(false);
 	FileDialog::set_default_show_hidden_files(EditorSettings::get_singleton()->get("file_dialog/show_hidden_files"));
 	EditorFileDialog::set_default_show_hidden_files(EditorSettings::get_singleton()->get("file_dialog/show_hidden_files"));
+	EditorFileDialog::set_default_display_mode((EditorFileDialog::DisplayMode)EditorSettings::get_singleton()->get("file_dialog/display_mode").operator int());
 	ResourceLoader::set_error_notify_func(this,_load_error_notify);
 	ResourceLoader::set_dependency_error_notify_func(this,_dependency_error_report);
 
@@ -5401,13 +5425,13 @@ EditorNode::EditorNode() {
 	p->add_separator();
 	p->add_item("About",SETTINGS_ABOUT);
 
-	layout_dialog = memnew( EditorLayoutDialog );
+	layout_dialog = memnew( EditorNameDialog );
 	gui_base->add_child(layout_dialog);
 	layout_dialog->set_hide_on_ok(false);
 	layout_dialog->set_size(Size2(175, 70));
 	confirm_error = memnew( AcceptDialog  );
 	layout_dialog->add_child(confirm_error);
-	layout_dialog->connect("layout_selected", this,"_layout_dialog_action");
+	layout_dialog->connect("name_confirmed", this,"_dialog_action");
 
 	sources_button = memnew( ToolButton );
 	right_menu_hb->add_child(sources_button);
@@ -5589,6 +5613,7 @@ EditorNode::EditorNode() {
 
 	scenes_dock = memnew( ScenesDock(this) );
 	scenes_dock->set_name("FileSystem");
+	scenes_dock->set_use_thumbnails(int(EditorSettings::get_singleton()->get("file_dialog/display_mode"))==EditorFileDialog::DISPLAY_THUMBNAILS);
 	dock_slot[DOCK_SLOT_LEFT_BR]->add_child(scenes_dock);
 	//prop_pallete->add_child(scenes_dock);
 	scenes_dock->connect("open",this,"open_request");
