@@ -1415,11 +1415,11 @@ void RichTextLabel::pop() {
 
 void RichTextLabel::remove_line(int p_line) {
 
-	if (p_line >= 0 && p_line < lines.size()) {
-		lines.remove(p_line);
+	if (p_line >= 0 && p_line < current_frame->lines.size()) {
+		current_frame->lines.remove(p_line);
 	}
 
-	first_invalid_line = 0; //invalidate ALL
+	current_frame->first_invalid_line = 0; //invalidate ALL
 	update();
 }
 
@@ -1789,7 +1789,7 @@ void RichTextLabel::scroll_to_line(int p_line) {
 
 int RichTextLabel::get_line_count() {
 
-	_validate_line_caches();
+	_validate_line_caches(main);
 
 	return current_frame->lines.size();
 }
@@ -2037,7 +2037,7 @@ int RichTextLabel::get_visible_characters() const {
 }
 int RichTextLabel::get_total_character_count() {
 
-	_validate_line_caches();
+	_validate_line_caches(main);
 
 	int tc=0;
 	for(int i=0;i<current_frame->lines.size();i++)
