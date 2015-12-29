@@ -2570,6 +2570,12 @@ void GDScriptLanguage::_add_global(const StringName& p_name,const Variant& p_val
 	_global_array=global_array.ptr();
 }
 
+void GDScriptLanguage::add_global_constant(const StringName& p_variable,const Variant& p_value) {
+
+	_add_global(p_variable,p_value);
+}
+
+
 void GDScriptLanguage::init() {
 
 
@@ -2646,6 +2652,7 @@ void GDScriptLanguage::get_reserved_words(List<String> *p_words) const  {
 		"elif",
 		"enum",
 		"extends"	,
+		"onready",
 		"for"	,
 		"func"	,
 		"if"	,
