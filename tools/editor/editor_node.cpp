@@ -511,13 +511,21 @@ void EditorNode::save_resource_as(const Ref<Resource>& p_resource) {
 	file->set_mode(EditorFileDialog::MODE_SAVE_FILE);
 	bool relpaths =  (p_resource->has_meta("__editor_relpaths__") && p_resource->get_meta("__editor_relpaths__").operator bool());
 
+	current_option=RESOURCE_SAVE_AS;
 	List<String> extensions;
 	Ref<PackedScene> sd = memnew( PackedScene );
 	ResourceSaver::get_recognized_extensions(p_resource,&extensions);
 	file->clear_filters();
+
+	List<String> preferred;
 	for(int i=0;i<extensions.size();i++) {
 
+		if (p_resource->is_type("Script") && extensions[i]=="tres" || extensions[i]=="res" || extensions[i]=="xml") {
+			//this serves no purpose and confused people
+			continue;
+		}
 		file->add_filter("*."+extensions[i]+" ; "+extensions[i].to_upper());
+		preferred.push_back(extensions[i]);
 	}
 
 	//file->set_current_path(current_path);
@@ -529,11 +537,11 @@ void EditorNode::save_resource_as(const Ref<Resource>& p_resource) {
 				file->set_current_path(p_resource->get_path().replacen("."+ext,"."+extensions.front()->get()));
 			}
 		}
-	} else {
+	} else if (preferred.size()) {
 
 		String existing;
 		if (extensions.size()) {
-			existing="new_"+p_resource->get_type().to_lower()+"."+extensions.front()->get().to_lower();
+			existing="new_"+p_resource->get_type().to_lower()+"."+preferred.front()->get().to_lower();
 		}
 		file->set_current_path(existing);
 
@@ -584,59 +592,66 @@ void EditorNode::_dialog_display_file_error(String p_file,Error p_error) {
 
 }
 
-void EditorNode::_get_scene_metadata() {
+void EditorNode::_get_scene_metadata(const String& p_file) {
 
 	Node *scene = editor_data.get_edited_scene_root();
 
 	if (!scene)
 		return;
 
+	String path = EditorSettings::get_singleton()->get_project_settings_path().plus_file(p_file.get_file()+"-editstate-"+p_file.md5_text()+".cfg");
 
-	if (scene->has_meta("__editor_plugin_states__")) {
+	Ref<ConfigFile> cf;
+	cf.instance();
 
-		Dictionary md = scene->get_meta("__editor_plugin_states__");
-		editor_data.set_editor_states(md);
+	Error err = cf->load(path);
+	if (err!=OK)
+		return; //must not exist
 
-	}
+	List<String> esl;
+	cf->get_section_keys("editor_states",&esl);
 
-	if (scene->has_meta("__editor_run_settings__")) {
+	Dictionary md;
+	for (List<String>::Element *E=esl.front();E;E=E->next()) {
 
-		Dictionary md = scene->get_meta("__editor_run_settings__");
-		if (md.has("run_mode"))
-			run_settings_dialog->set_run_mode(md["run_mode"]);
-		if (md.has("custom_args"))
-			run_settings_dialog->set_custom_arguments(md["custom_args"]);
-	}
-
-
-}
-
-void EditorNode::_set_scene_metadata() {
-
-	Node *scene = editor_data.get_edited_scene_root();
-
-	if (!scene)
-		return;
-
-	{ /* Editor States */
-		Dictionary md = editor_data.get_editor_states();
-
-		if (!md.empty()) {
-			scene->set_meta("__editor_plugin_states__",md);
+		Variant st=cf->get_value("editor_states",E->get());
+		if (st.get_type()) {
+			md[E->get()]=st;
 		}
 	}
 
-	{ /* Run Settings */
 
 
-		Dictionary md;
-		md["run_mode"]=run_settings_dialog->get_run_mode();
-		md["custom_args"]=run_settings_dialog->get_custom_arguments();
-		scene->set_meta("__editor_run_settings__",md);
+	editor_data.set_editor_states(md);
+
+}
+
+void EditorNode::_set_scene_metadata(const String& p_file) {
+
+	Node *scene = editor_data.get_edited_scene_root();
+
+	if (!scene)
+		return;
+
+	scene->set_meta("__editor_run_settings__",Variant()); //clear it (no point in keeping it)
+	scene->set_meta("__editor_plugin_states__",Variant());
+
+	String path = EditorSettings::get_singleton()->get_project_settings_path().plus_file(p_file.get_file()+"-editstate-"+p_file.md5_text()+".cfg");
+
+	Ref<ConfigFile> cf;
+	cf.instance();
+
+	Dictionary md = editor_data.get_editor_states();
+	List<Variant> keys;
+	md.get_key_list(&keys);
+
+	for(List<Variant>::Element *E=keys.front();E;E=E->next()) {
+
+		cf->set_value("editor_states",E->get(),md[E->get()]);
 	}
 
-
-
+	Error err = cf->save(path);
+	ERR_FAIL_COND(err!=OK);
 
 }
 
@@ -954,7 +969,7 @@ void EditorNode::_save_scene(String p_file) {
 	}
 
 
-	_set_scene_metadata();
+	_set_scene_metadata(p_file);
 
 
 	Ref<PackedScene> sdata;
@@ -3652,7 +3667,7 @@ Error EditorNode::load_scene(const String& p_scene, bool p_ignore_broken_deps,bo
 	new_scene->set_scene_instance_state(Ref<SceneState>());
 
 	set_edited_scene(new_scene);
-	_get_scene_metadata();
+	_get_scene_metadata(p_scene);
 	/*
 	editor_data.set_edited_scene_root(new_scene);
 
