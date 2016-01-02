@@ -5,7 +5,7 @@
 /*                           GODOT ENGINE                                */
 /*                    http://www.godotengine.org                         */
 /*************************************************************************/
-/* Copyright (c) 2007-2015 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -170,6 +170,7 @@ void StreamPlayer::stop() {
 	stop_request=false;
 	playback->stop();
 	resampler.flush();
+	emit_signal("finished");
 
 	//set_idle_process(false);
 }
@@ -378,6 +379,8 @@ void StreamPlayer::_bind_methods() {
 	ADD_PROPERTY( PropertyInfo(Variant::BOOL, "stream/paused"), _SCS("set_paused"), _SCS("is_paused") );
 	ADD_PROPERTY( PropertyInfo(Variant::INT, "stream/loop_restart_time"), _SCS("set_loop_restart_time"), _SCS("get_loop_restart_time") );
 	ADD_PROPERTY( PropertyInfo(Variant::INT, "stream/buffering_ms"), _SCS("set_buffering_msec"), _SCS("get_buffering_msec") );
+
+	ADD_SIGNAL(MethodInfo("finished"));
 }
 
 

@@ -5,7 +5,7 @@
 /*                           GODOT ENGINE                                */
 /*                    http://www.godotengine.org                         */
 /*************************************************************************/
-/* Copyright (c) 2007-2015 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -714,8 +714,12 @@ Error Main::setup(const char *execpath,int argc, char *argv[],bool p_second_phas
 
 	}
 
-	if (rtm>=0 && rtm<3)
+	if (rtm>=0 && rtm<3) {
+		if (editor) {
+			rtm=OS::RENDER_THREAD_SAFE;
+		}
 		OS::get_singleton()->_render_thread_mode=OS::RenderThreadMode(rtm);
+	}
 
 
 

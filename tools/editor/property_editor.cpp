@@ -5,7 +5,7 @@
 /*                           GODOT ENGINE                                */
 /*                    http://www.godotengine.org                         */
 /*************************************************************************/
-/* Copyright (c) 2007-2015 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -927,6 +927,7 @@ void CustomPropertyEditor::_node_path_selected(NodePath p_path) {
 		if (!node) {
 			v=p_path;
 			emit_signal("variant_changed");
+			call_deferred("hide"); //to not mess with dialogs
 			return;
 		}
 
@@ -938,6 +939,7 @@ void CustomPropertyEditor::_node_path_selected(NodePath p_path) {
 
 	v=p_path;
 	emit_signal("variant_changed");
+	call_deferred("hide"); //to not mess with dialogs
 
 }
 
@@ -1040,6 +1042,7 @@ void CustomPropertyEditor::_action_pressed(int p_which) {
 
 				v=NodePath();
 				emit_signal("variant_changed");
+				hide();
 			}
 		} break;
 		case Variant::OBJECT: {

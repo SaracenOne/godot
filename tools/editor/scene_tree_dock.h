@@ -5,7 +5,7 @@
 /*                           GODOT ENGINE                                */
 /*                    http://www.godotengine.org                         */
 /*************************************************************************/
-/* Copyright (c) 2007-2015 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -99,7 +99,7 @@ class SceneTreeDock : public VBoxContainer {
 	EditorNode *editor;
 
 	Node *_duplicate(Node *p_node, Map<Node*,Node*> &duplimap);
-	void _node_reparent(NodePath p_path,bool p_node_only);
+	void _node_reparent(NodePath p_path, bool p_keep_global_xform);
 	void _set_owners(Node *p_owner, const Array& p_nodes);
 	void _load_request(const String& p_path);
 	void _script_open_request(const Ref<Script>& p_script);

@@ -5,7 +5,7 @@
 /*                           GODOT ENGINE                                */
 /*                    http://www.godotengine.org                         */
 /*************************************************************************/
-/* Copyright (c) 2007-2015 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -81,6 +81,7 @@ class Body2DSW : public CollisionObject2DSW {
 	bool active;
 	bool can_sleep;
 	bool first_time_kinematic;
+	bool first_integration;
 	bool using_one_way_cache;
 	void _update_inertia();
 	virtual void _shapes_changed();

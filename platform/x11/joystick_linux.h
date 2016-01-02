@@ -5,7 +5,7 @@
 /*                           GODOT ENGINE                                */
 /*                    http://www.godotengine.org                         */
 /*************************************************************************/
-/* Copyright (c) 2007-2015 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -56,8 +56,6 @@ private:
 	struct Joystick {
 		int key_map[MAX_KEY - BT_MISC];
 		int abs_map[MAX_ABS];
-		int num_buttons;
-		int num_axes;
 		int dpad;
 		int fd;
 

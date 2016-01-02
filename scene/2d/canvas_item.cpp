@@ -5,7 +5,7 @@
 /*                           GODOT ENGINE                                */
 /*                    http://www.godotengine.org                         */
 /*************************************************************************/
-/* Copyright (c) 2007-2015 Juan Linietsky, Ariel Manzur.                 */
+/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
 /*                                                                       */
 /* Permission is hereby granted, free of charge, to any person obtaining */
 /* a copy of this software and associated documentation files (the       */
@@ -389,8 +389,8 @@ Matrix32 CanvasItem::get_global_transform_with_canvas() const {
 
 	if (last_valid->canvas_layer)
 		return last_valid->canvas_layer->get_transform() * xform;
-	else
-		return xform;
+	else if (is_inside_tree())
+		return get_viewport()->get_canvas_transform() * xform;
 }
 
 Matrix32 CanvasItem::get_global_transform() const {
