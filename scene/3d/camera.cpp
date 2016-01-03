@@ -131,7 +131,7 @@ bool Camera::_get(const StringName& p_name,Variant &r_ret) const {
 		r_ret= int(keep_aspect);
 	else if (p_name=="current") {
 
-		if (is_inside_tree() && get_tree()->is_editor_hint()) {
+		if (is_inside_tree() && get_tree()->is_node_being_edited(this)) {
 			r_ret=current;
 		} else {
 			r_ret=is_current();
@@ -206,12 +206,11 @@ void Camera::_update_camera() {
 
 // here goes listener stuff
 //	if (viewport_ptr && is_inside_scene() && is_current())
-//		viewport_ptr->_camera_transform_changed_notify();
+//		get_viewport()->_camera_transform_changed_notify();
 
 	if (is_inside_tree() && is_current()) {
-		if (viewport_ptr) {
-			viewport_ptr->_camera_transform_changed_notify();
-		}
+		get_viewport()->_camera_transform_changed_notify();
+
 	}
 
 	if (is_current() && get_world().is_valid()) {
@@ -227,29 +226,10 @@ void Camera::_notification(int p_what) {
 	
 		case NOTIFICATION_ENTER_WORLD: {
 
-			viewport_ptr=NULL;
 
-			{ //find viewport stuff
-				Node *parent=get_parent();
-
-				while(parent) {
-
-					Viewport* viewport = parent->cast_to<Viewport>();
-
-					if (viewport) {
-						viewport_ptr=viewport;
-						break;
-					}
-					parent=parent->get_parent();
-				}
-
-			}
-
-			camera_group = "_vp_cameras"+itos(get_viewport()->get_instance_ID());
-			add_to_group(camera_group);
-			if (viewport_ptr)
-				viewport_ptr->cameras.insert(this);
-			if (current)
+			bool first_camera = get_viewport()->cameras.size()==0;
+			get_viewport()->cameras.insert(this);
+			if (!get_tree()->is_node_being_edited(this) && (current || first_camera))
 				make_current();
 
 
@@ -260,17 +240,17 @@ void Camera::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_EXIT_WORLD: {
 		
-			if (is_current()) {
-				clear_current();
-				current=true; //keep it true
+			if (!get_tree()->is_node_being_edited(this)) {
+				if (is_current()) {
+					clear_current();
+					current=true; //keep it true
 
-			} else {
-				current=false;
+				} else {
+					current=false;
+				}
 			}
-			if (viewport_ptr)
-				viewport_ptr->cameras.erase(this);
-			viewport_ptr=NULL;
-			remove_from_group(camera_group);
+
+			get_viewport()->cameras.erase(this);
 
 
 		} break;
@@ -338,25 +318,12 @@ void Camera::make_current() {
 	if (!is_inside_tree())
 		return;
 
-	if (viewport_ptr) {
-		viewport_ptr->_set_camera(this);
-	}
+	get_viewport()->_set_camera(this);
 
 	//get_scene()->call_group(SceneMainLoop::GROUP_CALL_REALTIME,camera_group,"_camera_make_current",this);
 }
 
 
-void Camera::_camera_make_next_current(Node *p_exclude) {
-
-	if (this==p_exclude)
-		return;
-	if (!is_inside_tree())
-		return;
-	if (get_viewport()->get_cameras().size())
-		return;
-
-	make_current();
-}
 
 
 void Camera::clear_current() {
@@ -365,12 +332,20 @@ void Camera::clear_current() {
 	if (!is_inside_tree())
 		return;
 
-	if (viewport_ptr) {
-		if (get_viewport()->get_cameras().find(this)!=-1) {
-			viewport_ptr->_unset_camera(this);
-			//a group is used beause this needs to be in order to be deterministic
-			get_tree()->call_group(SceneTree::GROUP_CALL_REALTIME,camera_group,"_camera_make_next_current",this);
+	if (get_viewport()->get_cameras().find(this)!=-1) {
+		get_viewport()->_unset_camera(this);
+		//a group is used beause this needs to be in order to be deterministic
 
+		for (Set<Camera*>::Element *E=get_viewport()->cameras.front();E;E=E->next()) {
+
+			if (this==E->get())
+				continue;
+			if (!E->get()->is_inside_tree())
+				continue;
+			if (get_viewport()->get_cameras().find(this)!=-1)
+				return;
+
+			E->get()->make_current();
 		}
 	}
 
@@ -378,12 +353,13 @@ void Camera::clear_current() {
 
 bool Camera::is_current() const {
 
-	if (is_inside_tree()) {
-		if (viewport_ptr) {}
+	if (is_inside_tree() && !get_tree()->is_node_being_edited(this)) {
+		if (get_viewport()) {
 			if (get_viewport()->get_cameras().find(this) != -1)
 				return true;
 			else
 				return false;
+		}
 	} else
 		return current;
 
@@ -498,12 +474,12 @@ Vector3 Camera::project_local_ray_normal(const Point2& p_pos) const {
 
 
 #if 0
-	Size2 viewport_size = viewport_ptr->get_visible_rect().size;
+	Size2 viewport_size = get_viewport()->get_visible_rect().size;
 	Vector2 cpos = p_pos;
 #else
 
-	Size2 viewport_size = viewport_ptr->get_camera_rect_size();
-	Vector2 cpos = viewport_ptr->get_camera_coords(p_pos);
+	Size2 viewport_size = get_viewport()->get_camera_rect_size();
+	Vector2 cpos = get_viewport()->get_camera_coords(p_pos);
 #endif
 
 	Vector3 ray;
@@ -531,12 +507,12 @@ Vector3 Camera::project_ray_origin(const Point2& p_pos) const {
 	}
 
 #if 0
-	Size2 viewport_size = viewport_ptr->get_visible_rect().size;
+	Size2 viewport_size = get_viewport()->get_visible_rect().size;
 	Vector2 cpos = p_pos;
 #else
 
-	Size2 viewport_size = viewport_ptr->get_camera_rect_size();
-	Vector2 cpos = viewport_ptr->get_camera_coords(p_pos);
+	Size2 viewport_size = get_viewport()->get_camera_rect_size();
+	Vector2 cpos = get_viewport()->get_camera_coords(p_pos);
 #endif
 
 	ERR_FAIL_COND_V( viewport_size.y == 0, Vector3() );
@@ -583,7 +559,7 @@ Point2 Camera::unproject_position(const Vector3& p_pos) const {
 		ERR_FAIL_COND_V(!is_inside_tree(),Vector2());
 	}
 
-	Size2 viewport_size = viewport_ptr->get_visible_rect().size;
+	Size2 viewport_size = get_viewport()->get_visible_rect().size;
 
 	CameraMatrix cm;
 
@@ -614,7 +590,7 @@ Vector3 Camera::project_position(const Point2& p_point) const {
 		ERR_FAIL_COND_V(!is_inside_tree(),Vector3());
 	}
 
-	Size2 viewport_size = viewport_ptr->get_visible_rect().size;
+	Size2 viewport_size = get_viewport()->get_visible_rect().size;
 
 	CameraMatrix cm;
 
@@ -711,7 +687,6 @@ void Camera::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_environment:Environment"),&Camera::get_environment);
 	ObjectTypeDB::bind_method(_MD("set_keep_aspect_mode","mode"),&Camera::set_keep_aspect_mode);
 	ObjectTypeDB::bind_method(_MD("get_keep_aspect_mode"),&Camera::get_keep_aspect_mode);
-	ObjectTypeDB::bind_method(_MD("_camera_make_next_current"),&Camera::_camera_make_next_current);
 	ObjectTypeDB::bind_method(_MD("set_room_cull_enabled", "room_cull_enabled"), &Camera::set_room_cull_enabled);
 	ObjectTypeDB::bind_method(_MD("is_room_cull_enabled"), &Camera::is_room_cull_enabled);
 	//ObjectTypeDB::bind_method( _MD("_camera_make_current"),&Camera::_camera_make_current );
@@ -775,9 +750,9 @@ void Camera::set_depth(int32_t p_depth) {
 	if(depth!=p_depth) {
 		depth = p_depth;
 		VisualServer::get_singleton()->camera_set_depth(camera, depth);
-		if (current==true && viewport_ptr != NULL) {
-			viewport_ptr->_unset_camera(this);
-			viewport_ptr->_set_camera(this);
+		if (current == true && get_viewport() != NULL) {
+			get_viewport()->_unset_camera(this);
+			get_viewport()->_set_camera(this);
 		}
 	}
 }
@@ -790,7 +765,7 @@ Vector<Plane> Camera::get_frustum() const {
 
 	ERR_FAIL_COND_V(!is_inside_world(),Vector<Plane>());
 
-	Size2 viewport_size = viewport_ptr->get_visible_rect().size;
+	Size2 viewport_size = get_viewport()->get_visible_rect().size;
 	CameraMatrix cm;
 	if (mode==PROJECTION_PERSPECTIVE)
 		cm.set_perspective(fov,viewport_size.get_aspect(),near,far,keep_aspect==KEEP_WIDTH);
@@ -844,7 +819,6 @@ Camera::Camera() {
 	near=0;
 	far=0;
 	current=false;
-	viewport_ptr=NULL;
 	force_change=false;
 	mode=PROJECTION_PERSPECTIVE;
 	set_perspective(60.0,0.1,100.0);
