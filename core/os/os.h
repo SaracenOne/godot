@@ -74,8 +74,9 @@ public:
 		int width,height;
 		bool fullscreen;
 		bool resizable;
+		bool borderless_window;
 		float get_aspect() const { return (float)width/(float)height; }
-		VideoMode(int p_width=1280,int p_height=720,bool p_fullscreen=false, bool p_resizable = true) {width=p_width; height=p_height; fullscreen=p_fullscreen; resizable = p_resizable; }
+		VideoMode(int p_width=1280,int p_height=720,bool p_fullscreen=false, bool p_resizable = true,bool p_borderless_window=false) { width=p_width; height=p_height; fullscreen=p_fullscreen; resizable = p_resizable; borderless_window=p_borderless_window; }
 	};
 protected:
 friend class Main;
@@ -171,6 +172,8 @@ public:
 	virtual void set_window_maximized(bool p_enabled) {}
 	virtual bool is_window_maximized() const { return true; }
 
+	virtual void set_borderless_window(int p_borderless) {};
+	virtual bool get_borderless_window() { return 0; };
 
 	virtual void set_iterations_per_second(int p_ips);
 	virtual int get_iterations_per_second() const;
