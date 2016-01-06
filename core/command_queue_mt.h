@@ -1117,7 +1117,7 @@ public:
 	
 	void flush_all() {
 			
-		ERR_FAIL_COND(sync);
+		//ERR_FAIL_COND(sync);
 		lock();
 		while (true) {
 			bool exit = !flush_one();

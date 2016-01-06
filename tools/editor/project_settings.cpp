@@ -107,6 +107,8 @@ void ProjectSettings::_action_persist_toggle() {
 	String name="input/"+ti->get_text(0);
 
 	bool prev = Globals::get_singleton()->is_persisting(name);
+	print_line("prev persist: "+itos(prev));
+	print_line("new persist: "+itos(ti->is_checked(0)));
 	if (prev==ti->is_checked(0))
 		return;
 
@@ -428,7 +430,7 @@ void ProjectSettings::_update_actions() {
 			continue;
 
 		TreeItem *item=input_editor->create_item(root);
-		item->set_cell_mode(0,TreeItem::CELL_MODE_CHECK);
+		//item->set_cell_mode(0,TreeItem::CELL_MODE_CHECK);
 		item->set_text(0,name);
 		item->add_button(0,get_icon("Add","EditorIcons"),1);
 		if (!Globals::get_singleton()->get_input_presets().find(pi.name)) {
@@ -437,7 +439,7 @@ void ProjectSettings::_update_actions() {
 		}
 		item->set_custom_bg_color(0,get_color("prop_subsection","Editor"));
 		item->set_editable(0,true);
-		item->set_checked(0,pi.usage&PROPERTY_USAGE_CHECKED);
+		//item->set_checked(0,pi.usage&PROPERTY_USAGE_CHECKED);
 
 
 
@@ -699,9 +701,20 @@ void ProjectSettings::_save() {
 
 void ProjectSettings::_settings_prop_edited(const String& p_name) {
 
-	if (!Globals::get_singleton()->is_persisting(p_name)) {
-		String full_item = globals_editor->get_full_item_path(p_name);
+	String full_item = globals_editor->get_full_item_path(p_name);
+
+	if (!Globals::get_singleton()->is_persisting(full_item)) {
 		Globals::get_singleton()->set_persisting(full_item,true);
+
+		{
+			//small usability workaround, if anything related to resolution scaling or size is modified, change all of them together
+			if (full_item=="display/width" || full_item=="display/height" || full_item=="display/stretch_mode") {
+				Globals::get_singleton()->set_persisting("display/height",true);
+				Globals::get_singleton()->set_persisting("display/width",true);
+			}
+		}
+
+
 //		globals_editor->update_property(p_name);
 		globals_editor->get_property_editor()->update_tree();
 	}
