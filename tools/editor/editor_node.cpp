@@ -520,7 +520,7 @@ void EditorNode::save_resource_as(const Ref<Resource>& p_resource) {
 	List<String> preferred;
 	for(int i=0;i<extensions.size();i++) {
 
-		if (p_resource->is_type("Script") && extensions[i]=="tres" || extensions[i]=="res" || extensions[i]=="xml") {
+		if (p_resource->is_type("Script") && (extensions[i]=="tres" || extensions[i]=="res" || extensions[i]=="xml")) {
 			//this serves no purpose and confused people
 			continue;
 		}
@@ -4723,11 +4723,13 @@ void EditorNode::_scene_tab_changed(int p_tab) {
 	editor_data.get_undo_redo().add_do_method(this,"set_current_version",unsaved?saved_version:0);
 	editor_data.get_undo_redo().add_do_method(this,"set_current_scene",p_tab);
 	editor_data.get_undo_redo().add_do_method(scene_tabs,"set_current_tab",p_tab);
+	editor_data.get_undo_redo().add_do_method(scene_tabs,"ensure_tab_visible",p_tab);
 	editor_data.get_undo_redo().add_do_method(this,"set_current_version",next_scene_version==0?editor_data.get_undo_redo().get_version()+1:next_scene_version);
 
 	editor_data.get_undo_redo().add_undo_method(this,"set_current_version",next_scene_version);
 	editor_data.get_undo_redo().add_undo_method(this,"set_current_scene",editor_data.get_edited_scene());
 	editor_data.get_undo_redo().add_undo_method(scene_tabs,"set_current_tab",editor_data.get_edited_scene());
+	editor_data.get_undo_redo().add_undo_method(scene_tabs,"ensure_tab_visible",p_tab,editor_data.get_edited_scene());
 	editor_data.get_undo_redo().add_undo_method(this,"set_current_version",saved_version);
 	editor_data.get_undo_redo().commit_action();
 
@@ -5195,7 +5197,11 @@ EditorNode::EditorNode() {
 	p->add_separator();
 	p->add_item("Revert Scene",EDIT_REVERT);
 	p->add_separator();
+#ifdef OSX_ENABLED
 	p->add_item("Quit to Project List",RUN_PROJECT_MANAGER,KEY_MASK_SHIFT+KEY_MASK_ALT+KEY_Q);
+#else
+	p->add_item("Quit to Project List",RUN_PROJECT_MANAGER,KEY_MASK_SHIFT+KEY_MASK_CTRL+KEY_Q);
+#endif
 	p->add_item("Quit",FILE_QUIT,KEY_MASK_CMD+KEY_Q);
 
 	recent_scenes = memnew( PopupMenu );
