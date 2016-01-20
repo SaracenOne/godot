@@ -37,6 +37,8 @@
 #include "os/input.h"
 #include "tools/editor/editor_settings.h"
 #include "scene/gui/grid_container.h"
+#include "tools/editor/animation_editor.h"
+#include "tools/editor/plugins/animation_player_editor_plugin.h"
 
 class SnapDialog : public ConfirmationDialog {
 
@@ -194,7 +196,7 @@ void CanvasItemEditor::_edit_set_pivot(const Vector2& mouse_pos) {
 
 void CanvasItemEditor::_unhandled_key_input(const InputEvent& p_ev) {
 
-	if (!is_visible())
+	if (!is_visible() || get_viewport()->gui_has_modal_stack())
 		return;
 	if (p_ev.key.mod.control)
 		// prevent to change tool mode when control key is pressed
@@ -407,7 +409,7 @@ void CanvasItemEditor::_node_removed(Node *p_node) {
 
 void CanvasItemEditor::_keying_changed() {
 
-	if (editor->get_animation_editor()->has_keying())
+	if (AnimationPlayerEditor::singleton->get_key_editor()->has_keying())
 		animation_hb->show();
 	else
 		animation_hb->hide();
@@ -2712,11 +2714,11 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 					Node2D *n2d = canvas_item->cast_to<Node2D>();
 
 					if (key_pos)
-						editor->get_animation_editor()->insert_node_value_key(n2d,"transform/pos",n2d->get_pos(),existing);
+						AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(n2d,"transform/pos",n2d->get_pos(),existing);
 					if (key_rot)
-						editor->get_animation_editor()->insert_node_value_key(n2d,"transform/rot",Math::rad2deg(n2d->get_rot()),existing);
+						AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(n2d,"transform/rot",Math::rad2deg(n2d->get_rot()),existing);
 					if (key_scale)
-						editor->get_animation_editor()->insert_node_value_key(n2d,"transform/scale",n2d->get_scale(),existing);
+						AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(n2d,"transform/scale",n2d->get_scale(),existing);
 
 
 					if (n2d->has_meta("_edit_bone_") && n2d->get_parent_item()) {
@@ -2744,11 +2746,11 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 							for(List<Node2D*>::Element *F=ik_chain.front();F;F=F->next()) {
 
 								if (key_pos)
-									editor->get_animation_editor()->insert_node_value_key(F->get(),"transform/pos",F->get()->get_pos(),existing);
+									AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(F->get(),"transform/pos",F->get()->get_pos(),existing);
 								if (key_rot)
-									editor->get_animation_editor()->insert_node_value_key(F->get(),"transform/rot",Math::rad2deg(F->get()->get_rot()),existing);
+									AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(F->get(),"transform/rot",Math::rad2deg(F->get()->get_rot()),existing);
 								if (key_scale)
-									editor->get_animation_editor()->insert_node_value_key(F->get(),"transform/scale",F->get()->get_scale(),existing);
+									AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(F->get(),"transform/scale",F->get()->get_scale(),existing);
 
 
 							}
@@ -2760,9 +2762,9 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 					Control *ctrl = canvas_item->cast_to<Control>();
 
 					if (key_pos)
-						editor->get_animation_editor()->insert_node_value_key(ctrl,"rect/pos",ctrl->get_pos(),existing);
+						AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(ctrl,"rect/pos",ctrl->get_pos(),existing);
 					if (key_scale)
-						editor->get_animation_editor()->insert_node_value_key(ctrl,"rect/size",ctrl->get_size(),existing);
+						AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(ctrl,"rect/size",ctrl->get_size(),existing);
 				}
 
 			}
@@ -2884,7 +2886,7 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 					if (key_pos)
 						ctrl->set_pos(Point2());
 					//if (key_scale)
-					//	editor->get_animation_editor()->insert_node_value_key(ctrl,"rect/size",ctrl->get_size());
+					//	AnimationPlayerEditor::singleton->get_key_editor()->insert_node_value_key(ctrl,"rect/size",ctrl->get_size());
 				}
 
 			}
@@ -3433,7 +3435,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	box_selecting=false;
 	//zoom=0.5;
 	singleton=this;
-	editor->get_animation_editor()->connect("keying_changed",this,"_keying_changed");
+	AnimationPlayerEditor::singleton->get_key_editor()->connect("keying_changed",this,"_keying_changed");
 	set_process_unhandled_key_input(true);
 	can_move_pivot=false;
 	drag=DRAG_NONE;
