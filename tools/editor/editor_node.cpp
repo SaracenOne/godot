@@ -164,7 +164,7 @@ void EditorNode::_update_title() {
 
 void EditorNode::_unhandled_input(const InputEvent& p_event) {
 
-	if (p_event.type==InputEvent::KEY && p_event.key.pressed && !p_event.key.echo) {
+	if (p_event.type==InputEvent::KEY && p_event.key.pressed && !p_event.key.echo && !gui_base->get_viewport()->gui_has_modal_stack()) {
 
 		switch(p_event.key.scancode) {
 
@@ -2367,7 +2367,14 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 
 			if (!scene)
 				break;
-			
+
+			String filename = scene->get_filename();
+
+			if (filename==String()) {
+				show_warning("Can't reload a scene that was never saved..");
+				break;
+			}
+
 			if (unsaved_cache && !p_confirmed) {
 				confirmation->get_ok()->set_text("Revert");
 				confirmation->set_text("This action cannot be undone. Revert anyway?");
@@ -2375,7 +2382,13 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 				break;
 			}
 
-			Error err = load_scene(scene->get_filename());
+
+			int cur_idx = editor_data.get_edited_scene();
+			_remove_edited_scene();
+			Error err = load_scene(filename);
+			editor_data.move_edited_scene_to_index(cur_idx);
+			get_undo_redo()->clear_history();
+			scene_tabs->set_current_tab(cur_idx);
 
 		} break;
 
@@ -4520,14 +4533,14 @@ void EditorNode::_scene_tab_changed(int p_tab) {
 	editor_data.get_undo_redo().create_action("Switch Scene Tab");
 	editor_data.get_undo_redo().add_do_method(this,"set_current_version",unsaved?saved_version:0);
 	editor_data.get_undo_redo().add_do_method(this,"set_current_scene",p_tab);
-	editor_data.get_undo_redo().add_do_method(scene_tabs,"set_current_tab",p_tab);
-	editor_data.get_undo_redo().add_do_method(scene_tabs,"ensure_tab_visible",p_tab);
+	//editor_data.get_undo_redo().add_do_method(scene_tabs,"set_current_tab",p_tab);
+	//editor_data.get_undo_redo().add_do_method(scene_tabs,"ensure_tab_visible",p_tab);
 	editor_data.get_undo_redo().add_do_method(this,"set_current_version",next_scene_version==0?editor_data.get_undo_redo().get_version()+1:next_scene_version);
 
 	editor_data.get_undo_redo().add_undo_method(this,"set_current_version",next_scene_version);
 	editor_data.get_undo_redo().add_undo_method(this,"set_current_scene",editor_data.get_edited_scene());
-	editor_data.get_undo_redo().add_undo_method(scene_tabs,"set_current_tab",editor_data.get_edited_scene());
-	editor_data.get_undo_redo().add_undo_method(scene_tabs,"ensure_tab_visible",p_tab,editor_data.get_edited_scene());
+	//editor_data.get_undo_redo().add_undo_method(scene_tabs,"set_current_tab",editor_data.get_edited_scene());
+	//editor_data.get_undo_redo().add_undo_method(scene_tabs,"ensure_tab_visible",p_tab,editor_data.get_edited_scene());
 	editor_data.get_undo_redo().add_undo_method(this,"set_current_version",saved_version);
 	editor_data.get_undo_redo().commit_action();
 

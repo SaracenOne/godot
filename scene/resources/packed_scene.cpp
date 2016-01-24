@@ -33,7 +33,7 @@
 #include "scene/gui/control.h"
 #include "scene/2d/node_2d.h"
 #include "scene/main/instance_placeholder.h"
-
+#include "core/core_string_names.h"
 #define PACK_VERSION 2
 
 bool SceneState::can_instance() const {
@@ -98,6 +98,7 @@ Node *SceneState::instance(bool p_gen_edit_state) const {
 		}
 
 		Node *node=NULL;
+
 
 		if (i==0 && base_scene_idx>=0) {
 			//scene inheritance on root node
@@ -193,7 +194,26 @@ Node *SceneState::instance(bool p_gen_edit_state) const {
 					ERR_FAIL_INDEX_V( nprops[j].name, sname_count, NULL );
 					ERR_FAIL_INDEX_V( nprops[j].value, prop_count, NULL );
 
-					node->set(snames[ nprops[j].name ],props[ nprops[j].value ],&valid);
+					if (snames[ nprops[j].name ]==CoreStringNames::get_singleton()->_script) {
+						//work around to avoid old script variables from disappearing, should be the proper fix to:
+						//https://github.com/godotengine/godot/issues/2958
+
+						//store old state
+						List<Pair<StringName,Variant> > old_state;
+						if (node->get_script_instance()) {
+							node->get_script_instance()->get_property_state(old_state);
+						}
+
+						node->set(snames[ nprops[j].name ],props[ nprops[j].value ],&valid);
+
+						//restore old state for new script, if exists
+						for (List<Pair<StringName,Variant> >::Element *E=old_state.front();E;E=E->next()) {
+							node->set(E->get().first,E->get().second);
+						}
+					} else {
+
+						node->set(snames[ nprops[j].name ],props[ nprops[j].value ],&valid);
+					}
 				}
 			}
 
@@ -460,6 +480,7 @@ Error SceneState::_parse_node(Node *p_owner,Node *p_node,int p_parent_idx, Map<S
 	List<PropertyInfo> plist;
 	p_node->get_property_list(&plist);
 
+	bool saved_script=false;
 
 	for (List<PropertyInfo>::Element *E=plist.front();E;E=E->next()) {
 
@@ -508,8 +529,10 @@ Error SceneState::_parse_node(Node *p_owner,Node *p_node,int p_parent_idx, Map<S
 					break;
 				}
 			}
-
-			if (exists && p_node->get_script_instance()) {
+#if 0
+// this workaround ended up causing problems:
+https://github.com/godotengine/godot/issues/3127
+			if (saved_script && exists && p_node->get_script_instance()) {
 				//if this is an overriden value by another script, save it anyway
 				//as the script change will erase it
 				//https://github.com/godotengine/godot/issues/2958
@@ -522,7 +545,7 @@ Error SceneState::_parse_node(Node *p_owner,Node *p_node,int p_parent_idx, Map<S
 				}
 			}
 
-
+#endif
 			if (exists && bool(Variant::evaluate(Variant::OP_EQUAL,value,original))) {
 				//exists and did not change
 				continue;
@@ -542,6 +565,9 @@ Error SceneState::_parse_node(Node *p_owner,Node *p_node,int p_parent_idx, Map<S
 				continue;
 			}
 		}
+
+		if (name=="script/script")
+			saved_script=true;
 
 		NodeData::Property prop;
 		prop.name=_nm_get_string( name,name_map);
@@ -1532,7 +1558,39 @@ void SceneState::add_editable_instance(const NodePath& p_path){
 	editable_instances.push_back(p_path);
 }
 
+DVector<String> SceneState::_get_node_groups(int p_idx) const {
 
+	Vector<StringName> groups = get_node_groups(p_idx);
+	DVector<String> ret;
+
+	for(int i=0;i<groups.size();i++)
+		ret.push_back(groups[i]);
+
+	return ret;
+}
+
+void SceneState::_bind_methods() {
+
+	//unbuild API
+
+	ObjectTypeDB::bind_method(_MD("get_node_count"),&SceneState::get_node_count);
+	ObjectTypeDB::bind_method(_MD("get_node_type","idx"),&SceneState::get_node_type);
+	ObjectTypeDB::bind_method(_MD("get_node_name","idx"),&SceneState::get_node_name);
+	ObjectTypeDB::bind_method(_MD("get_node_path","idx","for_parent"),&SceneState::get_node_path,DEFVAL(false));
+	ObjectTypeDB::bind_method(_MD("get_node_owner_path","idx"),&SceneState::get_node_owner_path);
+	ObjectTypeDB::bind_method(_MD("get_node_instance:PackedScene","idx"),&SceneState::get_node_instance);
+	ObjectTypeDB::bind_method(_MD("get_node_groups","idx"),&SceneState::_get_node_groups);
+	ObjectTypeDB::bind_method(_MD("get_node_property_count","idx"),&SceneState::get_node_property_count);
+	ObjectTypeDB::bind_method(_MD("get_node_property_name","idx","prop_idx"),&SceneState::get_node_property_name);
+	ObjectTypeDB::bind_method(_MD("get_node_property_value","idx","prop_idx"),&SceneState::get_node_property_value);
+	ObjectTypeDB::bind_method(_MD("get_connection_count"),&SceneState::get_connection_count);
+	ObjectTypeDB::bind_method(_MD("get_connection_source","idx"),&SceneState::get_connection_source);
+	ObjectTypeDB::bind_method(_MD("get_connection_signal","idx"),&SceneState::get_connection_signal);
+	ObjectTypeDB::bind_method(_MD("get_connection_target","idx"),&SceneState::get_connection_target);
+	ObjectTypeDB::bind_method(_MD("get_connection_method","idx"),&SceneState::get_connection_method);
+	ObjectTypeDB::bind_method(_MD("get_connection_flags","idx"),&SceneState::get_connection_flags);
+	ObjectTypeDB::bind_method(_MD("get_connection_binds","idx"),&SceneState::get_connection_binds);
+}
 
 SceneState::SceneState() {
 
@@ -1635,6 +1693,7 @@ void PackedScene::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("can_instance"),&PackedScene::can_instance);
 	ObjectTypeDB::bind_method(_MD("_set_bundled_scene"),&PackedScene::_set_bundled_scene);
 	ObjectTypeDB::bind_method(_MD("_get_bundled_scene"),&PackedScene::_get_bundled_scene);
+	ObjectTypeDB::bind_method(_MD("get_state:SceneState"),&PackedScene::get_state);
 
 	ADD_PROPERTY( PropertyInfo(Variant::DICTIONARY,"_bundled"),_SCS("_set_bundled_scene"),_SCS("_get_bundled_scene"));
 
