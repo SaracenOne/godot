@@ -6767,6 +6767,14 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 
 			if (material->flags[VS::MATERIAL_FLAG_UNSHADED] == false && current_debug != VS::SCENARIO_DEBUG_SHADELESS) {
 
+				if (baked_light != NULL) {
+					if (baked_light->realtime_color_enabled) {
+						float realtime_energy = baked_light->realtime_energy;
+						material_shader.set_conditional(MaterialShaderGLES2::ENABLE_AMBIENT_COLOR, true);
+						material_shader.set_uniform(MaterialShaderGLES2::AMBIENT_COLOR, Vector3(baked_light->realtime_color.r*realtime_energy, baked_light->realtime_color.g*realtime_energy, baked_light->realtime_color.b*realtime_energy));
+					}
+				}
+
 				if (e->instance->sampled_light.is_valid()) {
 
 					SampledLight *sl = sampled_light_owner.get(e->instance->sampled_light);
