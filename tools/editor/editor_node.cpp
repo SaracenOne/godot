@@ -2214,7 +2214,7 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 
 		case FILE_EXPORT_PROJECT: {
 
-			project_export_settings->popup_centered_ratio();
+			project_export_settings->popup_export();
 			/*
 			String target = export_db->get_current_platform();
 			Ref<EditorExporter> exporter = export_db->get_exporter(target);
@@ -3661,6 +3661,7 @@ void EditorNode::update_keying() {
 
 	property_editor->set_keying(valid);
 
+	AnimationPlayerEditor::singleton->get_key_editor()->update_keying();
 }
 
 
