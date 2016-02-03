@@ -176,6 +176,8 @@ public:
 	virtual void set_borderless_window(int p_borderless) {};
 	virtual bool get_borderless_window() { return 0; };
 
+
+
 	virtual void set_iterations_per_second(int p_ips);
 	virtual int get_iterations_per_second() const;
 
@@ -404,6 +406,13 @@ public:
 
 	virtual bool is_joy_known(int p_device);
 	virtual String get_joy_guid(int p_device)const;
+
+	enum EngineContext {
+		CONTEXT_EDITOR,
+		CONTEXT_PROJECTMAN,
+	};
+
+	virtual void set_context(int p_context);
 
 	OS();	
 	virtual ~OS();

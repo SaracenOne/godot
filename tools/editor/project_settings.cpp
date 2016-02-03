@@ -38,18 +38,18 @@
 ProjectSettings *ProjectSettings::singleton=NULL;
 
 static const char* _button_names[JOY_BUTTON_MAX]={
-"PS X, XBox A, NDS B",
-"PS Circle, XBox B, NDS A",
-"PS Square, XBox X, NDS Y",
-"PS Triangle, XBox Y, NDS X",
-"L, L1, Wii C",
+"PS X, XBox A, Nintendo B",
+"PS Circle, XBox B, Nintendo A",
+"PS Square, XBox X, Nintendo Y",
+"PS Triangle, XBox Y, Nintendo X",
+"L, L1",
 "R, R1",
-"L2, Wii Z",
+"L2",
 "R2",
 "L3",
 "R3",
-"Select, Wii -",
-"Start, Wii +",
+"Select, Nintendo -",
+"Start, Nintendo +",
 "D-Pad Up",
 "D-Pad Down",
 "D-Pad Left",
@@ -299,10 +299,22 @@ void ProjectSettings::_add_item(int p_item){
 			device_id->set_val(0);
 			device_index_label->set_text("Joy Button Axis:");
 			device_index->clear();
-			for(int i=0;i<24;i++) {
+			for(int i=0;i<JOY_AXIS_MAX*2;i++) {
+
+				String desc;
+
+				int ax=i/2;
+				if (ax==0 || ax==1)
+					desc=" (Left Stick)";
+				else if (ax==2 || ax==3)
+					desc=" (Right Stick)";
+				else if (ax==6)
+					desc=" (L2)";
+				else if (ax==7)
+					desc=" (R2)";
 
 
-				device_index->add_item("Axis "+itos(i/2)+" "+(i&1?"+":"-"));
+				device_index->add_item("Axis "+itos(i/2)+" "+(i&1?"+":"-")+desc);
 			}
 			device_input->popup_centered(Size2(350,95));
 
@@ -315,7 +327,7 @@ void ProjectSettings::_add_item(int p_item){
 
 			for(int i=0;i<JOY_BUTTON_MAX;i++) {
 
-				device_index->add_item(String(_button_names[i]));
+				device_index->add_item(itos(i)+": "+String(_button_names[i]));
 			}
 			device_input->popup_centered(Size2(350,95));
 
@@ -499,7 +511,18 @@ void ProjectSettings::_update_actions() {
 				} break;
 				case InputEvent::JOYSTICK_MOTION: {
 
-					String str = "Device "+itos(ie.device)+", Axis "+itos(ie.joy_motion.axis)+" "+(ie.joy_motion.axis_value<0?"-.":"+.");
+					String desc;
+					int ax = ie.joy_motion.axis;
+
+					if (ax==0 || ax==1)
+						desc=" (Left Stick).";
+					else if (ax==2 || ax==3)
+						desc=" (Right Stick).";
+					else if (ax==6)
+						desc=" (L2).";
+					else if (ax==7)
+						desc=" (R2).";
+					String str = "Device "+itos(ie.device)+", Axis "+itos(ie.joy_motion.axis)+" "+(ie.joy_motion.axis_value<0?"-":"+")+desc;
 					action->set_text(0,str);
 					action->set_icon(0,get_icon("JoyAxis","EditorIcons"));
 				} break;
@@ -823,6 +846,7 @@ void ProjectSettings::_autoload_edited() {
 	String base="autoload/"+ti->get_text(0);
 
 	String path = Globals::get_singleton()->get(base);
+	int order = Globals::get_singleton()->get_order(base);
 
 	if (path.begins_with("*"))
 		path=path.substr(1,path.length());
@@ -833,6 +857,8 @@ void ProjectSettings::_autoload_edited() {
 	undo_redo->create_action("Toggle Autoload GlobalVar");
 	undo_redo->add_do_property(Globals::get_singleton(),base,path);
 	undo_redo->add_undo_property(Globals::get_singleton(),base,Globals::get_singleton()->get(base));
+	undo_redo->add_do_method(Globals::get_singleton(),"set_order",base,order); // keep order, as config order matters for these
+	undo_redo->add_undo_method(Globals::get_singleton(),"set_order",base,order);
 	undo_redo->add_do_method(this,"_update_autoload");
 	undo_redo->add_undo_method(this,"_update_autoload");
 	undo_redo->add_do_method(this,"_settings_changed");
@@ -924,10 +950,12 @@ void ProjectSettings::_autoload_delete(Object *p_item,int p_column, int p_button
 
 	if (p_button==0) {
 		//delete
+		int order = Globals::get_singleton()->get_order(name);
 		undo_redo->create_action("Remove Autoload");
 		undo_redo->add_do_property(Globals::get_singleton(),name,Variant());
 		undo_redo->add_undo_property(Globals::get_singleton(),name,Globals::get_singleton()->get(name));
 		undo_redo->add_undo_method(Globals::get_singleton(),"set_persisting",name,true);
+		undo_redo->add_undo_method(Globals::get_singleton(),"set_order",name,order);
 		undo_redo->add_do_method(this,"_update_autoload");
 		undo_redo->add_undo_method(this,"_update_autoload");
 		undo_redo->add_do_method(this,"_settings_changed");

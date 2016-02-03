@@ -65,7 +65,6 @@
 
 
 #include <X11/Xatom.h>
-//#include "os/pc_joystick_map.h"
 
 #undef CursorShape
 
@@ -1780,6 +1779,22 @@ bool OS_X11::is_joy_known(int p_device) {
 
 String OS_X11::get_joy_guid(int p_device) const {
 	return input->get_joy_guid_remapped(p_device);
+}
+
+void OS_X11::set_context(int p_context) {
+
+	XClassHint* classHint = NULL;
+	classHint = XAllocClassHint();
+	if (classHint) {
+
+		if (p_context == CONTEXT_EDITOR)
+			classHint->res_name = (char *)"Godot_Editor";
+		if (p_context == CONTEXT_PROJECTMAN)
+			classHint->res_name = (char *)"Godot_ProjectList";
+		classHint->res_class = (char *)"Godot";
+		XSetClassHint(x11_display, x11_window, classHint);
+		XFree(classHint);
+	}
 }
 
 OS_X11::OS_X11() {
