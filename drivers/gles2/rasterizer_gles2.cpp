@@ -6765,6 +6765,9 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 			material_shader.set_conditional(MaterialShaderGLES2::ENABLE_AMBIENT_LIGHTMAP,false);
 			material_shader.set_conditional(MaterialShaderGLES2::ENABLE_AMBIENT_DP_SAMPLER,false);
 
+			material_shader.set_conditional(MaterialShaderGLES2::ENABLE_AMBIENT_COLOR, false);
+
+
 			if (material->flags[VS::MATERIAL_FLAG_UNSHADED] == false && current_debug != VS::SCENARIO_DEBUG_SHADELESS) {
 
 				if (baked_light != NULL) {
