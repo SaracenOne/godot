@@ -2098,7 +2098,7 @@ String OS_Windows::get_system_dir(SystemDir p_dir) const {
 			id=CSIDL_MYPICTURES;
 		} break;
 		case SYSTEM_DIR_DOCUMENTS: {
-			id=0x000C;
+			id=CSIDL_PERSONAL;
 		} break;
 		case SYSTEM_DIR_DOWNLOADS: {
 			id=0x000C ;
