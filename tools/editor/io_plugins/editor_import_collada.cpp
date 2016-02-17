@@ -2478,7 +2478,7 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 			ERR_FAIL_COND_V(!meshdata.sources.has(color_source_id_basis), ERR_INVALID_DATA);
 
 			color_src = &morphmeshdata.sources[color_source_id];
-			color_src_basis = &meshdata.sources[color_source_id];
+			color_src_basis = &meshdata.sources[color_source_id_basis];
 		}
 
 		Set<Collada::Vertex> vertex_set; //vertex set will be the vertices
@@ -2497,6 +2497,7 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 		// This is, however, more incompatible with standard video cards, so arrays must be converted.
 		// Must convert to GL/DX format.
 
+		int index_count = 0;
 		int _prim_ofs = 0;
 		int vertidx = 0;
 		for (int p_i = 0; p_i<p_basis.count; p_i++) {
@@ -2610,7 +2611,7 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 					vertex_set_basis.insert(vertex);
 				}
 
-				real_index = p_basis.indices[(p_i * amount) + j];
+				real_index = p_basis.indices[index_count + j];
 
 				//build triangles if needed
 				if (j==0) {
@@ -2637,10 +2638,12 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 				real_prev2[1]=real_index;
 				_prim_ofs+=p_basis.vertex_size;
 			}
+			index_count+=amount;
 		}
 
 		_prim_ofs = 0;
 		vertidx = 0;
+		index_count = 0;
 		for (int p_i = 0; p_i<p.indices.size(); p_i++) {
 
 
@@ -2704,14 +2707,18 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 
 				index = indices_list_basis.find(raw_index)->get();
 
-				vertex.idx = (p_i * amount) + j;
-				vertex_set.insert(vertex);
-				
-				indices_list.push_back(index);
+				if (indices_list.find(index) == NULL)
+				{
+					vertex.idx = index_count;
+					vertex_set.insert(vertex);
+
+					indices_list.push_back(index);
+
+					index_count += 1;
+				}
 
 				_prim_ofs += p.vertex_size;
 			}
-
 		}
 
 
@@ -2721,8 +2728,8 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 		int vertex_set_size = vertex_set.size();
 		vertex_array.resize(vertex_set_size);
 		for (Set<Collada::Vertex>::Element *F = vertex_set.front(); F; F = F->next()) {
-			unsigned int foo = F->get().idx;
-			vertex_array[foo] = F->get();
+			unsigned int idx = F->get().idx;
+			vertex_array[idx] = F->get();
 		}
 
 		
@@ -2746,27 +2753,19 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 
 			DVector<Vector3> final_vertex_array;
 			DVector<Vector3> final_normal_array;
-			DVector<float> final_tangent_array;
 			DVector<Color> final_color_array;
 			DVector<Vector3> final_uv_array;
 			DVector<Vector3> final_uv2_array;
-			DVector<float> final_bone_array;
-			DVector<float> final_weight_array;
 
 			uint32_t final_format = 0;
 
 			//create format
 			final_format = Mesh::ARRAY_FORMAT_VERTEX | Mesh::ARRAY_FORMAT_INDEX;
 
-			if (normal_src) {
-				final_format |= Mesh::ARRAY_FORMAT_NORMAL;
-			}
-
 			//set arrays
-
 			int vlen = vertex_array.size();
-			{ //vertices
-
+			{
+				//vertices
 				DVector<Vector3> varray;
 				varray.resize(vertex_array.size());
 
@@ -2780,46 +2779,89 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 
 			}
 
+			if (uv_src) { //compute uv first, may be needed for computing tangent/bionrmal
+				bool uv_difference = false;
+
+				DVector<Vector3> uvarray;
+				uvarray.resize(vertex_array.size());
+				DVector<Vector3>::Write uvarrayw = uvarray.write();
+
+				for (int k = 0; k<vlen; k++) {
+					uvarrayw[k] = vertex_array[k].uv;
+					if (uvarrayw[k] != Vector3(0.0, 0.0, 0.0))
+						uv_difference = true;
+				}
+
+				uvarrayw = DVector<Vector3>::Write();
+
+				if (uv_difference) {
+					final_uv_array = uvarray;
+					final_format |= Mesh::ARRAY_FORMAT_TEX_UV;
+				}
+			}
+
+			if (uv2_src) { //compute uv2 first, may be needed for computing tangent/bionrmal
+				bool uv2_difference = false;
+
+				DVector<Vector3> uv2array;
+				uv2array.resize(vertex_array.size());
+				DVector<Vector3>::Write uv2arrayw = uv2array.write();
+
+				for (int k = 0; k<vlen; k++) {
+					uv2arrayw[k] = vertex_array[k].uv2;
+					if (uv2arrayw[k] != Vector3(0.0, 0.0, 0.0))
+						uv2_difference = true;
+				}
+
+				uv2arrayw = DVector<Vector3>::Write();
+
+				if (uv2_difference) {
+					final_uv2_array = uv2array;
+					final_format |= Mesh::ARRAY_FORMAT_TEX_UV2;
+				}
+			}
+
 			if (normal_src) {
+				bool normal_difference = false;
+
 				DVector<Vector3> narray;
 				narray.resize(vertex_array.size());
 				DVector<Vector3>::Write narrayw = narray.write();
 
 				for (int k = 0; k<vlen; k++) {
 					narrayw[k] = vertex_array[k].normal;
+					if (narrayw[k] != Vector3(0.0, 0.0, 0.0))
+						normal_difference = true;
 				}
 
 				narrayw = DVector<Vector3>::Write();
-				final_normal_array = narray;
+
+				if (normal_difference) {
+					final_normal_array = narray;
+					final_format |= Mesh::ARRAY_FORMAT_NORMAL;
+				}
 			}
 
-			////////////////////////////
-			// FINALLY CREATE SUFRACE //
-			////////////////////////////
+			if (color_src) {
+				bool color_difference = false;
 
-			Array d;
-			d.resize(VS::ARRAY_MAX);
+				DVector<Color> colorarray;
+				colorarray.resize(vertex_array.size());
+				DVector<Color>::Write colorarrayw = colorarray.write();
 
-			d[Mesh::ARRAY_INDEX] = index_array;
-			d[Mesh::ARRAY_VERTEX] = final_vertex_array;
+				for (int k = 0; k<vlen; k++) {
+					colorarrayw[k] = vertex_array[k].color;
+					if (colorarrayw[k] != Color(0.0, 0.0, 0.0, 0.0))
+						color_difference = true;
+				}
 
-			if (final_normal_array.size())
-				d[Mesh::ARRAY_NORMAL] = final_normal_array;
-			if (final_tangent_array.size())
-				d[Mesh::ARRAY_TANGENT] = final_tangent_array;
-			if (final_uv_array.size())
-				d[Mesh::ARRAY_TEX_UV] = final_uv_array;
-			if (final_uv2_array.size())
-				d[Mesh::ARRAY_TEX_UV2] = final_uv2_array;
-			if (final_color_array.size())
-				d[Mesh::ARRAY_COLOR] = final_color_array;
-			if (final_weight_array.size())
-				d[Mesh::ARRAY_WEIGHTS] = final_weight_array;
-			if (final_bone_array.size())
-				d[Mesh::ARRAY_BONES] = final_bone_array;
+				colorarrayw = DVector<Color>::Write();
 
-
-			Array mr;
+				if (color_difference) {
+					final_color_array = colorarray;
+					final_format |= Mesh::ARRAY_FORMAT_COLOR;
+				}
+			}
 
 			////////////////////////////
 			// THEN THE MORPH TARGETS //
@@ -2829,18 +2871,21 @@ Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph
 			p_morph_data_out->resize(surface, index_array.size());
 
 			int j;
-			for (j = 0; j < index_array.size(); j++)
-			{
+			for (j = 0; j < index_array.size(); j++) {
 				int index_array_val = index_array.get(j);
 				p_morph_data_out->set_index(surface, j, index_array_val);
 			}
 
-			for (j = 0; j < final_vertex_array.size(); j++)
-			{
-				// WRONG VERTEXES ON MULTI MATS
+			for (j = 0; j < final_vertex_array.size(); j++) {
 				Vector3 vertex_array_val = final_vertex_array.get(j);
 				p_morph_data_out->set_vertex(surface, j, vertex_array_val);
 			}
+
+			for (j = 0; j < final_normal_array.size(); j++) {
+				Vector3 vertex_normal_array_val = final_normal_array.get(j);
+				p_morph_data_out->set_vertex_normal(surface, j, vertex_normal_array_val);
+			}
+
 			p_morph_data_out->set_morph_type(surface, morphType);
 
 			incrementing_offset += index_array.size();
