@@ -6877,7 +6877,9 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 			if (!prev_skeleton || !skeleton)
 				rebind=true; //went from skeleton <-> no skeleton, needs rebind
 			_setup_skeleton(skeleton);
-			update_skeleton=true;
+			if (skeleton) {
+				update_skeleton = true;
+			}
 		}
 
 		if (material!=prev_material || rebind) {
