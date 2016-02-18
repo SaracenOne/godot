@@ -4837,11 +4837,6 @@ void VisualServerRaster::_instance_draw(Instance *p_instance) {
 	switch(p_instance->base_type) {
 	
 		case INSTANCE_MESH: {
-			const float *morphs = NULL;
-			if (!p_instance->data.morph_values.empty()) {
-				morphs=&p_instance->data.morph_values[0];
-			}
-
 			rasterizer->add_mesh(p_instance->base_rid, &p_instance->data);
 		} break;		
 		case INSTANCE_MULTIMESH: {
