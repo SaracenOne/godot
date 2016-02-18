@@ -6870,10 +6870,14 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 			}
 			rebind=true;
 		}
+		
+		bool update_skeleton=false;
+
 		if  (use_hw_skeleton_xform && skeleton!=prev_skeleton) {
 			if (!prev_skeleton || !skeleton)
 				rebind=true; //went from skeleton <-> no skeleton, needs rebind
 			_setup_skeleton(skeleton);
+			update_skeleton=true;
 		}
 
 		if (material!=prev_material || rebind) {
@@ -6946,10 +6950,6 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 		if (i==0 || rebind) {
 			material_shader.set_uniform(MaterialShaderGLES2::CAMERA_INVERSE_TRANSFORM, p_view_transform_inverse);
 			material_shader.set_uniform(MaterialShaderGLES2::PROJECTION_TRANSFORM, p_projection);
-			if (skeleton && use_hw_skeleton_xform) {
-				material_shader.set_uniform(MaterialShaderGLES2::SKELETON_MATRICES,max_texture_units-2);
-				material_shader.set_uniform(MaterialShaderGLES2::SKELTEX_PIXEL_SIZE,skeleton->pixel_size);
-			}
 			if (!shadow) {
 
 				if (!additive && current_env && current_env->fx_enabled[VS::ENV_FX_AMBIENT_LIGHT]) {
@@ -6962,6 +6962,11 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 			}
 
 			_rinfo.shader_change_count++;
+		}
+
+		if (update_skeleton) {
+			material_shader.set_uniform(MaterialShaderGLES2::SKELETON_MATRICES, max_texture_units-2);
+			material_shader.set_uniform(MaterialShaderGLES2::SKELTEX_PIXEL_SIZE, skeleton->pixel_size);
 		}
 
 		if (e->instance->billboard || e->instance->depth_scale) {
