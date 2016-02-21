@@ -5433,7 +5433,7 @@
 	Standard themed Button.
 	</brief_description>
 	<description>
-	Button is just the standard themed button: [image src="images/button_example.png"/] It can contain text and an icon, and will display them according to the current [Theme].
+	Button is the standard themed button. It can contain text and an icon, and will display them according to the current [Theme].
 	</description>
 	<methods>
 		<method name="set_text">
@@ -13032,7 +13032,9 @@ Returns an empty String "" at the end of the list.
 			<return type="Dictionary">
 			</return>
 			<description>
-			Returns all response headers as dictionary where the keys and values are transformed to lower case. A key with more than one value is a simple string with "; " as separator. example: (content-length:12), (content-type:application/json; charset=utf-8)
+			Returns all response headers as dictionary where the case-sensitivity of the keys and values is kept like the server delivers it. A value is a simple String, this string can have more than one value where "; " is used as separator.
+Structure: ("key":"value1; value2")
+Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 			</description>
 		</method>
 		<method name="get_response_body_length" qualifiers="const">
@@ -20065,6 +20067,10 @@ Returns an empty String "" at the end of the list.
 			</description>
 		</method>
 		<method name="native_video_pause">
+			<description>
+			</description>
+		</method>
+		<method name="native_video_unpause">
 			<description>
 			</description>
 		</method>
@@ -28613,7 +28619,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="state" type="Physics2DDirectBodyState">
 			</argument>
 			<description>
-			Override this function to use a custom force integrator. This allows to hook up to the physics processing and alter the simulation state for the object on every frame.
+			Called during physics processing, allowing you to read and safely modify the simulation state for the object. By default it works in addition to the usual physics behavior, but [method set_use_custom_integrator] allows you to disable the default behavior and do fully custom force integration for a body.
 			</description>
 		</method>
 		<method name="set_mode">
@@ -28774,7 +28780,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="enable" type="bool">
 			</argument>
 			<description>
-			Set to true if the body shall not do any internal force integration at all (like gravity or air friction). Only the [method _integrate_forces] will be able to integrate them if overrided.
+			Pass true to disable the internal force integration (like gravity or air friction) for this body. Other than collision response, the body will only move as determined by the [method _integrate_forces] function, if defined.
 			</description>
 		</method>
 		<method name="is_using_custom_integrator">
