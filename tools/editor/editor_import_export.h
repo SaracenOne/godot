@@ -46,6 +46,10 @@ protected:
 
 	static void _bind_methods();
 
+	String _validate_source_path(const String& p_path);
+	String _expand_source_path(const String& p_path);
+
+
 public:
 
 
@@ -303,6 +307,9 @@ protected:
 
 	static EditorImportExport* singleton;
 
+	DVector<String> _get_export_file_list();
+	DVector<String> _get_export_platforms();
+
 	static void _bind_methods();
 public:
 
@@ -315,6 +322,7 @@ public:
 	Ref<EditorImportPlugin> get_import_plugin_by_name(const String& p_string) const;
 
 	void add_export_plugin(const Ref<EditorExportPlugin>& p_plugin);
+	void remove_export_plugin(const Ref<EditorExportPlugin>& p_plugin);
 	int get_export_plugin_count() const;
 	Ref<EditorExportPlugin> get_export_plugin(int p_idx) const;
 
@@ -391,7 +399,10 @@ public:
 	~EditorImportExport();
 };
 
+VARIANT_ENUM_CAST(EditorImportExport::FileAction);
+VARIANT_ENUM_CAST(EditorImportExport::ExportFilter);
 VARIANT_ENUM_CAST(EditorImportExport::ImageAction);
 VARIANT_ENUM_CAST(EditorImportExport::ScriptAction);
+VARIANT_ENUM_CAST(EditorImportExport::SampleAction);
 
 #endif // EDITOR_IMPORT_EXPORT_H

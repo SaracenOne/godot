@@ -1857,6 +1857,7 @@ void Viewport::_gui_input_event(InputEvent p_event) {
 			}
 
 
+
 			if (gui.drag_data.get_type()==Variant::NIL && over && !gui.modal_stack.empty()) {
 
 				Control *top = gui.modal_stack.back()->get();
@@ -1890,7 +1891,7 @@ void Viewport::_gui_input_event(InputEvent p_event) {
 			}
 
 
-			Matrix32 localizer = over->get_canvas_transform().affine_inverse();
+			Matrix32 localizer = over->get_global_transform_with_canvas().affine_inverse();
 			Size2 pos = localizer.xform(mpos);
 			Vector2 speed = localizer.basis_xform(Point2(p_event.mouse_motion.speed_x,p_event.mouse_motion.speed_y));
 			Vector2 rel = localizer.basis_xform(Point2(p_event.mouse_motion.relative_x,p_event.mouse_motion.relative_y));
@@ -1925,7 +1926,7 @@ void Viewport::_gui_input_event(InputEvent p_event) {
 			}
 
 
-			pos = gui.focus_inv_xform.xform(pos);
+			//pos = gui.focus_inv_xform.xform(pos);
 
 
 			p_event.mouse_motion.x = pos.x;
