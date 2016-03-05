@@ -7186,11 +7186,10 @@ void VisualServerRaster::_draw_viewport(Viewport *p_viewport,int p_ofs_x, int p_
 	}
 
 	bool invalid_camera;
-	int i;
 	int active_camera_count = p_viewport->active_cameras.size();
 	if (active_camera_count > 0) {
 		invalid_camera = false;
-		for (i = 0; i < p_viewport->active_cameras.size(); i++)
+		for (int i = 0; i < p_viewport->active_cameras.size(); i++)
 		{
 			if (!camera_owner.owns(p_viewport->active_cameras[i])) {
 				invalid_camera = true;
