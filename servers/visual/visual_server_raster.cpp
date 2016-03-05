@@ -6490,7 +6490,7 @@ void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, S
 				
 		} break;		
 	}
-
+	
 
 	rasterizer->set_camera(p_camera->transform, camera_matrix,ortho);
 	
@@ -7185,14 +7185,21 @@ void VisualServerRaster::_draw_viewport(Viewport *p_viewport,int p_ofs_x, int p_
 		}
 	}
 
-	bool invalid_camera = false;
+	bool invalid_camera;
 	int i;
-	for (i = 0; i < p_viewport->active_cameras.size(); i++)
-	{
-		if (!camera_owner.owns(p_viewport->active_cameras[i])) {
-			invalid_camera = true;
-			break;
+	int active_camera_count = p_viewport->active_cameras.size();
+	if (active_camera_count > 0) {
+		invalid_camera = false;
+		for (i = 0; i < p_viewport->active_cameras.size(); i++)
+		{
+			if (!camera_owner.owns(p_viewport->active_cameras[i])) {
+				invalid_camera = true;
+				break;
+			}
 		}
+	}
+	else {
+		invalid_camera = true;
 	}
 
 	bool can_draw_3d = !p_viewport->hide_scenario && invalid_camera == false && scenario_owner.owns(p_viewport->scenario);
