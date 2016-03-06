@@ -7685,8 +7685,6 @@ void VisualServerRaster::set_boot_image(const Image& p_image, const Color& p_col
 void VisualServerRaster::init() {
 
 	rasterizer->init();
-	depth_buffer = memnew(DepthBufferSW);
-	depth_buffer->set_size(256, 256);
 	
 	shadows_enabled=GLOBAL_DEF("render/shadows_enabled",true);
 	//default_scenario = scenario_create();
@@ -7725,8 +7723,6 @@ void VisualServerRaster::_clean_up_owner(RID_OwnerBase *p_owner,String p_type) {
 }
 
 void VisualServerRaster::finish() {
-
-	memfree(depth_buffer);
 
 	free(default_cursor_texture);
 	if (test_cube.is_valid())
