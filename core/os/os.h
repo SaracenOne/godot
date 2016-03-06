@@ -76,8 +76,9 @@ public:
 		bool fullscreen;
 		bool resizable;
 		bool borderless_window;
+		int multisamples;
 		float get_aspect() const { return (float)width/(float)height; }
-		VideoMode(int p_width=1280,int p_height=720,bool p_fullscreen=false, bool p_resizable = true,bool p_borderless_window=false) { width=p_width; height=p_height; fullscreen=p_fullscreen; resizable = p_resizable; borderless_window=p_borderless_window; }
+		VideoMode(int p_width=1280,int p_height=720,bool p_fullscreen=false, bool p_resizable = true,bool p_borderless_window=false,int p_multisamples=0) { width=p_width; height=p_height; fullscreen=p_fullscreen; resizable = p_resizable; borderless_window=p_borderless_window; multisamples=p_multisamples; }
 	};
 protected:
 friend class Main;
@@ -176,6 +177,8 @@ public:
 	virtual void set_borderless_window(int p_borderless) {};
 	virtual bool get_borderless_window() { return 0; };
 
+	virtual void set_multisamples(int p_multisamples) {};
+	virtual int get_multisamples() { return 0; };
 
 
 	virtual void set_iterations_per_second(int p_ips);

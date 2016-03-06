@@ -51,16 +51,25 @@
 #define WGL_CONTEXT_FLAGS_ARB          0x2094
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x00000002
 
-typedef HGLRC (APIENTRY* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
+#define WGL_DRAW_TO_WINDOW_ARB             0x2001
+#define WGL_ACCELERATION_ARB               0x2003
+#define WGL_SUPPORT_OPENGL_ARB             0x2010
+#define WGL_DOUBLE_BUFFER_ARB              0x2011
+#define WGL_COLOR_BITS_ARB                 0x2014
+#define WGL_ALPHA_BITS_ARB                 0x201B
+#define WGL_DEPTH_BITS_ARB                 0x2022
+#define WGL_STENCIL_BITS_ARB               0x2023
+#define WGL_FULL_ACCELERATION_ARB          0x2027
+#define WGL_SAMPLE_BUFFERS_ARB             0x2041
+#define WGL_SAMPLES_ARB                    0x2042
 
+typedef HGLRC (APIENTRY* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
+typedef BOOL(WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC, const int*, const FLOAT *, UINT, int *, UINT *);
 
 void ContextGL_Win::release_current() {
 
-
 	wglMakeCurrent(hDC,NULL);
-
 }
-
 
 void ContextGL_Win::make_current() {
 
@@ -96,7 +105,6 @@ static GLWrapperFuncPtr wrapper_get_proc_address(const char* p_function) {
 }
 */
 
-
 Error ContextGL_Win::initialize() {
 
 	static	PIXELFORMATDESCRIPTOR pfd= {
@@ -120,18 +128,25 @@ Error ContextGL_Win::initialize() {
 		0, 0, 0	// Layer Masks Ignored
 	};
 	
-	if (!(hDC=GetDC(hWnd))) {
+	if (!(hDC = GetDC(hWnd))) {
 		MessageBox(NULL,"Can't Create A GL Device Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return ERR_CANT_CREATE;								// Return FALSE
 	}
 
-	if (!(pixel_format=ChoosePixelFormat(hDC,&pfd)))	// Did Windows Find A Matching Pixel Format?
+	if (multisample_supported == true)
 	{
-		MessageBox(NULL,"Can't Find A Suitable pixel_format.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-		return ERR_CANT_CREATE;								// Return FALSE
+		pixel_format = multisample_format;
+	}
+	else
+	{
+		if (!(pixel_format = ChoosePixelFormat(hDC, &pfd)))	// Did Windows Find A Matching Pixel Format?
+		{
+			MessageBox(NULL, "Can't Find A Suitable pixel_format.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
+			return ERR_CANT_CREATE;								// Return FALSE
+		}
 	}
 
-	if(!SetPixelFormat(hDC,pixel_format,&pfd))		// Are We Able To Set The Pixel Format?
+	if(!SetPixelFormat(hDC, pixel_format, &pfd))		// Are We Able To Set The Pixel Format?
 	{
 		MessageBox(NULL,"Can't Set The pixel_format.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return ERR_CANT_CREATE;								// Return FALSE
@@ -145,55 +160,75 @@ Error ContextGL_Win::initialize() {
 
 	wglMakeCurrent(hDC,hRC);
 
-	if (opengl_3_context) {
 
-		int attribs[] = {
-			 WGL_CONTEXT_MAJOR_VERSION_ARB, 3,//we want a 3.1 context
-			 WGL_CONTEXT_MINOR_VERSION_ARB, 2,
-			 //and it shall be forward compatible so that we can only use up to date functionality
-			 WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-		0}; //zero indicates the end of the array
-
-		PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = NULL; //pointer to the method
-		wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC) wglGetProcAddress("wglCreateContextAttribsARB");
-
-		if(wglCreateContextAttribsARB == NULL) //OpenGL 3.0 is not supported
-		{
-			MessageBox(NULL,"Cannot get Proc Adress for CreateContextAttribs", "ERROR",MB_OK|MB_ICONEXCLAMATION);
-			wglDeleteContext(hRC);
-			return ERR_CANT_CREATE;
-		}
-
-		HGLRC new_hRC;
-		if (!(new_hRC=wglCreateContextAttribsARB(hDC,0, attribs)))
-		{
-			wglDeleteContext(hRC);
-			MessageBox(NULL,"Can't Create An OpenGL 3.1 Rendering Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-			return ERR_CANT_CREATE;								// Return false
-		}
-		wglMakeCurrent(hDC,NULL);
-		wglDeleteContext(hRC);
-		hRC=new_hRC;
-
-		if (!wglMakeCurrent(hDC,hRC)) 				// Try To Activate The Rendering Context
-		{
-			MessageBox(NULL,"Can't Activate The GL 3.1 Rendering Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
-			return ERR_CANT_CREATE;							// Return FALSE
-		}
-
-		printf("Activated GL 3.1 context");
-	}
-
-
-//	glWrapperInit(wrapper_get_proc_address);
 
 	return OK;
 }
 
-ContextGL_Win::ContextGL_Win(HWND hwnd,bool p_opengl_3_context) {
+void ContextGL_Win::shutdown() {
+	if (hDC != 0)
+	{
+		release_current();
+		if (hRC != 0)
+		{
+			wglDeleteContext(hRC);
+			hRC = 0;
 
-	opengl_3_context=p_opengl_3_context;
-	hWnd=hwnd;
+		}
+		ReleaseDC(hWnd, hDC);
+		hDC = 0;
+	}
+}
+
+int ContextGL_Win::test_multisample_support(int p_samples) {
+	// TODO: test extensions
+
+	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
+	wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+
+	if (wglChoosePixelFormatARB != NULL)
+	{
+		int pixel_format;
+		bool valid;
+		UINT num_formats;
+		float fAttributes[] = { 0, 0 };
+
+		int iAttributes[] = {
+			WGL_DRAW_TO_WINDOW_ARB, 1,
+			WGL_SUPPORT_OPENGL_ARB, 1,
+			WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
+			WGL_COLOR_BITS_ARB, 24,
+			WGL_ALPHA_BITS_ARB, 8,
+			WGL_DEPTH_BITS_ARB, 16,
+			WGL_STENCIL_BITS_ARB, 0,
+			WGL_DOUBLE_BUFFER_ARB, 1,
+			WGL_SAMPLE_BUFFERS_ARB, 1,
+			WGL_SAMPLES_ARB, p_samples,
+			0, 0 };
+
+		valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixel_format, &num_formats);
+
+		if (valid && num_formats >= 1)
+		{
+			multisample_supported = true;
+			multisample_format = pixel_format;
+
+			return p_samples;
+		}
+	}
+
+	return 0;
+}
+
+void ContextGL_Win::set_active_hwnd(HWND hwnd) {
+	hWnd = hwnd;
+}
+
+
+ContextGL_Win::ContextGL_Win() {
+
+	multisample_supported = false;
+	multisample_format = 0;
 }
 
 ContextGL_Win::~ContextGL_Win() {

@@ -180,6 +180,7 @@ protected:
 	bool maximized;
 	bool minimized;
 	bool borderless;
+	int multisamples;
 
 	static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor,  LPARAM dwData);
 
@@ -226,6 +227,9 @@ public:
 
 	virtual void set_borderless_window(int p_borderless);;
 	virtual bool get_borderless_window();
+
+	virtual void set_multisamples(int p_multisamples);
+	virtual int get_multisamples();
 
 	virtual MainLoop *get_main_loop() const;
 

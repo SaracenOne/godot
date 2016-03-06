@@ -55,6 +55,7 @@
 
 #include "shlobj.h"
 #include <regstr.h>
+#include <WinUser.h>
 
 static const WORD MAX_CONSOLE_LINES = 1500;
 
@@ -179,6 +180,7 @@ void OS_Windows::initialize_core() {
 	maximized=false;
 	minimized=false;
 	borderless=false;
+	multisamples=false;
 
 	ThreadWindows::make_default();	
 	SemaphoreWindows::make_default();	
@@ -880,7 +882,7 @@ void OS_Windows::initialize(const VideoMode& p_desired,int p_video_driver,int p_
 	DWORD		dwExStyle;
 	DWORD		dwStyle;
 
-	if (video_mode.fullscreen||video_mode.borderless_window) {
+	if (video_mode.fullscreen || video_mode.borderless_window) {
 
 		dwExStyle=WS_EX_APPWINDOW;
 		dwStyle=WS_POPUP;
@@ -935,8 +937,28 @@ void OS_Windows::initialize(const VideoMode& p_desired,int p_video_driver,int p_
 	};
 	
 #if defined(OPENGL_ENABLED) || defined(GLES2_ENABLED) || defined(LEGACYGL_ENABLED)
-	gl_context = memnew( ContextGL_Win(hWnd,false) );
+	gl_context = memnew( ContextGL_Win );
+	gl_context->set_active_hwnd(hWnd);
 	gl_context->initialize();
+	int multisamples = gl_context->test_multisample_support(video_mode.multisamples);
+	if (multisamples > 0)
+	{
+		gl_context->shutdown();
+		DestroyWindow(hWnd);
+		hWnd = 0;
+
+		if (!(hWnd=CreateWindowExW(dwExStyle,L"Engine",L"", dwStyle|WS_CLIPSIBLINGS|WS_CLIPCHILDREN,(GetSystemMetrics(SM_CXSCREEN)-WindowRect.right)/2, (GetSystemMetrics(SM_CYSCREEN)-WindowRect.bottom)/2,WindowRect.right-WindowRect.left,WindowRect.bottom-WindowRect.top, NULL,NULL,	hInstance,NULL))) {
+			MessageBoxW(NULL, L"Window Creation Error.", L"ERROR", MB_OK | MB_ICONEXCLAMATION);
+			return;								// Return FALSE
+		}
+
+		video_mode.multisamples = multisamples;
+
+		gl_context->set_active_hwnd(hWnd);
+		gl_context->initialize();
+	}
+
+
 	rasterizer = memnew( RasterizerGLES2 );
 #else
  #ifdef DX9_ENABLED
@@ -1541,6 +1563,15 @@ void OS_Windows::set_borderless_window(int p_borderless) {
 bool OS_Windows::get_borderless_window() {
 	return video_mode.borderless_window;
 }
+
+void OS_Windows::set_multisamples(int p_multisamples) {
+	video_mode.multisamples = p_multisamples;
+}
+
+int OS_Windows::get_multisamples() {
+	return video_mode.multisamples;
+}
+
 
 void OS_Windows::print_error(const char* p_function, const char* p_file, int p_line, const char* p_code, const char* p_rationale, ErrorType p_type) {
 

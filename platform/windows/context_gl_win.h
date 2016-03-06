@@ -56,21 +56,25 @@ class ContextGL_Win : public ContextGL {
 	unsigned int pixel_format;
 	HWND hWnd;
 	bool opengl_3_context;
+
+	bool multisample_supported;
+	int multisample_format;
 public:
 
-
 	virtual void release_current();
-
 	virtual void make_current();
 	
 	virtual int get_window_width();
 	virtual int get_window_height();
 	virtual void swap_buffers();
-	
+
 	virtual Error initialize();
-		
-	
-	ContextGL_Win(HWND hwnd,bool p_opengl_3_context);
+	virtual void shutdown();
+
+	int test_multisample_support(int p_samples);
+	void set_active_hwnd(HWND hwnd);
+
+	ContextGL_Win();
 	~ContextGL_Win();
 
 };

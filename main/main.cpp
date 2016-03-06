@@ -691,6 +691,8 @@ Error Main::setup(const char *execpath,int argc, char *argv[],bool p_second_phas
 		video_mode.resizable=globals->get("display/resizable");
 	if (use_custom_res && globals->has("display/borderless_window"))
 		video_mode.borderless_window = globals->get("display/borderless_window");
+	if (globals->has("display/multisamples"))
+		video_mode.multisamples = globals->get("display/multisamples");
 
 	if (!force_res && use_custom_res && globals->has("display/test_width") && globals->has("display/test_height")) {
 		int tw = globals->get("display/test_width");
@@ -707,6 +709,8 @@ Error Main::setup(const char *execpath,int argc, char *argv[],bool p_second_phas
 	GLOBAL_DEF("display/fullscreen",video_mode.fullscreen);
 	GLOBAL_DEF("display/resizable",video_mode.resizable);
 	GLOBAL_DEF("display/borderless_window", video_mode.borderless_window);
+	GLOBAL_DEF("display/multisamples", video_mode.multisamples);
+
 	GLOBAL_DEF("display/test_width",0);
 	GLOBAL_DEF("display/test_height",0);
 	OS::get_singleton()->_pixel_snap=GLOBAL_DEF("display/use_2d_pixel_snap",false);

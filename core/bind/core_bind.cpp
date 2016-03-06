@@ -259,6 +259,15 @@ bool _OS::get_borderless_window() const {
 	return OS::get_singleton()->get_borderless_window();
 }
 
+void _OS::set_multisamples(int p_multisamples) {
+	OS::get_singleton()->set_multisamples(p_multisamples);
+}
+
+bool _OS::get_multisamples() const {
+	return OS::get_singleton()->get_multisamples();
+}
+
+
 void _OS::set_use_file_access_save_and_swap(bool p_enable) {
 
 	FileAccess::set_backup_save(p_enable);
