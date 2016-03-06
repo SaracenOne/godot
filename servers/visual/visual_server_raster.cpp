@@ -2843,7 +2843,7 @@ void VisualServerRaster::instance_geometry_set_flag(RID p_instance,InstanceFlags
 		} break;
 		case INSTANCE_FLAG_RECEIVE_SHADOWS: {
 
-			instance->receive_shadows=p_enabled;
+			instance->data.receive_shadows=p_enabled;
 
 		} break;
 		case INSTANCE_FLAG_DEPH_SCALE: {
@@ -2890,7 +2890,7 @@ bool VisualServerRaster::instance_geometry_get_flag(RID p_instance,InstanceFlags
 		} break;
 		case INSTANCE_FLAG_RECEIVE_SHADOWS: {
 
-			return instance->receive_shadows;
+			return instance->data.receive_shadows;
 
 		} break;
 		case INSTANCE_FLAG_DEPH_SCALE: {
@@ -7685,6 +7685,8 @@ void VisualServerRaster::set_boot_image(const Image& p_image, const Color& p_col
 void VisualServerRaster::init() {
 
 	rasterizer->init();
+	depth_buffer = memnew(DepthBufferSW);
+	depth_buffer->set_size(256, 256);
 	
 	shadows_enabled=GLOBAL_DEF("render/shadows_enabled",true);
 	//default_scenario = scenario_create();
@@ -7724,6 +7726,7 @@ void VisualServerRaster::_clean_up_owner(RID_OwnerBase *p_owner,String p_type) {
 
 void VisualServerRaster::finish() {
 
+	memfree(depth_buffer);
 
 	free(default_cursor_texture);
 	if (test_cube.is_valid())

@@ -549,6 +549,7 @@ public:
 		bool depth_scale :8;
 		bool billboard :8;
 		bool billboard_y :8;
+		bool receive_shadows : 8;
 
 	};
 
