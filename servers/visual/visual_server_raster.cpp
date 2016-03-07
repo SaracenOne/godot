@@ -2838,7 +2838,12 @@ void VisualServerRaster::instance_geometry_set_flag(RID p_instance,InstanceFlags
 
 		} break;
 		case INSTANCE_FLAG_CAST_SHADOW: {
-			instance->cast_shadows=p_enabled;
+			if (p_enabled == true) {
+				instance->data.cast_shadows = SHADOW_CASTING_SETTING_ON;
+			}
+			else {
+				instance->data.cast_shadows = SHADOW_CASTING_SETTING_OFF;
+			}
 
 		} break;
 		case INSTANCE_FLAG_RECEIVE_SHADOWS: {
@@ -2885,7 +2890,12 @@ bool VisualServerRaster::instance_geometry_get_flag(RID p_instance,InstanceFlags
 
 		} break;
 		case INSTANCE_FLAG_CAST_SHADOW: {
-			return instance->cast_shadows;
+			if(instance->data.cast_shadows == SHADOW_CASTING_SETTING_OFF) {
+				return false;
+			}
+			else {
+				return true;
+			}
 
 		} break;
 		case INSTANCE_FLAG_RECEIVE_SHADOWS: {
@@ -2907,6 +2917,22 @@ bool VisualServerRaster::instance_geometry_get_flag(RID p_instance,InstanceFlags
 	}
 
 	return false;
+}
+
+void VisualServerRaster::instance_geometry_set_cast_shadows_setting(RID p_instance, VS::ShadowCastingSetting p_shadow_casting_setting) {
+
+	Instance *instance = instance_owner.get( p_instance );
+	ERR_FAIL_COND( !instance );
+
+	instance->data.cast_shadows = p_shadow_casting_setting;
+}
+
+VS::ShadowCastingSetting VisualServerRaster::instance_geometry_get_cast_shadows_setting(RID p_instance) const{
+
+	const Instance *instance = instance_owner.get( p_instance );
+	ERR_FAIL_COND_V( !instance, SHADOW_CASTING_SETTING_OFF );
+
+	return instance->data.cast_shadows;
 }
 
 
@@ -5128,7 +5154,7 @@ void VisualServerRaster::_light_instance_update_pssm_shadow(Instance *p_light,Sc
 		
 			float min,max;
 			Instance *ins=instance_shadow_cull_result[j];
-			if (!ins->visible || !ins->cast_shadows)
+			if (!ins->visible || ins->data.cast_shadows == VS::SHADOW_CASTING_SETTING_OFF)
 				continue;
 			ins->transformed_aabb.project_range_in_plane(Plane(z_vec,0),min,max);
 
@@ -5156,7 +5182,7 @@ void VisualServerRaster::_light_instance_update_pssm_shadow(Instance *p_light,Sc
 		for (int j=0;j<caster_cull_count;j++) {
 		
 			Instance *instance = instance_shadow_cull_result[j];
-			if (!instance->visible || !instance->cast_shadows)
+			if (!instance->visible || instance->data.cast_shadows==VS::SHADOW_CASTING_SETTING_OFF)
 				continue;
 			_instance_draw(instance);
 		}
@@ -5239,7 +5265,7 @@ void VisualServerRaster::_light_instance_update_lispsm_shadow(Instance *p_light,
 		for(int i=0;i<caster_count;i++) {
 
 			Instance *ins = instance_shadow_cull_result[i];
-			if (!ins->visible || !ins->cast_shadows)
+			if (!ins->visible || ins->data.cast_shadows == VS::SHADOW_CASTING_SETTING_OFF)
 				continue;
 
 			for(int j=0;j<8;j++) {
@@ -5390,7 +5416,7 @@ void VisualServerRaster::_light_instance_update_lispsm_shadow(Instance *p_light,
 
 		Instance *instance = instance_shadow_cull_result[i];
 
-		if (!instance->visible || !instance->cast_shadows)
+		if (!instance->visible || instance->data.cast_shadows == VS::SHADOW_CASTING_SETTING_OFF)
 			continue;
 		_instance_draw(instance);
 	}
@@ -5487,7 +5513,7 @@ void VisualServerRaster::_light_instance_update_lispsm_shadow(Instance *p_light,
 	for(int i=0;i<caster_count;i++) {
 
 		Instance *ins=instance_shadow_cull_result[i];
-		if (!ins->visible || !ins->cast_shadows)
+		if (!ins->visible || ins->cast_shadows==VS::SHADOW_CASTING_SETTING_OFF)
 			continue;
 
 		//@TODO optimize using support mapping
@@ -5577,7 +5603,7 @@ void VisualServerRaster::_light_instance_update_lispsm_shadow(Instance *p_light,
 
 		Instance *instance = instance_shadow_cull_result[i];
 
-		if (!instance->visible || !instance->cast_shadows)
+		if (!instance->visible || instance->cast_shadows==VS::SHADOW_CASTING_SETTING_OFF)
 			continue;
 		_instance_draw(instance);
 	}
@@ -5625,7 +5651,7 @@ void VisualServerRaster::_light_instance_update_shadow(Instance *p_light,Scenari
 			for (int i=0;i<cull_count;i++) {
 
 				Instance *instance = instance_shadow_cull_result[i];
-				if (!instance->visible || !instance->cast_shadows)
+				if (!instance->visible || instance->data.cast_shadows == VS::SHADOW_CASTING_SETTING_OFF)
 					continue;
 				_instance_draw(instance);
 			}
@@ -5666,7 +5692,7 @@ void VisualServerRaster::_light_instance_update_shadow(Instance *p_light,Scenari
 					for (int j=0;j<cull_count;j++) {
 
 						Instance *instance = instance_shadow_cull_result[j];
-						if (!instance->visible || !instance->cast_shadows)
+						if (!instance->visible || instance->data.cast_shadows == VS::SHADOW_CASTING_SETTING_OFF)
 							continue;
 
 						_instance_draw(instance);
@@ -6623,7 +6649,7 @@ void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, S
 				}
 			}
 
-		} else if ((1<<ins->base_type)&INSTANCE_GEOMETRY_MASK && ins->visible) {
+		} else if ((1<<ins->base_type)&INSTANCE_GEOMETRY_MASK && ins->visible && ins->data.cast_shadows!=VS::SHADOW_CASTING_SETTING_SHADOWS_ONLY) {
 
 
 			bool discarded=false;
