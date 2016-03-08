@@ -41,7 +41,7 @@ class Camera : public Spatial {
 	OBJ_TYPE( Camera, Spatial );
 public:
 	enum Projection {
-		
+
 		PROJECTION_PERSPECTIVE,
 		PROJECTION_ORTHOGONAL
 	};
@@ -59,14 +59,14 @@ private:
 	bool current;
 
 	Projection mode;
-	
+
 	float fov;
 	float size;
 	float near,far;
 	float v_offset;
 	float h_offset;
 	KeepAspect keep_aspect;
-	
+
 	RID camera;
 	RID scenario_id;
 
@@ -90,14 +90,14 @@ protected:
 	void _update_camera();
 	virtual void _request_camera_update();
 	void _update_camera_mode();
-	
+
 	bool _set(const StringName& p_name, const Variant& p_value);
 	bool _get(const StringName& p_name,Variant &r_ret) const;
 	void _get_property_list( List<PropertyInfo> *p_list) const;
 	void _notification(int p_what);
-	
+
 	static void _bind_methods();
-	
+
 public:
 
 	enum {
@@ -108,7 +108,7 @@ public:
 
 	void set_perspective(float p_fovy_degrees, float p_z_near, float p_z_far);
 	void set_orthogonal(float p_size, float p_z_near, float p_z_far);
-	
+
 	void make_current();
 	void clear_current();
 	bool is_current() const;
@@ -158,7 +158,7 @@ public:
 	bool is_room_cull_enabled() const;
 
 
-	Camera();	
+	Camera();
 	~Camera();
 
 };
