@@ -166,6 +166,8 @@ private:
 	Control *_get_focus_neighbour(Margin p_margin,int p_count=0);
 
 
+	void _set_anchor(Margin p_margin,AnchorType p_anchor);
+
 	float _get_parent_range(int p_idx) const;
 	float _get_range(int p_idx) const;
 	float _s2a(float p_val, AnchorType p_anchor,float p_range) const;
@@ -250,7 +252,7 @@ public:
 	
 	/* POSITIONING */
 	
-	void set_anchor(Margin p_margin,AnchorType p_anchor);
+	void set_anchor(Margin p_margin,AnchorType p_anchor, bool p_keep_margin=false);
 	void set_anchor_and_margin(Margin p_margin,AnchorType p_anchor, float p_pos);
 	
 	AnchorType get_anchor(Margin p_margin) const;

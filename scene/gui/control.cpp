@@ -39,6 +39,9 @@
 #include "scene/scene_string_names.h"
 #include "scene/gui/panel.h"
 #include "scene/gui/label.h"
+#ifdef TOOLS_ENABLED
+#include "tools/editor/editor_settings.h"
+#endif
 #include <stdio.h>
 
 
@@ -1165,18 +1168,34 @@ float Control::_a2s(float p_val, AnchorType p_anchor,float p_range) const {
 }
 
 
-void Control::set_anchor(Margin p_margin,AnchorType p_anchor) {
+void Control::set_anchor(Margin p_margin,AnchorType p_anchor, bool p_keep_margin) {
 	
 	if (!is_inside_tree()) {
 		
 		data.anchor[p_margin]=p_anchor;
-	} else {
+	} else if(!p_keep_margin) {
 		float pr = _get_parent_range(p_margin);
 		float s = _a2s( data.margin[p_margin], data.anchor[p_margin], pr );
 		data.anchor[p_margin]=p_anchor;
 		data.margin[p_margin] = _s2a( s, p_anchor, pr );
+	} else {
+		data.anchor[p_margin] = p_anchor;
+		_size_changed();
 	}
 	_change_notify();
+}
+
+void Control::_set_anchor(Margin p_margin,AnchorType p_anchor) {
+	#ifdef TOOLS_ENABLED
+	SceneTree *st=OS::get_singleton()->get_main_loop()->cast_to<SceneTree>();
+	if (st && st->is_editor_hint()) {
+		set_anchor(p_margin, p_anchor, EDITOR_DEF("2d_editor/keep_margins_when_changing_anchors", false));
+	} else {
+		set_anchor(p_margin, p_anchor);
+	}
+	#else
+	set_anchor(p_margin, p_anchor);
+	#endif
 }
 
 void Control::set_anchor_and_margin(Margin p_margin,AnchorType p_anchor, float p_pos) {
@@ -2158,7 +2177,8 @@ void Control::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("accept_event"),&Control::accept_event);
 	ObjectTypeDB::bind_method(_MD("get_minimum_size"),&Control::get_minimum_size);
 	ObjectTypeDB::bind_method(_MD("get_combined_minimum_size"),&Control::get_combined_minimum_size);
-	ObjectTypeDB::bind_method(_MD("set_anchor","margin","anchor_mode"),&Control::set_anchor);
+	ObjectTypeDB::bind_method(_MD("set_anchor","margin","anchor_mode","keep_margin"),&Control::set_anchor,DEFVAL(false));
+	ObjectTypeDB::bind_method(_MD("_set_anchor","margin","anchor_mode"),&Control::_set_anchor);
 	ObjectTypeDB::bind_method(_MD("get_anchor","margin"),&Control::get_anchor);
 	ObjectTypeDB::bind_method(_MD("set_margin","margin","offset"),&Control::set_margin);
 	ObjectTypeDB::bind_method(_MD("set_anchor_and_margin","margin","anchor_mode","offset"),&Control::set_anchor_and_margin);
@@ -2379,5 +2399,3 @@ Control::Control() {
 Control::~Control()
 {
 }
-
-

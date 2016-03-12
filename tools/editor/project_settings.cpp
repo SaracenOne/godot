@@ -966,7 +966,7 @@ void ProjectSettings::_autoload_delete(Object *p_item,int p_column, int p_button
 		undo_redo->commit_action();
 	} else {
 
-		TreeItem *swap;
+		TreeItem *swap = NULL;
 
 		if (p_button==1) {
 			swap=ti->get_prev();
@@ -1396,6 +1396,11 @@ void ProjectSettings::_clear_search_box() {
 	globals_editor->get_property_editor()->update_tree();
 }
 
+void ProjectSettings::set_plugins_page() {
+
+	tab_container->set_current_tab( plugin_settings->get_index() );
+}
+
 void ProjectSettings::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("_item_selected"),&ProjectSettings::_item_selected);
@@ -1452,7 +1457,7 @@ ProjectSettings::ProjectSettings(EditorData *p_data) {
 	data=p_data;
 
 
-	TabContainer *tab_container = memnew( TabContainer );
+	tab_container = memnew( TabContainer );
 	add_child(tab_container);
 	set_child_rect(tab_container);
 
