@@ -173,7 +173,6 @@ class VisualServerRaster : public VisualServer {
 		AABB transformed_aabb;
 		uint32_t object_ID;
 		bool visible;
-		bool receive_shadows;
 		bool visible_in_all_rooms;
 		uint32_t layer_mask;
 		float draw_range_begin;

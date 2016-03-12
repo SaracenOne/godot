@@ -882,7 +882,7 @@ void OS_Windows::initialize(const VideoMode& p_desired,int p_video_driver,int p_
 	DWORD		dwExStyle;
 	DWORD		dwStyle;
 
-	if (video_mode.fullscreen || video_mode.borderless_window) {
+	if (video_mode.fullscreen||video_mode.borderless_window) {
 
 		dwExStyle=WS_EX_APPWINDOW;
 		dwStyle=WS_POPUP;

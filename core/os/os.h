@@ -174,8 +174,8 @@ public:
 	virtual void set_window_maximized(bool p_enabled) {}
 	virtual bool is_window_maximized() const { return true; }
 
-	virtual void set_borderless_window(int p_borderless) {};
-	virtual bool get_borderless_window() { return 0; };
+	virtual void set_borderless_window(int p_borderless) {}
+	virtual bool get_borderless_window() { return 0; }
 
 	virtual void set_multisamples(int p_multisamples) {};
 	virtual int get_multisamples() { return 0; };
