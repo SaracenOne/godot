@@ -129,6 +129,8 @@ public:
 	virtual void set_request_scene_tree_message_func(RequestSceneTreeMessageFunc p_func, void *p_udata);
 	virtual void set_live_edit_funcs(LiveEditFuncs *p_funcs);
 
+	virtual void live_script_reload(const Array &p_script_name_array, const Array &p_script_source_code_array);
+
 	ScriptDebuggerRemote();
 	~ScriptDebuggerRemote();
 };

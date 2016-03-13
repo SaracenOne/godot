@@ -783,6 +783,7 @@ void ScriptEditor::_resave_scripts(const String& p_str) {
 
 }
 
+// Very messy, needs better reload hooks
 void ScriptEditor::_reload_scripts(){
 
 
@@ -803,16 +804,34 @@ void ScriptEditor::_reload_scripts(){
 			continue; //internal script, who cares
 		}
 
+		String script_path;
+		script_path = script->get_path();
+		script->set_path("");
 
-		Ref<Script> rel_script = ResourceLoader::load(script->get_path(),script->get_type(),true);
-		ERR_CONTINUE(!rel_script.is_valid());
-		script->set_source_code( rel_script->get_source_code() );
-		script->set_last_modified_time( rel_script->get_last_modified_time() );
-		script->reload();
-		ste->reload_text();
+		Ref<Script> rel_script = ResourceLoader::load(script_path,script->get_type(),true);
 
+		if (!rel_script.is_valid()) {
+			if(!rel_script.is_null()) {
+				rel_script->set_path("");
+			}
+			script->set_path(script_path);
+			ERR_CONTINUE(!rel_script.is_valid());
+		}
+
+		// Valid, reload this
+		if (script->get_last_modified_time() != rel_script->get_last_modified_time()) {
+			script->set_source_code(rel_script->get_source_code());
+			script->set_last_modified_time(rel_script->get_last_modified_time());
+			add_script_to_dirty_list(script);
+			ste->reload_text();
+		}
+
+		rel_script->set_path("");
+		script->set_path(script_path);
 
 	}
+
+	reload_script_dirty_list();
 
 	disk_changed->hide();
 	_update_script_names();
@@ -846,6 +865,8 @@ void ScriptEditor::_res_saved_callback(const Ref<Resource>& p_res) {
 		}
 
 	}
+
+	add_script_to_dirty_list(p_res);
 
 	_update_script_names();
 
@@ -932,7 +953,7 @@ void ScriptEditor::_menu_option(int p_option) {
 		} break;
 		case FILE_SAVE_ALL: {
 
-			if (!_test_script_times_on_disk())
+			if (_test_script_times_on_disk())
 				return;
 
 			save_all_scripts();
@@ -1026,11 +1047,13 @@ void ScriptEditor::_menu_option(int p_option) {
 					return;
 
 				editor->save_resource( current->get_edited_script() );
+				reload_script_dirty_list();
 
 			} break;
 			case FILE_SAVE_AS: {
 
 				editor->save_resource_as( current->get_edited_script() );
+				reload_script_dirty_list();
 
 			} break;
 			case EDIT_UNDO: {
@@ -1428,6 +1451,66 @@ void ScriptEditor::_menu_option(int p_option) {
 	}
 
 
+}
+
+void ScriptEditor::add_script_to_dirty_list(Ref<Script> p_script) {	
+	Ref<Script> base_gdscript = p_script->get_base();
+	if (base_gdscript.is_valid()) {
+		add_script_base_to_dirty_list(base_gdscript);
+	}
+
+	if (script_dirty_list.find(p_script) == -1) {
+		script_dirty_list.push_back(p_script);
+	}
+
+	Set<Ref<Script>> inherited_scripts = p_script->get_inherited_scripts();
+	for (Set<Ref<Script>>::Element *E = inherited_scripts.front(); E; E = E->next()) {
+		add_script_inheritors_to_dirty_list(E->get());
+	}
+}
+
+void ScriptEditor::add_script_base_to_dirty_list(Ref<Script> p_script) {
+	Ref<Script> base_gdscript = p_script->get_base();
+	if (base_gdscript.is_valid()) {
+		add_script_base_to_dirty_list(base_gdscript);
+	}
+
+	if (script_dirty_list.find(p_script) == -1) {
+		script_dirty_list.push_back(p_script);
+	}
+}
+
+void ScriptEditor::add_script_inheritors_to_dirty_list(Ref<Script> p_script) {
+	if (script_dirty_list.find(p_script) == -1) {
+		script_dirty_list.push_back(p_script);
+	}
+
+	Set<Ref<Script>> inherited_scripts = p_script->get_inherited_scripts();
+	for (Set<Ref<Script>>::Element *E = inherited_scripts.front(); E; E = E->next()) {
+		add_script_inheritors_to_dirty_list(E->get());
+	}
+}
+
+void ScriptEditor::reload_script_dirty_list() {
+	if (EditorSettings::get_singleton()->get("text_editor/dynamic_script_reloading_enabled")) {
+		if (script_dirty_list.size() > 0) {
+			Array script_res_names;
+			Array script_new_source;
+
+			while (script_dirty_list.size() > 0)
+			{
+				script_dirty_list[0]->reload();
+
+				String path = script_dirty_list[0]->get_path();
+				script_res_names.push_back(path);
+				script_new_source.push_back(script_dirty_list[0]->get_source_code());
+
+				script_dirty_list.remove(0);
+			}
+
+			debugger->live_debug_script_reload(script_res_names, script_new_source);
+		}
+	}
 }
 
 void ScriptEditor::_tab_changed(int p_which) {
@@ -1966,7 +2049,7 @@ void ScriptEditor::save_all_scripts() {
 			//ResourceSaver::save(script->get_path(),script);
 		}
 	}
-
+	reload_script_dirty_list();
 }
 
 void ScriptEditor::apply_scripts() const {

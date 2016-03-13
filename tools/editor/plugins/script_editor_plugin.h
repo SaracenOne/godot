@@ -191,6 +191,7 @@ class ScriptEditor : public VBoxContainer {
 	ToolButton *script_back;
 	ToolButton *script_forward;
 
+	Ref<Script> pending_dirty_script;
 
 	struct ScriptHistory {
 
@@ -205,6 +206,14 @@ class ScriptEditor : public VBoxContainer {
 
 
 	EditorHelpIndex *help_index;
+
+	Vector<Ref<Script>> script_dirty_list;
+
+	void add_script_to_dirty_list(Ref<Script> p_script);
+	void add_script_base_to_dirty_list(Ref<Script> p_script);
+	void add_script_inheritors_to_dirty_list(Ref<Script> p_script);
+
+	void reload_script_dirty_list();
 
 	void _tab_changed(int p_which);
 	void _menu_option(int p_optin);
