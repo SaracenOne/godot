@@ -876,7 +876,7 @@ void ScriptEditor::_res_saved_callback(const Ref<Resource>& p_res) {
 bool ScriptEditor::_test_script_times_on_disk() {
 
 
-	disk_changed_list->clear();
+	//disk_changed_list->clear();
 	TreeItem *r = disk_changed_list->create_item();
 	disk_changed_list->set_hide_root(true);
 
