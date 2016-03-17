@@ -887,13 +887,13 @@ Ref<Shader> MultiPassMaterial::get_shader(const int p_pass_index) const {
 }
 
 
-void MultiPassMaterial::set_shader_param(const StringName& p_param, const int p_pass_index, const Variant& p_value) {
+void MultiPassMaterial::set_shader_param(const int p_pass_index, const StringName& p_param, const Variant& p_value) {
 
 	VisualServer::get_singleton()->material_set_param(material, p_pass_index, p_param, p_value);
 
 }
 
-Variant MultiPassMaterial::get_shader_param(const StringName& p_param, const int p_pass_index) const{
+Variant MultiPassMaterial::get_shader_param(const int p_pass_index, const StringName& p_param) const{
 
 	return VisualServer::get_singleton()->material_get_param(material, p_pass_index, p_param);
 }
@@ -901,15 +901,24 @@ Variant MultiPassMaterial::get_shader_param(const StringName& p_param, const int
 
 
 void MultiPassMaterial::_bind_methods() {
+	
+	ObjectTypeDB::bind_method(_MD("set_pass_flag", "pass_index", "flag", "enable"), &MultiPassMaterial::set_pass_flag);
+	ObjectTypeDB::bind_method(_MD("get_pass_flag", "pass_index", "flag"), &MultiPassMaterial::get_pass_flag);
+	ObjectTypeDB::bind_method(_MD("set_pass_blend_mode", "pass_index", "mode"), &MultiPassMaterial::set_pass_blend_mode);
+	ObjectTypeDB::bind_method(_MD("get_pass_blend_mode", "pass_index"), &MultiPassMaterial::get_pass_blend_mode);
+	ObjectTypeDB::bind_method(_MD("set_pass_line_width", "pass_index", "width"), &MultiPassMaterial::set_pass_line_width);
+	ObjectTypeDB::bind_method(_MD("get_pass_line_width", "pass_index"), &MultiPassMaterial::get_pass_line_width);
+	ObjectTypeDB::bind_method(_MD("set_pass_depth_draw_mode", "pass_index", "mode"), &MultiPassMaterial::set_pass_depth_draw_mode);
+	ObjectTypeDB::bind_method(_MD("get_pass_depth_draw_mode", "pass_index"), &MultiPassMaterial::get_pass_depth_draw_mode);
 
 	ObjectTypeDB::bind_method(_MD("set_pass_count", "pass_count"), &MultiPassMaterial::set_pass_count);
 	ObjectTypeDB::bind_method(_MD("get_pass_count"), &MultiPassMaterial::get_pass_count);
 
-	ObjectTypeDB::bind_method(_MD("set_shader", "shader:Shader"), &MultiPassMaterial::set_shader);
-	ObjectTypeDB::bind_method(_MD("get_shader:Shader"), &MultiPassMaterial::get_shader);
+	ObjectTypeDB::bind_method(_MD("set_shader", "pass_index", "shader:Shader"), &MultiPassMaterial::set_shader);
+	ObjectTypeDB::bind_method(_MD("get_shader:Shader", "pass_index"), &MultiPassMaterial::get_shader);
 
-	ObjectTypeDB::bind_method(_MD("set_shader_param", "param", "value:Variant"), &MultiPassMaterial::set_shader_param);
-	ObjectTypeDB::bind_method(_MD("get_shader_param:Variant", "param"), &MultiPassMaterial::get_shader_param);
+	ObjectTypeDB::bind_method(_MD("set_shader_param", "pass_index", "param", "value:Variant"), &MultiPassMaterial::set_shader_param);
+	ObjectTypeDB::bind_method(_MD("get_shader_param:Variant", "pass_index", "param"), &MultiPassMaterial::get_shader_param);
 
 	ObjectTypeDB::bind_method(_MD("_shader_changed"), &MultiPassMaterial::_shader_changed);
 

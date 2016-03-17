@@ -12774,7 +12774,7 @@
 		</theme_item>
 	</theme_items>
 </class>
-<class name="FixedMaterial" inherits="Material" category="Core">
+<class name="FixedMaterial" inherits="SinglePassMaterial" category="Core">
 	<brief_description>
 		Simple Material with a fixed parameter set.
 	</brief_description>
@@ -20884,6 +20884,146 @@
 			</argument>
 			<description>
 				Set the [MultiMesh] to be instance.
+			</description>
+		</method>
+	</methods>
+	<constants>
+	</constants>
+</class>
+<class name="MultiPassMaterial" inherits="Material" category="Core">
+	<brief_description>
+		Special material suppporting multiple render passes.
+	</brief_description>
+	<description>
+		A MultiPassMaterial is similar to a [ShaderMaterial] in the sense that it allows a mesh surface to be rendered with a [Shader], but supports the ability to render the surface in multiple passes. Each pass can have a different shader and/or parameters assigned to it, allowing the rendering of various special effects such as outlines.
+	</description>
+	<methods>
+		<method name="get_pass_blend_mode" qualifiers="const">
+			<return type="int">
+			</return>
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<description>
+				Return blend mode for the material pass index, which can be one of BLEND_MODE_MIX (default), BLEND_MODE_ADD, BLEND_MODE_SUB. Keep in mind that only BLEND_MODE_MIX ensures that the material [i]may[/i] be opaque, any other blend mode will render with alpha blending enabled in raster-based [VisualServer] implementations.
+			</description>
+		</method>
+		<method name="get_pass_count" qualifiers="const">
+			<return type="int">
+			</return>
+			<description>
+				Return the number of render passes set in this material.
+			</description>
+		</method>
+		<method name="get_pass_depth_draw_mode" qualifiers="const">
+			<return type="int">
+			</return>
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<description>
+			</description>
+		</method>
+		<method name="get_pass_flag" qualifiers="const">
+			<return type="bool">
+			</return>
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<argument index="1" name="flag" type="int">
+			</argument>
+			<description>
+				Return a [Material] flag for the pass index, which toggles on or off a behavior when rendering. See enumeration FLAG_* for a list.
+			</description>
+		</method>
+		<method name="get_pass_line_width" qualifiers="const">
+			<return type="float">
+			</return>
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<description>
+				Return the line width for geometry pass index drawn with FLAG_WIREFRAME enabled, or LINE primitives. Note that not all hardware or VisualServer backends support this (like DirectX).
+			</description>
+		</method>
+		<method name="get_shader" qualifiers="const">
+			<return type="Shader">
+			</return>
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<description>
+				Return the [Shader] for a specific pass index.
+			</description>
+		</method>
+		<method name="get_shader_param" qualifiers="const">
+			<return type="Variant">
+			</return>
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<argument index="1" name="param" type="String">
+			</argument>
+			<description>
+				Returns a shader param for the the shader on a specific pass index.
+			</description>
+		</method>
+		<method name="set_pass_blend_mode">
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<argument index="1" name="mode" type="int">
+			</argument>
+			<description>
+				Set blend mode for the material pass index, which can be one of BLEND_MODE_MIX (default), BLEND_MODE_ADD, BLEND_MODE_SUB. Keep in mind that only BLEND_MODE_MIX ensures that the material [i]may[/i] be opaque, any other blend mode will render with alpha blending enabled in raster-based [VisualServer] implementations.
+			</description>
+		</method>
+		<method name="set_pass_count">
+			<argument index="0" name="pass_count" type="int">
+			</argument>
+			<description>
+				Set the number of passes on the material.
+			</description>
+		</method>
+		<method name="set_pass_depth_draw_mode">
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<argument index="1" name="mode" type="int">
+			</argument>
+			<description>
+			</description>
+		</method>
+		<method name="set_pass_flag">
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<argument index="1" name="flag" type="int">
+			</argument>
+			<argument index="2" name="enable" type="bool">
+			</argument>
+			<description>
+				Set a [Material] flag for the pass index, which toggles on or off a behavior when rendering. See enumeration FLAG_* for a list.
+			</description>
+		</method>
+		<method name="set_pass_line_width">
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<argument index="1" name="width" type="float">
+			</argument>
+			<description>
+				Set the line width for geometry pass index drawn with FLAG_WIREFRAME enabled, or LINE primitives. Note that not all hardware or VisualServer backends support this (like DirectX).
+			</description>
+		</method>
+		<method name="set_shader">
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<argument index="1" name="shader" type="Shader">
+			</argument>
+			<description>
+				Sets a shader to be used on a specific pass index.
+			</description>
+		</method>
+		<method name="set_shader_param">
+			<argument index="0" name="pass_index" type="int">
+			</argument>
+			<argument index="1" name="param" type="String">
+			</argument>
+			<argument index="2" name="value" type="Variant">
+			</argument>
+			<description>
+				Sets a shader param for a shader on a specific pass index.
 			</description>
 		</method>
 	</methods>
@@ -35176,7 +35316,7 @@
 		</constant>
 	</constants>
 </class>
-<class name="ShaderMaterial" inherits="Material" category="Core">
+<class name="ShaderMaterial" inherits="SinglePassMaterial" category="Core">
 	<brief_description>
 	</brief_description>
 	<description>
@@ -35353,6 +35493,18 @@
 			<description>
 			</description>
 		</method>
+	</methods>
+	<constants>
+	</constants>
+</class>
+<class name="SinglePassMaterial" inherits="Material" category="Core">
+	<brief_description>
+		Basis for materials only requiring a single pass.
+	</brief_description>
+	<description>
+		A virtual class designed to be inherited by materials which only require a single render pass, currently [FixedMaterial] and [ShaderMaterial].
+	</description>
+	<methods>
 	</methods>
 	<constants>
 	</constants>
@@ -45026,6 +45178,8 @@
 			</argument>
 			<argument index="2" name="arg2" type="int">
 			</argument>
+			<argument index="3" name="arg3" type="Rect2">
+			</argument>
 			<description>
 			</description>
 		</method>
@@ -45184,7 +45338,9 @@
 			</return>
 			<argument index="0" name="arg0" type="AABB">
 			</argument>
-			<argument index="1" name="arg1" type="RID">
+			<argument index="1" name="arg1" type="int">
+			</argument>
+			<argument index="2" name="arg2" type="RID">
 			</argument>
 			<description>
 			</description>
@@ -45194,7 +45350,9 @@
 			</return>
 			<argument index="0" name="arg0" type="Array">
 			</argument>
-			<argument index="1" name="arg1" type="RID">
+			<argument index="1" name="arg1" type="int">
+			</argument>
+			<argument index="2" name="arg2" type="RID">
 			</argument>
 			<description>
 			</description>
@@ -45206,7 +45364,9 @@
 			</argument>
 			<argument index="1" name="arg1" type="Vector3">
 			</argument>
-			<argument index="2" name="arg2" type="RID">
+			<argument index="2" name="arg2" type="int">
+			</argument>
+			<argument index="3" name="arg3" type="RID">
 			</argument>
 			<description>
 			</description>
@@ -45330,6 +45490,8 @@
 		<method name="material_create">
 			<return type="RID">
 			</return>
+			<argument index="0" name="arg0" type="int">
+			</argument>
 			<description>
 			</description>
 		</method>
@@ -45337,6 +45499,8 @@
 			<return type="int">
 			</return>
 			<argument index="0" name="arg0" type="RID">
+			</argument>
+			<argument index="1" name="arg1" type="int">
 			</argument>
 			<description>
 			</description>
@@ -45348,6 +45512,8 @@
 			</argument>
 			<argument index="1" name="arg1" type="int">
 			</argument>
+			<argument index="2" name="arg2" type="int">
+			</argument>
 			<description>
 			</description>
 		</method>
@@ -45356,13 +45522,17 @@
 			</return>
 			<argument index="0" name="arg0" type="RID">
 			</argument>
+			<argument index="1" name="arg1" type="int">
+			</argument>
 			<description>
 			</description>
 		</method>
 		<method name="material_get_param" qualifiers="const">
 			<argument index="0" name="arg0" type="RID">
 			</argument>
-			<argument index="1" name="arg1" type="String">
+			<argument index="1" name="arg1" type="int">
+			</argument>
+			<argument index="2" name="arg2" type="String">
 			</argument>
 			<description>
 			</description>
@@ -45372,6 +45542,8 @@
 			</return>
 			<argument index="0" name="arg0" type="RID">
 			</argument>
+			<argument index="1" name="arg1" type="int">
+			</argument>
 			<description>
 			</description>
 		</method>
@@ -45379,6 +45551,8 @@
 			<argument index="0" name="arg0" type="RID">
 			</argument>
 			<argument index="1" name="arg1" type="int">
+			</argument>
+			<argument index="2" name="arg2" type="int">
 			</argument>
 			<description>
 			</description>
@@ -45388,7 +45562,9 @@
 			</argument>
 			<argument index="1" name="arg1" type="int">
 			</argument>
-			<argument index="2" name="arg2" type="bool">
+			<argument index="2" name="arg2" type="int">
+			</argument>
+			<argument index="3" name="arg3" type="bool">
 			</argument>
 			<description>
 			</description>
@@ -45396,7 +45572,9 @@
 		<method name="material_set_line_width">
 			<argument index="0" name="arg0" type="RID">
 			</argument>
-			<argument index="1" name="arg1" type="float">
+			<argument index="1" name="arg1" type="int">
+			</argument>
+			<argument index="2" name="arg2" type="float">
 			</argument>
 			<description>
 			</description>
@@ -45404,9 +45582,11 @@
 		<method name="material_set_param">
 			<argument index="0" name="arg0" type="RID">
 			</argument>
-			<argument index="1" name="arg1" type="String">
+			<argument index="1" name="arg1" type="int">
 			</argument>
-			<argument index="2" name="arg2" type="Variant">
+			<argument index="2" name="arg2" type="String">
+			</argument>
+			<argument index="3" name="arg3" type="Variant">
 			</argument>
 			<description>
 			</description>
@@ -45414,7 +45594,9 @@
 		<method name="material_set_shader">
 			<argument index="0" name="shader" type="RID">
 			</argument>
-			<argument index="1" name="arg1" type="RID">
+			<argument index="1" name="arg1" type="int">
+			</argument>
+			<argument index="2" name="arg2" type="RID">
 			</argument>
 			<description>
 			</description>
@@ -45949,6 +46131,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="set_swap_buffers_active">
+			<argument index="0" name="arg0" type="bool">
+			</argument>
+			<description>
+			</description>
+		</method>
 		<method name="shader_create">
 			<return type="RID">
 			</return>
@@ -46087,10 +46275,10 @@
 			<description>
 			</description>
 		</method>
-		<method name="viewport_get_attached_camera" qualifiers="const">
-			<return type="RID">
-			</return>
+		<method name="viewport_detach_camera">
 			<argument index="0" name="arg0" type="RID">
+			</argument>
+			<argument index="1" name="arg1" type="RID" default="RID()">
 			</argument>
 			<description>
 			</description>
@@ -46195,7 +46383,7 @@
 		</constant>
 		<constant name="MATERIAL_FLAG_ONTOP" value="4">
 		</constant>
-		<constant name="MATERIAL_FLAG_MAX" value="7">
+		<constant name="MATERIAL_FLAG_MAX" value="8">
 		</constant>
 		<constant name="MATERIAL_BLEND_MODE_MIX" value="0">
 		</constant>
