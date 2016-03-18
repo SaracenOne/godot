@@ -843,34 +843,36 @@ void ScriptEditor::_reload_scripts(){
 
 void ScriptEditor::_res_saved_callback(const Ref<Resource>& p_res) {
 
+	const Ref<Script>& script_res = p_res;
+	ERR_FAIL_COND(script_res.is_null());
+	if (script_res.is_valid()) {
+
+		for (int i = 0; i < tab_container->get_child_count(); i++) {
+
+			ScriptTextEditor *ste = tab_container->get_child(i)->cast_to<ScriptTextEditor>();
+			if (!ste) {
+
+				continue;
+			}
 
 
-	for(int i=0;i<tab_container->get_child_count();i++) {
+			Ref<Script> script = ste->get_edited_script();
 
-		ScriptTextEditor *ste = tab_container->get_child(i)->cast_to<ScriptTextEditor>();
-		if (!ste) {
+			if (script->get_path() == "" || script->get_path().find("local://") != -1 || script->get_path().find("::") != -1) {
+				continue; //internal script, who cares
+			}
 
-			continue;
+			if (script == p_res) {
+
+				ste->get_text_edit()->tag_saved_version();
+			}
+
 		}
 
+		add_script_to_dirty_list(p_res);
 
-		Ref<Script> script = ste->get_edited_script();
-
-		if (script->get_path()=="" || script->get_path().find("local://")!=-1 || script->get_path().find("::")!=-1) {
-			continue; //internal script, who cares
-		}
-
-		if (script==p_res) {
-
-			ste->get_text_edit()->tag_saved_version();
-		}
-
+		_update_script_names();
 	}
-
-	add_script_to_dirty_list(p_res);
-
-	_update_script_names();
-
 }
 
 bool ScriptEditor::_test_script_times_on_disk() {
