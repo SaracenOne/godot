@@ -229,9 +229,9 @@ bool Control::_get(const StringName& p_name,Variant &r_ret) const {
 		return false;
 
 
-	
+
 	return true;
-	
+
 
 }
 void Control::_get_property_list( List<PropertyInfo> *p_list) const {
@@ -329,7 +329,7 @@ Control *Control::get_parent_control() const {
 
 
 void Control::_resize(const Size2& p_size) {
-	
+
 	_size_changed();
 }
 
@@ -366,7 +366,7 @@ void Control::_notification(int p_notification) {
 				Node *parent_control=NULL;
 				bool subwindow=false;
 
-			while(parent) {
+				while(parent) {
 
 					parent=parent->get_parent();
 
@@ -377,7 +377,7 @@ void Control::_notification(int p_notification) {
 					if (ci && ci->is_set_as_toplevel()) {
 						subwindow=true;
 						break;
-				}
+					}
 
 					if (parent->cast_to<Control>()) {
 						parent_control=parent->cast_to<Control>();
@@ -386,7 +386,7 @@ void Control::_notification(int p_notification) {
 
 					} else {
 						break;
-				}
+					}
 				}
 
 
@@ -398,17 +398,17 @@ void Control::_notification(int p_notification) {
 				} else {
 					//is a regular root control
 					data.RI=get_viewport()->_gui_add_root_control(this);
-			}
+				}
 
-			data.parent_canvas_item=get_parent_item();
+				data.parent_canvas_item=get_parent_item();
 
-			if (data.parent_canvas_item) {
+				if (data.parent_canvas_item) {
 
-				data.parent_canvas_item->connect("item_rect_changed",this,"_size_changed");
+					data.parent_canvas_item->connect("item_rect_changed",this,"_size_changed");
 				} else  {
-				//connect viewport
+					//connect viewport
 					get_viewport()->connect("size_changed",this,"_size_changed");
-			}
+				}
 			}
 
 
@@ -617,13 +617,13 @@ void Control::force_drag(const Variant& p_data,Control *p_control) {
 
 	get_viewport()->_gui_force_drag(this,p_data,p_control);
 
-	}
+}
 
 void Control::set_drag_preview(Control *p_control) {
 
 	ERR_FAIL_COND(!is_inside_tree());
 	get_viewport()->_gui_set_drag_preview(this,p_control);
-	}
+}
 
 
 
@@ -632,7 +632,7 @@ void Control::set_drag_preview(Control *p_control) {
 bool Control::is_window_modal_on_top() const {
 
 	if (!is_inside_tree())
-	return false;
+		return false;
 
 	return get_viewport()->_gui_is_modal_on_top(this);
 }
@@ -640,7 +640,7 @@ bool Control::is_window_modal_on_top() const {
 
 
 Size2 Control::get_minimum_size() const {
-	
+
 	ScriptInstance *si = const_cast<Control*>(this)->get_script_instance();
 	if (si) {
 
@@ -654,7 +654,7 @@ Size2 Control::get_minimum_size() const {
 
 
 Ref<Texture> Control::get_icon(const StringName& p_name,const StringName& p_type) const {
-	
+
 	if (p_type==StringName()) {
 
 		const Ref<Texture>* tex = data.icon_override.getptr(p_name);
@@ -714,7 +714,7 @@ Ref<Shader> Control::get_shader(const StringName& p_name,const StringName& p_typ
 }
 
 Ref<StyleBox> Control::get_stylebox(const StringName& p_name,const StringName& p_type) const {
-		
+
 	if (p_type==StringName()) {
 		const Ref<StyleBox>* style = data.style_override.getptr(p_name);
 		if (style)
@@ -828,12 +828,12 @@ int Control::get_constant(const StringName& p_name,const StringName& p_type) con
 
 	return Theme::get_default()->get_constant( p_name, type );
 
-	
+
 }
 
 
 bool Control::has_icon(const StringName& p_name,const StringName& p_type) const {
-	
+
 	if (p_type==StringName()) {
 		const Ref<Texture>* tex = data.icon_override.getptr(p_name);
 		if (tex)
@@ -889,10 +889,10 @@ bool Control::has_shader(const StringName &p_name, const StringName &p_type) con
 	}
 
 	return Theme::get_default()->has_shader( p_name, type );
-	
+
 }
 bool Control::has_stylebox(const StringName& p_name,const StringName& p_type) const {
-		
+
 	if (p_type==StringName()) {
 		const Ref<StyleBox>* style = data.style_override.getptr(p_name);
 
@@ -922,7 +922,7 @@ bool Control::has_stylebox(const StringName& p_name,const StringName& p_type) co
 
 }
 bool Control::has_font(const StringName& p_name,const StringName& p_type) const {
-	
+
 	if (p_type==StringName()) {
 		const Ref<Font>* font = data.font_override.getptr(p_name);
 		if (font)
@@ -952,7 +952,7 @@ bool Control::has_font(const StringName& p_name,const StringName& p_type) const 
 
 }
 bool Control::has_color(const StringName& p_name,const StringName& p_type) const {
-	
+
 	if (p_type==StringName()) {
 		const Color* color = data.color_override.getptr(p_name);
 		if (color)
@@ -1024,7 +1024,7 @@ Size2 Control::get_parent_area_size() const {
 	} else {
 
 		parent_size=get_viewport()->get_visible_rect().size;
-	} 
+	}
 	return parent_size;
 
 }
@@ -1098,11 +1098,11 @@ void Control::_size_changed() {
 }
 
 float Control::_get_parent_range(int p_idx) const {
-	
+
 	if (!is_inside_tree()) {
-	
+
 		return 1.0;
-		
+
 	} if (data.parent_canvas_item) {
 
 		return data.parent_canvas_item->get_item_rect().size[p_idx&1];
@@ -1115,21 +1115,21 @@ float Control::_get_parent_range(int p_idx) const {
 
 
 float Control::_get_range(int p_idx) const {
-	
+
 	p_idx&=1;
 
 	float parent_range = _get_parent_range( p_idx );
 	float from = _a2s( data.margin[p_idx], data.anchor[p_idx], parent_range );
 	float to = _a2s( data.margin[p_idx+2], data.anchor[p_idx+2], parent_range );
-	
+
 	return to-from;
 }
 
 float Control::_s2a(float p_val, AnchorType p_anchor,float p_range) const {
-	
+
 	switch(p_anchor) {
-		
-		case ANCHOR_BEGIN: {			
+
+		case ANCHOR_BEGIN: {
 			return p_val;
 		} break;
 		case ANCHOR_END: {
@@ -1137,21 +1137,21 @@ float Control::_s2a(float p_val, AnchorType p_anchor,float p_range) const {
 		} break;
 		case ANCHOR_RATIO: {
 			return p_val/p_range;
-		} break;			
+		} break;
         case ANCHOR_CENTER: {
             return (p_range/2)-p_val;
         } break;
-	}	
-	
+	}
+
 	return 0;
 }
 
 
 float Control::_a2s(float p_val, AnchorType p_anchor,float p_range) const {
-	
+
 	switch(p_anchor) {
-		
-		case ANCHOR_BEGIN: {			
+
+		case ANCHOR_BEGIN: {
 			return Math::floor(p_val);
 		} break;
 		case ANCHOR_END: {
@@ -1159,7 +1159,7 @@ float Control::_a2s(float p_val, AnchorType p_anchor,float p_range) const {
 		} break;
 		case ANCHOR_RATIO: {
 			return Math::floor(p_range*p_val);
-		} break;			
+		} break;
 		case ANCHOR_CENTER: {
 		    return Math::floor((p_range/2)-p_val);
 		} break;
@@ -1169,14 +1169,14 @@ float Control::_a2s(float p_val, AnchorType p_anchor,float p_range) const {
 
 
 void Control::set_anchor(Margin p_margin,AnchorType p_anchor, bool p_keep_margin) {
-	
+
 	if (!is_inside_tree()) {
-		
-		data.anchor[p_margin]=p_anchor;
+
+		data.anchor[p_margin] = p_anchor;
 	} else if(!p_keep_margin) {
 		float pr = _get_parent_range(p_margin);
 		float s = _a2s( data.margin[p_margin], data.anchor[p_margin], pr );
-		data.anchor[p_margin]=p_anchor;
+		data.anchor[p_margin] = p_anchor;
 		data.margin[p_margin] = _s2a( s, p_anchor, pr );
 	} else {
 		data.anchor[p_margin] = p_anchor;
@@ -1206,8 +1206,8 @@ void Control::set_anchor_and_margin(Margin p_margin,AnchorType p_anchor, float p
 
 
 Control::AnchorType Control::get_anchor(Margin p_margin) const {
-	
-	return data.anchor[p_margin];	
+
+	return data.anchor[p_margin];
 }
 
 
@@ -1235,40 +1235,40 @@ void Control::set_margin(Margin p_margin,float p_value) {
 }
 
 void Control::set_begin(const Size2& p_point) {
-	
+
 	data.margin[0]=p_point.x;
 	data.margin[1]=p_point.y;
 	_size_changed();
 }
 
 void Control::set_end(const Size2& p_point) {
-	
+
 	data.margin[2]=p_point.x;
 	data.margin[3]=p_point.y;
 	_size_changed();
 }
 
 float Control::get_margin(Margin p_margin) const {
-	
+
 	return data.margin[p_margin];
 }
 
 Size2 Control::get_begin() const {
-	
+
 	return Size2( data.margin[0], data.margin[1] );
 }
 Size2 Control::get_end() const {
-	
+
 	return Size2( data.margin[2], data.margin[3] );
 }
 
 Point2 Control::get_global_pos() const {
-	
+
 	return get_global_transform().get_origin();
 }
 
 void Control::set_global_pos(const Point2& p_point) {
-	
+
 	Matrix32 inv;
 
 	if (data.parent_canvas_item) {
@@ -1295,10 +1295,10 @@ void Control::set_pos(const Size2& p_point) {
 	Size2 size = Size2(MAX( min.width, ret.width),MAX( min.height, ret.height));
 	float w=size.x;
 	float h=size.y;
-	
+
 	x=p_point.x;
 	y=p_point.y;
-	
+
 	data.margin[0] = _s2a( x, data.anchor[0], pw );
 	data.margin[1] = _s2a( y, data.anchor[1], ph );
 	data.margin[2] = _s2a( x+w, data.anchor[2], pw );
@@ -1308,26 +1308,26 @@ void Control::set_pos(const Size2& p_point) {
 }
 
 void Control::set_size(const Size2& p_size) {
-		
+
 	Size2 new_size=p_size;
 	Size2 min=get_combined_minimum_size();
 	if (new_size.x<min.x)
 		new_size.x=min.x;
 	if (new_size.y<min.y)
 		new_size.y=min.y;
-	
+
 	float pw = _get_parent_range(0);
 	float ph = _get_parent_range(1);
-	
+
 	float x = _a2s( data.margin[0], data.anchor[0], pw );
 	float y = _a2s( data.margin[1], data.anchor[1], ph );
-	
+
 	float w=new_size.width;
 	float h=new_size.height;
-	
+
 	data.margin[2] = _s2a( x+w, data.anchor[2], pw );
 	data.margin[3] = _s2a( y+h, data.anchor[3], ph );
-	
+
 	_size_changed();
 
 }
@@ -1339,13 +1339,13 @@ Size2 Control::get_pos() const {
 }
 
 Size2 Control::get_size() const {
-	
+
 	return data.size_cache;
 }
 
 Rect2 Control::get_global_rect() const {
-						    
-	return Rect2( get_global_pos(), get_size() );				    
+
+	return Rect2( get_global_pos(), get_size() );
 }
 
 Rect2 Control::get_window_rect() const {
@@ -1357,7 +1357,7 @@ Rect2 Control::get_window_rect() const {
 
 
 Rect2 Control::get_rect() const {
-	
+
 	return Rect2(get_pos(),get_size());
 }
 
@@ -1367,7 +1367,7 @@ Rect2 Control::get_item_rect() const {
 }
 
 void Control::set_area_as_parent_rect(int p_margin) {
-	
+
 	data.anchor[MARGIN_LEFT]=ANCHOR_BEGIN;
 	data.anchor[MARGIN_TOP]=ANCHOR_BEGIN;
 	data.anchor[MARGIN_RIGHT]=ANCHOR_END;
@@ -1376,7 +1376,7 @@ void Control::set_area_as_parent_rect(int p_margin) {
 		data.margin[i]=p_margin;
 
 	_size_changed();
-	
+
 }
 
 void Control::add_icon_override(const StringName& p_name, const Ref<Texture>& p_icon) {
@@ -1437,7 +1437,7 @@ static Control *_next_control(Control *p_from) {
 	if (p_from->is_set_as_toplevel())
 		return NULL; // can't go above
 
-	Control *parent = p_from->get_parent()?p_from->get_parent()->cast_to<Control>():NULL;	
+	Control *parent = p_from->get_parent()?p_from->get_parent()->cast_to<Control>():NULL;
 
 	if (!parent) {
 
@@ -1463,10 +1463,10 @@ static Control *_next_control(Control *p_from) {
 Control *Control::find_next_valid_focus() const {
 
 	Control *from = const_cast<Control*>(this);
-	
+
 	while(true) {
-	
-		
+
+
 		// find next child
 
 		Control *next_child=NULL;
@@ -1508,10 +1508,10 @@ Control *Control::find_next_valid_focus() const {
 							break;
 						next_child=next_child->get_parent_control();
 
+					}
+
+
 				}
-
-
-			}
 			}
 
 		}
@@ -1525,7 +1525,7 @@ Control *Control::find_next_valid_focus() const {
 
 		from = next_child;
 	}
-	
+
 	return NULL;
 
 
@@ -1638,10 +1638,10 @@ void Control::grab_focus() {
 	}
 	if (data.focus_mode==FOCUS_NONE)
 		return;
-	
+
 	get_viewport()->_gui_control_grab_focus(this);
-		
-}	
+
+}
 
 void Control::release_focus() {
 
@@ -1661,7 +1661,7 @@ bool Control::is_toplevel_control() const {
 }
 
 void Control::show_modal(bool p_exclusive) {
-	
+
 	ERR_FAIL_COND(!is_inside_tree());
 	ERR_FAIL_COND(!data.SI);
 
@@ -1673,7 +1673,7 @@ void Control::show_modal(bool p_exclusive) {
 	raise();
 	data.modal_exclusive=p_exclusive;
 	data.MI=get_viewport()->_gui_show_modal(this);
-	
+
 }
 
 void Control::_modal_set_prev_focus_owner(ObjectID p_prev) {
@@ -1690,10 +1690,10 @@ void Control::_modal_stack_remove() {
 
 	get_viewport()->_gui_remove_from_modal_stack(data.MI,data.modal_prev_focus_owner);
 
-		data.MI=NULL;
+	data.MI=NULL;
 	data.modal_prev_focus_owner=0;
 
-		}
+}
 
 void Control::_propagate_theme_changed(Control *p_owner) {
 
@@ -2000,7 +2000,7 @@ void Control::grab_click_focus() {
 
 	get_viewport()->_gui_grab_click_focus(this);
 
-	}
+}
 
 void Control::minimum_size_changed() {
 
@@ -2241,7 +2241,7 @@ void Control::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_constant","name","type"),&Control::get_constant,DEFVAL(""));
 
 
-	ObjectTypeDB::bind_method(_MD("get_parent_control:Control"),&Control::get_parent_control);	
+	ObjectTypeDB::bind_method(_MD("get_parent_control:Control"),&Control::get_parent_control);
 
 	ObjectTypeDB::bind_method(_MD("set_tooltip","tooltip"),&Control::set_tooltip);
 	ObjectTypeDB::bind_method(_MD("get_tooltip","atpos"),&Control::get_tooltip,DEFVAL(Point2()));
@@ -2277,10 +2277,10 @@ void Control::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "rect/pivot"), _SCS("set_pivot"), _SCS("get_pivot"));
 
-	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/left", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("set_anchor"),_SCS("get_anchor"), MARGIN_LEFT );
-	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/top", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("set_anchor"),_SCS("get_anchor"), MARGIN_TOP );
-	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/right", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("set_anchor"),_SCS("get_anchor"), MARGIN_RIGHT );
-	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/bottom", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("set_anchor"),_SCS("get_anchor"), MARGIN_BOTTOM );
+	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/left", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("_set_anchor"),_SCS("get_anchor"), MARGIN_LEFT );
+	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/top", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("_set_anchor"),_SCS("get_anchor"), MARGIN_TOP );
+	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/right", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("_set_anchor"),_SCS("get_anchor"), MARGIN_RIGHT );
+	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/bottom", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("_set_anchor"),_SCS("get_anchor"), MARGIN_BOTTOM );
 
 	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"margin/left", PROPERTY_HINT_RANGE, "-4096,4096"), _SCS("set_margin"),_SCS("get_margin"), MARGIN_LEFT );
 	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"margin/top", PROPERTY_HINT_RANGE, "-4096,4096"), _SCS("set_margin"),_SCS("get_margin"), MARGIN_TOP );
@@ -2307,7 +2307,7 @@ void Control::_bind_methods() {
 
 	BIND_CONSTANT( ANCHOR_BEGIN );
 	BIND_CONSTANT( ANCHOR_END );
-	BIND_CONSTANT( ANCHOR_RATIO );	
+	BIND_CONSTANT( ANCHOR_RATIO );
     BIND_CONSTANT( ANCHOR_CENTER );
 	BIND_CONSTANT( FOCUS_NONE );
 	BIND_CONSTANT( FOCUS_CLICK );
@@ -2354,10 +2354,10 @@ void Control::_bind_methods() {
 	ADD_SIGNAL( MethodInfo("minimum_size_changed") );
 	ADD_SIGNAL( MethodInfo("modal_close") );
 
-	
+
 }
 Control::Control() {
-	
+
 	data.parent=NULL;
 
 	data.ignore_mouse=false;
@@ -2392,7 +2392,7 @@ Control::Control() {
 
 
 
-			
+
 }
 
 
