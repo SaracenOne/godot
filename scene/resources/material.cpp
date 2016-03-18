@@ -839,7 +839,8 @@ void MultiPassMaterial::set_pass_depth_draw_mode(const int p_pass_index, DepthDr
 }
 
 Material::DepthDrawMode MultiPassMaterial::get_pass_depth_draw_mode(const int p_pass_index) const {
-	return DEPTH_DRAW_ALWAYS;
+	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), DEPTH_DRAW_ALWAYS);
+	return passes[p_pass_index].depth_draw_mode;
 }
 
 void MultiPassMaterial::set_pass_line_width(const int p_pass_index, float p_width) {

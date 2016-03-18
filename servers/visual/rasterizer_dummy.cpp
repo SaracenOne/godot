@@ -275,7 +275,7 @@ void RasterizerDummy::material_set_param(RID p_material, const int p_pass_index,
 	Material *material = material_owner.get(p_material);
 	ERR_FAIL_COND(!material);
 	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND(!pass, RID());
+	ERR_FAIL_COND(!pass);
 
 	if (p_value.get_type()==Variant::NIL)
 		pass->shader_params.erase(p_param);
@@ -345,7 +345,7 @@ void RasterizerDummy::material_set_blend_mode(RID p_material,const int p_pass_in
 	Material *material = material_owner.get(p_material);
 	ERR_FAIL_COND(!material);
 	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND(!pass, VS::MATERIAL_DEPTH_DRAW_ALWAYS);
+	ERR_FAIL_COND(!pass);
 
 	pass->blend_mode=p_mode;
 
