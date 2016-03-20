@@ -120,12 +120,17 @@ class DaeExporter:
 		def close_to(self, v):		
 			if ( (self.vertex-v.vertex).length > CMP_EPSILON ):
 				return False
+				
 			if ( (self.normal-v.normal).length > CMP_EPSILON ):
 				return False
-			#if ( (self.uv-v.uv).length > CMP_EPSILON ):
-				#return False
-			#if ( (self.uv2-v.uv2).length > CMP_EPSILON ):
-				#return False
+				
+			for i in range(len(self.uv)):
+				if ( (self.uv[i]-v.uv[i]).length > CMP_EPSILON ):
+					return False
+					
+			#if (self.color!=None):
+			#	if ( (self.color-v.color).length > CMP_EPSILON ):
+			#		return False
 
 			return True
 
@@ -133,8 +138,8 @@ class DaeExporter:
 			tup = (self.vertex.x,self.vertex.y,self.vertex.z,self.normal.x,self.normal.y,self.normal.z)
 			for t in self.uv:
 				tup = tup + (t.x,t.y)
-			if (self.color!=None):
-				tup = tup + (self.color.x,self.color.y,self.color.z)
+			#if (self.color!=None):
+			#	tup = tup + (self.color.x,self.color.y,self.color.z)
 			#if (self.tangent!=None):
 			#	tup = tup + (self.tangent.x,self.tangent.y,self.tangent.z)
 			#if (self.bitangent!=None):
@@ -202,8 +207,8 @@ class DaeExporter:
 				dstfile=basedir+"/"+os.path.basename(image.filepath)
 				
 				if (not os.path.isfile(dstfile)):
-					
 					image.save()
+					
 				imgpath="images/"+os.path.basename(image.filepath)
 				image.filepath = img_tmp_path
 
@@ -627,11 +632,11 @@ class DaeExporter:
 				if (has_tangents):
 					v.tangent = Vector( ml.tangent )
 					v.bitangent = Vector( ml.bitangent )
-					#if(skeyindex>0):
-					#	v_basis.tangent = Vector(self.basis_loops_cache[loop_index].tangent)
-					#	v.tangent-=v_basis.tangent
-					#	v_basis.bitangent = Vector(self.basis_loops_cache[loop_index].bitangent)
-					#	v.bitangent-=v_basis.bitangent
+					if(skeyindex>0):
+						v_basis.tangent = Vector(self.basis_loops_cache[loop_index].tangent)
+						v.tangent-=v_basis.tangent
+						v_basis.bitangent = Vector(self.basis_loops_cache[loop_index].bitangent)
+						v.bitangent-=v_basis.bitangent
 					
 
 
@@ -1011,7 +1016,7 @@ class DaeExporter:
 			if (node.parent.type=="ARMATURE"):
 				armature=node.parent
 				if (armcount>1):
-					self.operator.report({'WARNING'},'Object "'+node.name+'" refers to more than one armature! This is unsupported.')
+					self.operator.report({'WARNING'},'Object "'+node.name+'" refers to more than one armature! This is unsopported.')
 				if (armcount==0):
 					self.operator.report({'WARNING'},'Object "'+node.name+'" is child of an armature, but has no armature modifier.')
 
