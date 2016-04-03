@@ -270,14 +270,30 @@ ObjectID SpatialEditorViewport::_select_ray(const Point2& p_pos, bool p_append,b
 			continue;
 
 		Ref<SpatialEditorGizmo> seg = spat->get_gizmo();
+		Ref<SpatialEditorGizmo> curr_seg = seg;
 
-		if (!seg.is_valid())
+		if (!curr_seg.is_valid())
 			continue;
 
-		if (found_gizmos.has(seg))
+		while(1) {
+			if (spat->get_owner() == editor->get_edited_scene() || editor->get_edited_scene()->is_editable_instance(spat->get_owner())) {
+				curr_seg = spat->get_gizmo();
+				break;
+			}
+			else {
+				spat=spat->get_parent_spatial();
+				if (spat == NULL) {
+					break;
+				}
+			}
+		}
+
+		if (!curr_seg.is_valid())
 			continue;
 
-		found_gizmos.insert(seg);
+		if (found_gizmos.has(curr_seg))
+			continue;
+
 		Vector3 point;
 		Vector3 normal;
 
@@ -286,6 +302,8 @@ ObjectID SpatialEditorViewport::_select_ray(const Point2& p_pos, bool p_append,b
 
 		if (!inters)
 			continue;
+
+		found_gizmos.insert(curr_seg);
 
 		float dist = pos.distance_to(point);
 
@@ -396,14 +414,31 @@ void SpatialEditorViewport::_find_items_at_pos(const Point2& p_pos,bool &r_inclu
 			continue;
 
 		Ref<SpatialEditorGizmo> seg = spat->get_gizmo();
+		Ref<SpatialEditorGizmo> curr_seg = seg;
 
-		if (!seg.is_valid())
+		if (!curr_seg.is_valid())
 			continue;
 
-		if (found_gizmos.has(seg))
+		while (1) {
+			if (spat->get_owner() == editor->get_edited_scene() || editor->get_edited_scene()->is_editable_instance(spat->get_owner())) {
+				curr_seg = spat->get_gizmo();
+				break;
+			}
+			else {
+				spat = spat->get_parent_spatial();
+				if (spat == NULL) {
+					break;
+				}
+			}
+		}
+
+		if (!curr_seg.is_valid())
 			continue;
 
-		found_gizmos.insert(seg);
+		if (found_gizmos.has(curr_seg))
+			continue;
+
+		found_gizmos.insert(curr_seg);
 		Vector3 point;
 		Vector3 normal;
 
@@ -522,11 +557,28 @@ void SpatialEditorViewport::_select_region() {
 			continue;
 
 		Ref<SpatialEditorGizmo> seg = sp->get_gizmo();
+		Ref<SpatialEditorGizmo> curr_seg = seg;
+
+		if (!curr_seg.is_valid())
+			continue;
+
+		while (1) {
+			if (sp->get_owner() == editor->get_edited_scene() || editor->get_edited_scene()->is_editable_instance(sp->get_owner())) {
+				curr_seg = sp->get_gizmo();
+				break;
+			}
+			else {
+				sp = sp->get_parent_spatial();
+				if (sp == NULL) {
+					break;
+				}
+			}
+		}
 
 		if (!seg.is_valid())
 			continue;
 
-		if (found_gizmos.has(seg))
+		if (found_gizmos.has(curr_seg))
 			continue;
 
 		if (seg->intersect_frustum(camera,frustum))
@@ -3682,6 +3734,18 @@ void SpatialEditor::_request_gizmo(Object* p_obj) {
 			selected->update_gizmo();
 		}
 
+	}
+	else {
+		if (sp==selected) {
+			selected=NULL;
+		}
+
+		Ref<SpatialEditorGizmo> seg;
+		seg=gizmos->get_gizmo(sp);
+
+		if (seg.is_valid()) {
+			sp->set_gizmo(Ref<SpatialGizmo>());
+		}
 	}
 }
 
