@@ -947,9 +947,9 @@ public:
 	virtual real_t instance_get_extra_visibility_margin( RID p_instance ) const =0;
 
 	// don't use these in a game!
-	virtual Vector<RID> instances_cull_aabb(const AABB& p_aabb, RID p_scenario=RID()) const=0;
-	virtual Vector<RID> instances_cull_ray(const Vector3& p_from, const Vector3& p_to, RID p_scenario=RID()) const=0;
-	virtual Vector<RID> instances_cull_convex(const Vector<Plane>& p_convex, RID p_scenario=RID()) const=0;
+	virtual Vector<RID> instances_cull_aabb(const AABB& p_aabb, uint32_t layer_mask, RID p_scenario=RID()) const=0;
+	virtual Vector<RID> instances_cull_ray(const Vector3& p_from, const Vector3& p_to, uint32_t layer_mask, RID p_scenario=RID()) const=0;
+	virtual Vector<RID> instances_cull_convex(const Vector<Plane>& p_convex, uint32_t layer_mask, RID p_scenario=RID()) const=0;
 
 	enum InstanceFlags {
 		INSTANCE_FLAG_VISIBLE,

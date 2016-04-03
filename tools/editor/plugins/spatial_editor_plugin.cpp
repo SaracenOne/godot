@@ -243,7 +243,7 @@ ObjectID SpatialEditorViewport::_select_ray(const Point2& p_pos, bool p_append,b
 	Vector3 ray=_get_ray(p_pos);
 	Vector3 pos=_get_ray_pos(p_pos);
 
-	Vector<RID> instances=VisualServer::get_singleton()->instances_cull_ray(pos,ray,get_tree()->get_root()->get_world()->get_scenario() );
+	Vector<RID> instances=VisualServer::get_singleton()->instances_cull_ray(pos,ray,0xffffffff,get_tree()->get_root()->get_world()->get_scenario() );
 	Set<Ref<SpatialEditorGizmo> > found_gizmos;
 
 	//uint32_t closest=0;
@@ -378,7 +378,7 @@ void SpatialEditorViewport::_find_items_at_pos(const Point2& p_pos,bool &r_inclu
 	Vector3 ray=_get_ray(p_pos);
 	Vector3 pos=_get_ray_pos(p_pos);
 
-	Vector<RID> instances=VisualServer::get_singleton()->instances_cull_ray(pos,ray,get_tree()->get_root()->get_world()->get_scenario() );
+	Vector<RID> instances=VisualServer::get_singleton()->instances_cull_ray(pos,ray,0xffffffff,get_tree()->get_root()->get_world()->get_scenario() );
 	Set<Ref<SpatialEditorGizmo> > found_gizmos;
 
 	r_includes_current=false;
@@ -507,7 +507,7 @@ void SpatialEditorViewport::_select_region() {
 
 	frustum.push_back( far );
 
-	Vector<RID> instances=VisualServer::get_singleton()->instances_cull_convex(frustum,get_tree()->get_root()->get_world()->get_scenario());
+	Vector<RID> instances=VisualServer::get_singleton()->instances_cull_convex(frustum,0xffffffff,get_tree()->get_root()->get_world()->get_scenario());
 
 
 	for (int i=0;i<instances.size();i++) {
@@ -864,7 +864,7 @@ void SpatialEditorViewport::_sinput(const InputEvent &p_event) {
 
 						if (b.mod.control) {
 
-							Vector<RID> instances=VisualServer::get_singleton()->instances_cull_ray(ray_origin,ray_dir,get_tree()->get_root()->get_world()->get_scenario() );
+							Vector<RID> instances=VisualServer::get_singleton()->instances_cull_ray(ray_origin,ray_dir,0xffffffff,get_tree()->get_root()->get_world()->get_scenario() );
 
 							Plane p(ray_origin,_get_camera_normal());
 

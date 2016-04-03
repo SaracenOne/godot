@@ -545,9 +545,9 @@ public:
 	FUNC2(instance_set_extra_visibility_margin,RID, real_t  );
 	FUNC1RC(real_t,instance_get_extra_visibility_margin,RID );
 
-	FUNC2RC(Vector<RID>,instances_cull_aabb,const AABB& , RID );
-	FUNC3RC(Vector<RID>,instances_cull_ray,const Vector3& ,const Vector3&, RID );
-	FUNC2RC(Vector<RID>,instances_cull_convex,const Vector<Plane>& , RID );
+	FUNC3RC(Vector<RID>,instances_cull_aabb,const AABB& ,uint32_t, RID );
+	FUNC4RC(Vector<RID>,instances_cull_ray,const Vector3& ,const Vector3&, uint32_t,RID );
+	FUNC3RC(Vector<RID>,instances_cull_convex,const Vector<Plane>&, uint32_t, RID );
 
 	FUNC3(instance_geometry_set_flag,RID,InstanceFlags ,bool );
 	FUNC2RC(bool,instance_geometry_get_flag,RID,InstanceFlags );

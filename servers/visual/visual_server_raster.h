@@ -158,9 +158,24 @@ class VisualServerRaster : public VisualServer {
 		
 			MAX_LIGHTS=4
 		};
+
+		struct OctreeLayer {
+			int layer_index;
+			OctreeElementID octree_id;
+
+			OctreeLayer() {
+				layer_index = -1;
+				octree_id = -1;
+			}
+
+			OctreeLayer(int p_layer_index, OctreeElementID p_octree_id) {
+				layer_index = p_layer_index;
+				octree_id = p_octree_id;
+			}
+		};
 	
 		RID self;
-		OctreeElementID octree_id;		
+		Vector<OctreeLayer> octree_layers;
 		Scenario *scenario;
 		bool update;
 		bool update_aabb;
@@ -292,7 +307,6 @@ class VisualServerRaster : public VisualServer {
 
 
 		Instance() { 
-			octree_id=0;
 			update_next=0;
 			object_ID=0;
 			last_render_pass=0;
@@ -360,7 +374,7 @@ class VisualServerRaster : public VisualServer {
 		// well wtf, balloon allocator is slower?
 		typedef ::Octree<Instance,true> Octree;
 		
-		Octree octree;
+		Octree octree[32];
 			
 		List<RID> directional_lights;
 		RID environment;
@@ -624,6 +638,13 @@ class VisualServerRaster : public VisualServer {
 	
 	ViewportRect viewport_rect;
 	_FORCE_INLINE_ void _instance_draw(Instance *p_instance);
+	_FORCE_INLINE_ void _instance_clear_layers(Instance *p_instance) {
+		while (p_instance->octree_layers.size() > 0) {
+			Instance::OctreeLayer octree_layer = p_instance->octree_layers[0];
+			p_instance->scenario->octree[octree_layer.layer_index].erase(octree_layer.octree_id);
+			p_instance->octree_layers.remove(0);
+		}
+	}
 	
 	bool _test_portal_cull(Camera *p_camera, Instance *p_portal_from, Instance *p_portal_to);
 	void _cull_portal(Camera *p_camera, Instance *p_portal,Instance *p_from_portal);
@@ -1107,9 +1128,9 @@ public:
 	virtual void instance_set_extra_visibility_margin( RID p_instance, real_t p_margin );
 	virtual real_t instance_get_extra_visibility_margin( RID p_instance ) const;
 
-	virtual Vector<RID> instances_cull_aabb(const AABB& p_aabb, RID p_scenario=RID()) const;
-	virtual Vector<RID> instances_cull_ray(const Vector3& p_from, const Vector3& p_to, RID p_scenario=RID()) const;
-	virtual Vector<RID> instances_cull_convex(const Vector<Plane>& p_convex, RID p_scenario=RID()) const;
+	virtual Vector<RID> instances_cull_aabb(const AABB& p_aabb, uint32_t layer_mask, RID p_scenario=RID()) const;
+	virtual Vector<RID> instances_cull_ray(const Vector3& p_from, const Vector3& p_to, uint32_t layer_mask, RID p_scenario=RID()) const;
+	virtual Vector<RID> instances_cull_convex(const Vector<Plane>& p_convex, uint32_t layer_mask, RID p_scenario=RID()) const;
 
 	virtual void instance_geometry_set_flag(RID p_instance,InstanceFlags p_flags,bool p_enabled);
 	virtual bool instance_geometry_get_flag(RID p_instance,InstanceFlags p_flags) const;
