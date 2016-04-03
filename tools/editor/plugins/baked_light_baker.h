@@ -280,6 +280,12 @@ public:
 	float ao_radius;
 	float ao_strength;
 
+	bool sky_light_enabled;
+	Color sky_light_color;
+	float sky_light_energy;
+
+	int sky_light_rays_thrown;
+
 	bool paused;
 	bool baking;
 	bool first_bake_to_map;

@@ -2803,7 +2803,7 @@ Vector<RID> VisualServerRaster::instances_cull_ray(const Vector3& p_from, const 
 	return instances;
 
 }
-Vector<RID> VisualServerRaster::instances_cull_convex(const Vector<Plane>& p_convex, uint32_t layer_mask,  RID p_scenario) const{
+Vector<RID> VisualServerRaster::instances_cull_convex(const Vector<Plane>& p_convex, uint32_t layer_mask, RID p_scenario) const{
 
 	Vector<RID> instances;
 	Scenario *scenario=scenario_owner.get(p_scenario);
@@ -3391,7 +3391,8 @@ void VisualServerRaster::instance_light_set_enabled(RID p_instance,bool p_enable
 		return;
 
 	instance->light_info->enabled=p_enabled;
-	if (light_get_type(instance->base_rid)!=VS::LIGHT_DIRECTIONAL && instance->octree_layers.size() && instance->scenario) {
+	if (light_get_type(instance->base_rid) != VS::LIGHT_DIRECTIONAL && instance->octree_layers.size() && instance->scenario)
+	{
 		for (int i = 0; i < instance->octree_layers.size(); i++) {
 			instance->scenario->octree[instance->octree_layers[i].layer_index].set_pairable(instance->octree_layers[i].octree_id, p_enabled, 1 << INSTANCE_LIGHT, p_enabled ? INSTANCE_GEOMETRY_MASK : 0);
 		}
@@ -5172,8 +5173,8 @@ void VisualServerRaster::_light_instance_update_pssm_shadow(Instance *p_light,Sc
 		light_frustum_planes[4]=Plane( z_vec, z_max+1e6 ); 
 		light_frustum_planes[5]=Plane( -z_vec, -z_min ); // z_min is ok, since casters further than far-light plane are not needed		
 							
-		uint32_t camera_layer_mask=p_camera->visible_layers;
-		uint32_t light_layer_mask=p_light->layer_mask;
+		uint32_t camera_layer_mask = p_camera->visible_layers;
+		uint32_t light_layer_mask = p_light->layer_mask;
 
 		int caster_cull_count=0;
 		for (int i = 0; i < 32; i++){
@@ -5668,8 +5669,8 @@ void VisualServerRaster::_light_instance_update_shadow(Instance *p_light,Scenari
 
 	Rasterizer::ShadowType shadow_type = rasterizer->light_instance_get_shadow_type(p_light->light_info->instance);
 
-	uint32_t camera_layer_mask=p_camera->visible_layers;
-	uint32_t light_layer_mask=p_light->layer_mask;
+	uint32_t camera_layer_mask = p_camera->visible_layers;
+	uint32_t light_layer_mask = p_light->layer_mask;
 
 	switch(shadow_type) {
 		
@@ -5738,7 +5739,6 @@ void VisualServerRaster::_light_instance_update_shadow(Instance *p_light,Scenari
 					for (int i = 0; i < 32; i++){
 						cull_count = p_scenario->octree[i].cull_convex(planes, instance_shadow_cull_result + cull_count, MAX_INSTANCE_CULL - cull_count, INSTANCE_GEOMETRY_MASK);
 					}
-
 
 
 					for (int j=0;j<cull_count;j++) {
@@ -6103,10 +6103,7 @@ void VisualServerRaster::_cull_portal(Camera *p_camera, Instance *p_portal,Insta
 
 	Instance *portal = p_portal;
 
-	if (!portal->room) {
-
-		return; //portals need all to belong to a room, it may be unconfigured yet
-	} else if (portal->last_render_pass!=render_pass) {
+	if (portal->last_render_pass!=render_pass) {
 
 		return; //invalid portal, ignore
 	} else if (portal->portal_info->last_visited_pass==render_pass) {
@@ -6167,6 +6164,8 @@ void VisualServerRaster::_cull_portal(Camera *p_camera, Instance *p_portal,Insta
 
 	} else {
 		//to exterior/to parent roomportal
+		if (!portal->room)
+			return; // ??
 
 		Instance *parent_room = portal->room->room;
 
@@ -7776,6 +7775,8 @@ void VisualServerRaster::set_boot_image(const Image& p_image, const Color& p_col
 void VisualServerRaster::init() {
 
 	rasterizer->init();
+	depth_buffer = memnew(DepthBufferSW);
+	depth_buffer->set_size(256, 256);
 	
 	shadows_enabled=GLOBAL_DEF("render/shadows_enabled",true);
 	//default_scenario = scenario_create();
@@ -7815,6 +7816,7 @@ void VisualServerRaster::_clean_up_owner(RID_OwnerBase *p_owner,String p_type) {
 
 void VisualServerRaster::finish() {
 
+	memfree(depth_buffer);
 	free(default_cursor_texture);
 	if (test_cube.is_valid())
 		free(test_cube);

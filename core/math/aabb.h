@@ -42,6 +42,12 @@
 
 class AABB {
 public:
+	const enum IntersectionType {
+		INTERSECTION_INTERSECTS = 0,
+		INTERSECTION_INSIDE,
+		INTERSECTION_OUTSIDE
+	};
+
 	Vector3 pos;
 	Vector3 size;
 
@@ -76,6 +82,7 @@ public:
 	bool intersects_ray(const Vector3& p_from, const Vector3& p_dir,Vector3* r_clip=NULL,Vector3* r_normal=NULL) const;
 	_FORCE_INLINE_ bool smits_intersect_ray(const Vector3 &from,const Vector3& p_dir, float t0, float t1) const;
 
+	_FORCE_INLINE_ IntersectionType intersects_convex_shape_with_intersection_type(const Plane *p_plane, int p_plane_count) const;
 	_FORCE_INLINE_ bool intersects_convex_shape(const Plane *p_plane, int p_plane_count) const;
 	bool intersects_plane(const Plane &p_plane) const;
 
@@ -189,6 +196,48 @@ Vector3 AABB::get_endpoint(int p_point) const {
 	};
 
 	ERR_FAIL_V(Vector3());
+}
+
+AABB::IntersectionType AABB::intersects_convex_shape_with_intersection_type(const Plane *p_planes, int p_plane_count) const {
+
+	Vector3 points[8] = {
+		Vector3(pos.x, pos.y, pos.z),
+		Vector3(pos.x, pos.y, pos.z + size.z),
+		Vector3(pos.x, pos.y + size.y, pos.z),
+		Vector3(pos.x, pos.y + size.y, pos.z + size.z),
+		Vector3(pos.x + size.x, pos.y, pos.z),
+		Vector3(pos.x + size.x, pos.y, pos.z + size.z),
+		Vector3(pos.x + size.x, pos.y + size.y, pos.z),
+		Vector3(pos.x + size.x, pos.y + size.y, pos.z + size.z),
+	};
+
+	int planes_inside = 0;
+
+	for (int i = 0; i<p_plane_count; i++) {
+		int points_inside = 8;
+		int plane_inside_addition = 1;
+		const Plane &p = p_planes[i];
+
+		for (int j = 0; j < 8; j++) {
+			if (p.is_point_over(points[j])) {
+				plane_inside_addition = 0;
+				points_inside--;
+			}
+		}
+
+		if (points_inside == 0)
+			return INTERSECTION_OUTSIDE;
+
+		planes_inside += plane_inside_addition;
+	}
+
+	if (planes_inside == p_plane_count) {
+		return INTERSECTION_INSIDE;
+	}
+	else {
+		return INTERSECTION_INTERSECTS;
+	}
+
 }
 
 bool AABB::intersects_convex_shape(const Plane *p_planes, int p_plane_count) const {

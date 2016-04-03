@@ -60,6 +60,10 @@ private:
 	Format format;
 	bool flags[BAKE_MAX];
 
+	bool sky_light_enabled;
+	Color sky_light_color;
+	float sky_light_energy;
+
 
 
 	void _update_lightmaps();
@@ -115,6 +119,15 @@ public:
 
 	void set_ao_strength(float p_ao_strength);
 	float get_ao_strength() const;
+
+	void set_sky_light_enabled(float p_sky_light_enabed);
+	bool get_sky_light_enabled() const;
+
+	void set_sky_light_color(Color p_sky_light_color);
+	Color get_sky_light_color() const;
+
+	void set_sky_light_energy(float p_sky_light_energy);
+	float get_sky_light_energy() const;
 
 	void set_realtime_color_enabled(const bool p_enabled);
 	bool get_realtime_color_enabled() const;

@@ -60,7 +60,9 @@ BakedLightBaker::MeshTexture* BakedLightBaker::_get_mat_tex(const Ref<Texture>& 
 		Ref<ImageTexture> imgtex=p_tex;
 		if (imgtex.is_null())
 			return NULL;
-		Image image=imgtex->get_data();
+		if (imgtex->get_width() != imgtex->get_height())
+			return NULL;
+		Image &image=imgtex->get_data();
 		if (image.empty())
 			return NULL;
 
@@ -131,7 +133,7 @@ void BakedLightBaker::_add_mesh(const Ref<Mesh>& p_mesh,const Ref<Material>& p_m
 
 					mm.specular.tex=_get_mat_tex(fm->get_texture(FixedMaterial::PARAM_SPECULAR));
 
-					mm.skip = fm->get_fixed_flag(FixedMaterial::FLAG_USE_ALPHA);
+					mm.skip = fm->get_fixed_flag(FixedMaterial::FLAG_USE_ALPHA) || fm->get_flag(FixedMaterial::FLAG_SKIP_SHADOW_CASTING);
 				} else {
 
 					mm.diffuse.color=Color(1,1,1,1);
@@ -1616,8 +1618,6 @@ double BakedLightBaker::get_modifier(int p_light_idx) const {
 
 void BakedLightBaker::throw_rays(ThreadStack& thread_stack,int p_amount) {
 
-
-
 	for(int i=0;i<lights.size();i++) {
 
 		LightData &dl=lights[i];
@@ -1769,6 +1769,12 @@ void BakedLightBaker::bake(const Ref<BakedLight> &p_light, Node* p_node) {
 	ao_radius=baked_light->get_ao_radius();
 	ao_strength=baked_light->get_ao_strength();
 	linear_color=baked_light->get_bake_flag(BakedLight::BAKE_LINEAR_COLOR);
+
+	sky_light_enabled = baked_light->get_sky_light_enabled();
+	sky_light_color = baked_light->get_sky_light_color();
+	sky_light_energy = baked_light->get_sky_light_energy();
+
+	sky_light_rays_thrown = 0;
 
 	baked_textures.clear();
 	for(int i=0;i<baked_light->get_lightmaps_count();i++) {

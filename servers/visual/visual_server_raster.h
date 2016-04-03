@@ -34,6 +34,7 @@
 #include "servers/visual/rasterizer.h"
 #include "balloon_allocator.h"
 #include "octree.h"
+#include "depth_buffer_sw.h"
 
 /**
 	@author Juan Linietsky <reduzio@gmail.com>
@@ -638,6 +639,7 @@ class VisualServerRaster : public VisualServer {
 	
 	ViewportRect viewport_rect;
 	_FORCE_INLINE_ void _instance_draw(Instance *p_instance);
+
 	_FORCE_INLINE_ void _instance_clear_layers(Instance *p_instance) {
 		while (p_instance->octree_layers.size() > 0) {
 			Instance::OctreeLayer octree_layer = p_instance->octree_layers[0];
@@ -675,8 +677,7 @@ class VisualServerRaster : public VisualServer {
 	void _draw_viewport(Viewport *p_viewport,int p_ofs_x, int p_ofs_y,int p_parent_w,int p_parent_h);
 	void _draw_viewports();
 	void _draw_cursors_and_margins();
-	
-	
+		
 	Rasterizer *rasterizer;
 public:
 
@@ -1128,9 +1129,9 @@ public:
 	virtual void instance_set_extra_visibility_margin( RID p_instance, real_t p_margin );
 	virtual real_t instance_get_extra_visibility_margin( RID p_instance ) const;
 
-	virtual Vector<RID> instances_cull_aabb(const AABB& p_aabb, uint32_t layer_mask, RID p_scenario=RID()) const;
-	virtual Vector<RID> instances_cull_ray(const Vector3& p_from, const Vector3& p_to, uint32_t layer_mask, RID p_scenario=RID()) const;
-	virtual Vector<RID> instances_cull_convex(const Vector<Plane>& p_convex, uint32_t layer_mask, RID p_scenario=RID()) const;
+	virtual Vector<RID> instances_cull_aabb(const AABB& p_aabb, uint32_t layer_mask, RID p_scenario = RID()) const;
+	virtual Vector<RID> instances_cull_ray(const Vector3& p_from, const Vector3& p_to, uint32_t layer_mask, RID p_scenario = RID()) const;
+	virtual Vector<RID> instances_cull_convex(const Vector<Plane>& p_convex, uint32_t layer_mask, RID p_scenario = RID()) const;
 
 	virtual void instance_geometry_set_flag(RID p_instance,InstanceFlags p_flags,bool p_enabled);
 	virtual bool instance_geometry_get_flag(RID p_instance,InstanceFlags p_flags) const;
@@ -1307,6 +1308,7 @@ public:
 	virtual void set_swap_buffers_active(const bool p_active);
 
 	RID get_test_cube();
+	DepthBufferSW *depth_buffer;
 
 	virtual void set_boot_image(const Image& p_image, const Color& p_color, bool p_scale);
 	virtual void set_default_clear_color(const Color& p_color);

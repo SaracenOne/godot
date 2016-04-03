@@ -256,6 +256,36 @@ float BakedLight::get_ao_strength() const {
 	return ao_strength;
 }
 
+void BakedLight::set_sky_light_enabled(float p_sky_light_enabled) {
+
+	sky_light_enabled = p_sky_light_enabled;
+}
+
+bool BakedLight::get_sky_light_enabled() const {
+
+	return sky_light_enabled;
+}
+
+void BakedLight::set_sky_light_color(Color p_sky_light_color) {
+
+	sky_light_color = p_sky_light_color;
+}
+
+Color BakedLight::get_sky_light_color() const {
+
+	return sky_light_color;
+}
+
+void BakedLight::set_sky_light_energy(float p_sky_light_energy) {
+
+	sky_light_energy = p_sky_light_energy;
+}
+
+float BakedLight::get_sky_light_energy() const {
+
+	return sky_light_energy;
+}
+
 void BakedLight::set_realtime_color_enabled(const bool p_realtime_color_enabled) {
 
 	VS::get_singleton()->baked_light_set_realtime_color_enabled(baked_light, p_realtime_color_enabled);
@@ -466,6 +496,15 @@ void BakedLight::_bind_methods(){
 	ObjectTypeDB::bind_method(_MD("set_ao_strength","ao_strength"),&BakedLight::set_ao_strength);
 	ObjectTypeDB::bind_method(_MD("get_ao_strength"),&BakedLight::get_ao_strength);
 
+	ObjectTypeDB::bind_method(_MD("set_sky_light_enabled", "sky_light_enabled"), &BakedLight::set_sky_light_enabled);
+	ObjectTypeDB::bind_method(_MD("get_sky_light_enabled"), &BakedLight::get_sky_light_enabled);
+
+	ObjectTypeDB::bind_method(_MD("set_sky_light_color", "sky_light_color"), &BakedLight::set_sky_light_color);
+	ObjectTypeDB::bind_method(_MD("get_sky_light_color"), &BakedLight::get_sky_light_color);
+
+	ObjectTypeDB::bind_method(_MD("set_sky_light_energy", "sky_light_energy"), &BakedLight::set_sky_light_energy);
+	ObjectTypeDB::bind_method(_MD("get_sky_light_energy"), &BakedLight::get_sky_light_energy);
+
 	ObjectTypeDB::bind_method(_MD("set_realtime_color_enabled", "enabled"), &BakedLight::set_realtime_color_enabled);
 	ObjectTypeDB::bind_method(_MD("get_realtime_color_enabled"), &BakedLight::get_realtime_color_enabled);
 
@@ -521,6 +560,10 @@ void BakedLight::_bind_methods(){
 	ADD_PROPERTY( PropertyInfo(Variant::REAL,"advanced/ao_radius",PROPERTY_HINT_RANGE,"0.0,16.0,0.01"),_SCS("set_ao_radius"),_SCS("get_ao_radius"));
 	ADD_PROPERTY( PropertyInfo(Variant::REAL,"advanced/ao_strength",PROPERTY_HINT_RANGE,"0.0,1.0,0.01"),_SCS("set_ao_strength"),_SCS("get_ao_strength"));
 
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "sky_light/enabled"), _SCS("set_sky_light_enabled"), _SCS("get_sky_light_enabled"));
+	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "sky_light/color", PROPERTY_HINT_COLOR_NO_ALPHA), _SCS("set_sky_light_color"), _SCS("get_sky_light_color"));
+	ADD_PROPERTY(PropertyInfo(Variant::REAL, "sky_light/energy", PROPERTY_HINT_RANGE, "0.01,4096.0,0.01"), _SCS("set_sky_light_energy"), _SCS("get_sky_light_energy"));
+
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "realtime/enabled"), _SCS("set_realtime_color_enabled"), _SCS("get_realtime_color_enabled"));
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "realtime/color", PROPERTY_HINT_COLOR_NO_ALPHA), _SCS("set_realtime_color"), _SCS("get_realtime_color"));
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "realtime/energy", PROPERTY_HINT_RANGE, "0.01,4096.0,0.01"), _SCS("set_realtime_energy"), _SCS("get_realtime_energy"));
@@ -563,6 +606,10 @@ BakedLight::BakedLight() {
 	flags[BAKE_TRANSLUCENT]=true;
 	flags[BAKE_CONSERVE_ENERGY]=false;
 	flags[BAKE_LINEAR_COLOR]=false;
+
+	sky_light_enabled = false;
+	sky_light_color=Color(0.0,0.0,0.0);
+	sky_light_energy = 0.0;
 
 	mode=MODE_OCTREE;
 	baked_light=VS::get_singleton()->baked_light_create();

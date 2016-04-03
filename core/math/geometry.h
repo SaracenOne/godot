@@ -788,6 +788,92 @@ public:
 		return clipped;
 	}
 
+	static inline Vector<Plane> clip_polygon(const Vector<Plane>& polygon, const Plane& p_plane) {
+
+		enum LocationCache {
+			LOC_INSIDE = 1,
+			LOC_BOUNDARY = 0,
+			LOC_OUTSIDE = -1
+		};
+
+		if (polygon.size() == 0)
+			return polygon;
+
+		const Quat quat = Quat(p_plane.normal, p_plane.d);
+
+		int *location_cache = (int*)alloca(sizeof(int)*polygon.size());
+		int inside_count = 0;
+		int outside_count = 0;
+
+		for (int a = 0; a < polygon.size(); a++) {
+			//float p_plane.d = (*this) * polygon[a];
+			float dist = p_plane.distance_to(polygon[a].normal);
+			if (dist <-CMP_POINT_IN_PLANE_EPSILON) {
+				location_cache[a] = LOC_INSIDE;
+				inside_count++;
+			}
+			else {
+				if (dist > CMP_POINT_IN_PLANE_EPSILON) {
+					location_cache[a] = LOC_OUTSIDE;
+					outside_count++;
+				}
+				else {
+					location_cache[a] = LOC_BOUNDARY;
+				}
+			}
+		}
+
+		if (outside_count == 0) {
+
+			return polygon; // no changes
+
+		}
+		else if (inside_count == 0) {
+
+			return Vector<Plane>(); //empty
+		}
+
+		//		long count = 0;
+		long previous = polygon.size() - 1;
+
+		Vector<Plane> clipped;
+
+		for (int index = 0; index < polygon.size(); index++) {
+			int loc = location_cache[index];
+			if (loc == LOC_OUTSIDE) {
+				if (location_cache[previous] == LOC_INSIDE) {
+					const Quat& v1 = Quat(polygon[previous].normal, polygon[previous].d);
+					const Quat& v2 = Quat(polygon[index].normal, polygon[index].d);
+
+					Quat segment = v1 - v2;
+					double den = quat.dot(segment);
+					double dist = p_plane.distance_to(Vector3(v1.x, v1.y, v1.z)) / den;
+					dist = -dist;
+					Quat final = v1 + segment * dist;
+					clipped.push_back(Plane(Vector3(final.x, final.y, final.z), final.w));
+				}
+			}
+			else {
+				const Quat& v1 = Quat(polygon[index].normal, polygon[index].d);
+				if ((loc == LOC_INSIDE) && (location_cache[previous] == LOC_OUTSIDE)) {
+					const Quat& v2 = Quat(polygon[previous].normal, polygon[previous].d);
+					Quat segment = v1 - v2;
+					double den = quat.dot(segment);
+					double dist = p_plane.distance_to(Vector3(v1.x, v1.y, v1.z)) / den;
+					dist = -dist;
+					Quat final = v1 + segment * dist;
+					clipped.push_back(Plane(Vector3(final.x, final.y, final.z), final.w));
+				}
+
+				clipped.push_back(Plane(polygon[index].normal, polygon[index].d));
+			}
+
+			previous = index;
+		}
+
+		return clipped;
+	}
+
 
 	static Vector<int> triangulate_polygon(const Vector<Vector2>& p_polygon) {
 
