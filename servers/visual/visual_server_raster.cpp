@@ -2130,9 +2130,10 @@ RID VisualServerRaster::scenario_create() {
 	ERR_FAIL_COND_V(!scenario,RID());
 	RID scenario_rid = scenario_owner.make_rid( scenario );
 	scenario->self=scenario_rid;
-	scenario->octree.set_pair_callback(instance_pair,this);
-	scenario->octree.set_unpair_callback(instance_unpair,this);
-
+	for (int i = 0; i < 32; i++) {
+		scenario->octree[i].set_pair_callback(instance_pair, this);
+		scenario->octree[i].set_unpair_callback(instance_unpair, this);
+	}
 	return scenario_rid;
 }
 
@@ -2266,9 +2267,8 @@ void VisualServerRaster::instance_set_base(RID p_instance, RID p_base) {
 
 		}
 
-		if (instance->scenario && instance->octree_id) {
-			instance->scenario->octree.erase( instance->octree_id );
-			instance->octree_id=0;
+		if (instance->scenario) {
+			_instance_clear_layers(instance);
 		}
 
 
@@ -2440,10 +2440,7 @@ void VisualServerRaster::instance_set_scenario(RID p_instance, RID p_scenario) {
 			_portal_disconnect(instance,true);
 		}
 
-		if (instance->octree_id) {
-			instance->scenario->octree.erase( instance->octree_id );
-			instance->octree_id=0;
-		}
+		_instance_clear_layers(instance);
 
 		instance->scenario=NULL;
 	}
@@ -2488,7 +2485,8 @@ void VisualServerRaster::instance_set_layer_mask(RID p_instance, uint32_t p_mask
 	ERR_FAIL_COND( !instance );
 
 	instance->layer_mask=p_mask;
-
+	_instance_clear_layers(instance);
+	_instance_queue_update(instance);
 }
 
 uint32_t VisualServerRaster::instance_get_layer_mask(RID p_instance) const{
@@ -2638,10 +2636,9 @@ void VisualServerRaster::instance_set_room( RID p_instance, RID p_room ) {
 
 			instance->room->room_info->owned_geometry_instances.erase(instance->RE);
 
-			if (!p_room.is_valid() && instance->octree_id) {
+			if (!p_room.is_valid() && instance->octree_layers.size() > 0) {
 				//remove from the octree, so it's re-added with different flags
-				instance->scenario->octree.erase( instance->octree_id );
-				instance->octree_id=0;
+				_instance_clear_layers( instance );
 				_instance_queue_update( instance,true );
 			}
 
@@ -2675,10 +2672,9 @@ void VisualServerRaster::instance_set_room( RID p_instance, RID p_room ) {
 
 	} else {
 
-		if (p_room.is_valid() && instance->octree_id) {
+		if (p_room.is_valid() && instance->octree_layers.size() > 0) {
 			//remove from the octree, so it's re-added with different flags
-			instance->scenario->octree.erase( instance->octree_id );
-			instance->octree_id=0;
+			_instance_clear_layers( instance );
 			_instance_queue_update( instance,true );
 		}
 
@@ -2762,7 +2758,7 @@ real_t VisualServerRaster::instance_get_extra_visibility_margin( RID p_instance 
 }
 
 
-Vector<RID> VisualServerRaster::instances_cull_aabb(const AABB& p_aabb, RID p_scenario) const {
+Vector<RID> VisualServerRaster::instances_cull_aabb(const AABB& p_aabb, uint32_t layer_mask, RID p_scenario) const {
 
 
 	Vector<RID> instances;
@@ -2773,7 +2769,11 @@ Vector<RID> VisualServerRaster::instances_cull_aabb(const AABB& p_aabb, RID p_sc
 
 	int culled=0;
 	Instance *cull[1024];
-	culled=scenario->octree.cull_AABB(p_aabb,cull,1024);
+	for (int i = 0; i < 32; i++){
+		if (layer_mask & (1 << (i))) {
+			culled += scenario->octree[i].cull_AABB(p_aabb, cull + culled, 1024 - culled);
+		}
+	}
 
 	for (int i=0;i<culled;i++) {
 
@@ -2784,7 +2784,7 @@ Vector<RID> VisualServerRaster::instances_cull_aabb(const AABB& p_aabb, RID p_sc
 
 	return instances;
 }
-Vector<RID> VisualServerRaster::instances_cull_ray(const Vector3& p_from, const Vector3& p_to, RID p_scenario) const{
+Vector<RID> VisualServerRaster::instances_cull_ray(const Vector3& p_from, const Vector3& p_to, uint32_t layer_mask, RID p_scenario) const{
 
 	Vector<RID> instances;
 	Scenario *scenario=scenario_owner.get(p_scenario);
@@ -2793,7 +2793,11 @@ Vector<RID> VisualServerRaster::instances_cull_ray(const Vector3& p_from, const 
 
 	int culled=0;
 	Instance *cull[1024];
-	culled=scenario->octree.cull_segment(p_from,p_to*10000,cull,1024);
+	for (int i = 0; i < 32; i++){
+		if (layer_mask & (1 << (i))) {
+			culled += scenario->octree[i].cull_segment(p_from, p_to * 10000, cull + culled, 1024 - culled);
+		}
+	}
 
 
 	for (int i=0;i<culled;i++) {
@@ -2806,7 +2810,7 @@ Vector<RID> VisualServerRaster::instances_cull_ray(const Vector3& p_from, const 
 	return instances;
 
 }
-Vector<RID> VisualServerRaster::instances_cull_convex(const Vector<Plane>& p_convex,  RID p_scenario) const{
+Vector<RID> VisualServerRaster::instances_cull_convex(const Vector<Plane>& p_convex, uint32_t layer_mask,  RID p_scenario) const{
 
 	Vector<RID> instances;
 	Scenario *scenario=scenario_owner.get(p_scenario);
@@ -2815,9 +2819,11 @@ Vector<RID> VisualServerRaster::instances_cull_convex(const Vector<Plane>& p_con
 
 	int culled=0;
 	Instance *cull[1024];
-
-
-	culled=scenario->octree.cull_convex(p_convex,cull,1024);
+	for (int i = 0; i < 32; i++){
+		if (layer_mask & (1 << (i))) {
+			culled += scenario->octree[i].cull_convex(p_convex, cull + culled, 1024 - culled);
+		}
+	}
 
 	for (int i=0;i<culled;i++) {
 
@@ -3199,7 +3205,7 @@ void VisualServerRaster::_update_instance(Instance *p_instance) {
 
 
 
-	if (p_instance->octree_id==0) {
+	if (p_instance->octree_layers.size()==0) {
 
 		uint32_t base_type = 1<<p_instance->base_type;
 		uint32_t pairable_mask=0;
@@ -3237,14 +3243,20 @@ void VisualServerRaster::_update_instance(Instance *p_instance) {
 
 
 		// not inside octree
-		p_instance->octree_id = p_instance->scenario->octree.create(p_instance,new_aabb,0,pairable,base_type,pairable_mask);
+		for (int i = 0; i < 32; i++) {
+			if (p_instance->layer_mask & (1 << (i))) {
+				uint32_t octree_id = p_instance->scenario->octree[i].create(p_instance, new_aabb, 0, pairable, base_type, pairable_mask);
+				p_instance->octree_layers.push_back(Instance::OctreeLayer(i, octree_id));
+			}
+		}
 
 	} else {
 
 	//	if (new_aabb==p_instance->data.transformed_aabb)
 	//		return;
-
-		p_instance->scenario->octree.move(p_instance->octree_id,new_aabb);
+		for (int i = 0; i < p_instance->octree_layers.size(); i++) {
+			p_instance->scenario->octree[p_instance->octree_layers[i].layer_index].move(p_instance->octree_layers[i].octree_id, new_aabb);
+		}
 	}
 
 	if (p_instance->base_type==INSTANCE_PORTAL) {
@@ -3393,8 +3405,11 @@ void VisualServerRaster::instance_light_set_enabled(RID p_instance,bool p_enable
 		return;
 
 	instance->light_info->enabled=p_enabled;
-	if (light_get_type(instance->base_rid)!=VS::LIGHT_DIRECTIONAL && instance->octree_id && instance->scenario)
-		instance->scenario->octree.set_pairable(instance->octree_id,p_enabled,1<<INSTANCE_LIGHT,p_enabled?INSTANCE_GEOMETRY_MASK:0);
+	if (light_get_type(instance->base_rid)!=VS::LIGHT_DIRECTIONAL && instance->octree_layers.size() && instance->scenario) {
+		for (int i = 0; i < instance->octree_layers.size(); i++) {
+			instance->scenario->octree[instance->octree_layers[i].layer_index].set_pairable(instance->octree_layers[i].octree_id, p_enabled, 1 << INSTANCE_LIGHT, p_enabled ? INSTANCE_GEOMETRY_MASK : 0);
+		}
+	}
 
 	//_instance_queue_update( instance , true );
 
@@ -5179,7 +5194,15 @@ void VisualServerRaster::_light_instance_update_pssm_shadow(Instance *p_light,Sc
 		light_frustum_planes[4]=Plane( z_vec, z_max+1e6 );
 		light_frustum_planes[5]=Plane( -z_vec, -z_min ); // z_min is ok, since casters further than far-light plane are not needed
 
-		int caster_cull_count = p_scenario->octree.cull_convex(light_frustum_planes,instance_shadow_cull_result,MAX_INSTANCE_CULL,INSTANCE_GEOMETRY_MASK);
+		uint32_t camera_layer_mask=p_camera->visible_layers;
+		uint32_t light_layer_mask=p_light->layer_mask;
+
+		int caster_cull_count=0;
+		for (int i = 0; i < 32; i++){
+			if (camera_layer_mask & (1 << (i)) && light_layer_mask & (1 << (i))) {
+				caster_cull_count += p_scenario->octree[i].cull_convex(light_frustum_planes, instance_shadow_cull_result + caster_cull_count, MAX_INSTANCE_CULL - caster_cull_count, INSTANCE_GEOMETRY_MASK);
+			}
+		}
 
 		// a pre pass will need to be needed to determine the actual z-near to be used
 		for(int j=0;j<caster_cull_count;j++) {
@@ -5279,8 +5302,16 @@ void VisualServerRaster::_light_instance_update_lispsm_shadow(Instance *p_light,
 
 	float near_dist=1;
 
+	uint32_t camera_layer_mask = p_camera->visible_layers;
+	uint32_t light_layer_mask = p_light->layer_mask;
+
 	Vector<Plane> light_frustum_planes = _camera_generate_orthogonal_planes(p_light,p_camera,p_cull_range.min,p_cull_range.max);
-	int caster_count = p_scenario->octree.cull_convex(light_frustum_planes,instance_shadow_cull_result,MAX_INSTANCE_CULL,INSTANCE_GEOMETRY_MASK);
+	int caster_count = 0;
+	for (int i = 0; i < 32; i++){
+		if (camera_layer_mask & (1 << (i)) && light_layer_mask & (1 << (i))) {
+			caster_count += p_scenario->octree[i].cull_convex(light_frustum_planes, instance_shadow_cull_result + caster_count, MAX_INSTANCE_CULL - caster_count, INSTANCE_GEOMETRY_MASK);
+		}
+	}
 
 	// this could be faster by just getting supports from the AABBs..
 	// but, safer to do as the original implementation explains for now..
@@ -5659,6 +5690,9 @@ void VisualServerRaster::_light_instance_update_shadow(Instance *p_light,Scenari
 
 	Rasterizer::ShadowType shadow_type = rasterizer->light_instance_get_shadow_type(p_light->light_info->instance);
 
+	uint32_t camera_layer_mask=p_camera->visible_layers;
+	uint32_t light_layer_mask=p_light->layer_mask;
+
 	switch(shadow_type) {
 
 		case Rasterizer::SHADOW_SIMPLE: {
@@ -5677,7 +5711,12 @@ void VisualServerRaster::_light_instance_update_shadow(Instance *p_light,Scenari
 			cm.set_perspective( angle*2.0, 1.0, 0.001, far );
 
 			Vector<Plane> planes = cm.get_projection_planes(p_light->data.transform);
-			int cull_count = p_scenario->octree.cull_convex(planes,instance_shadow_cull_result,MAX_INSTANCE_CULL,INSTANCE_GEOMETRY_MASK);
+			int cull_count = 0;
+			for (int i = 0; i < 32; i++){
+				if (camera_layer_mask & (1 << (i)) && light_layer_mask & (1 << (i))) {
+					cull_count = p_scenario->octree[i].cull_convex(planes, instance_shadow_cull_result + cull_count, MAX_INSTANCE_CULL - cull_count, INSTANCE_GEOMETRY_MASK);
+				}
+			}
 
 
 			for (int i=0;i<cull_count;i++) {
@@ -5717,8 +5756,11 @@ void VisualServerRaster::_light_instance_update_shadow(Instance *p_light,Scenari
 					planes[3]=p_light->data.transform.xform(Plane(Vector3(0,1,z).normalized(),radius));
 					planes[4]=p_light->data.transform.xform(Plane(Vector3(0,-1,z).normalized(),radius));
 
+					int cull_count=0;
+					for (int i = 0; i < 32; i++){
+						cull_count = p_scenario->octree[i].cull_convex(planes, instance_shadow_cull_result + cull_count, MAX_INSTANCE_CULL - cull_count, INSTANCE_GEOMETRY_MASK);
+					}
 
-					int cull_count = p_scenario->octree.cull_convex(planes,instance_shadow_cull_result,MAX_INSTANCE_CULL,INSTANCE_GEOMETRY_MASK);
 
 
 					for (int j=0;j<cull_count;j++) {
@@ -6562,7 +6604,13 @@ void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, S
 	cull_range.max=cull_range.z_near;
 
 	/* STEP 2 - CULL */
-	int cull_count = p_scenario->octree.cull_convex(planes,instance_cull_result,MAX_INSTANCE_CULL);
+	int cull_count = 0;
+
+	for (int i = 0; i < 32; i++) {
+		if (camera_layer_mask & (1 << (i))) {
+			cull_count += p_scenario->octree[i].cull_convex(planes, instance_cull_result + cull_count, MAX_INSTANCE_CULL - cull_count);
+		}
+	}
 	light_cull_count=0;
 	light_samplers_culled=0;
 
@@ -6597,8 +6645,12 @@ void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, S
 
 		}
 
-		room_cull_count = p_scenario->octree.cull_point(p_camera->transform.origin,room_cull_result,MAX_ROOM_CULL,NULL,(1<<INSTANCE_ROOM)|(1<<INSTANCE_PORTAL));
-
+		room_cull_count=0;
+		for (int i = 0; i < 32; i++) {
+			if (camera_layer_mask & (1 << (i))) {
+				room_cull_count += p_scenario->octree[i].cull_point(p_camera->transform.origin, room_cull_result + room_cull_count, MAX_ROOM_CULL - room_cull_count, NULL, (1 << INSTANCE_ROOM) | (1 << INSTANCE_PORTAL));
+			}
+		}
 
 		Set<Instance*> current_rooms;
 		Set<Instance*> portal_rooms;
