@@ -1464,7 +1464,8 @@ GDInstance* GDScript::_create_instance(const Variant** p_args,int p_argcount,Obj
 
 	instances.insert(instance->owner);
 
-	initializer->call(instance,p_args,p_argcount,r_error);
+	if (initializer)
+		initializer->call(instance,p_args,p_argcount,r_error);
 
 	if (r_error.error!=Variant::CallError::CALL_OK) {
 		instance->script=Ref<GDScript>();
