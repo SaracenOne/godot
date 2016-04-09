@@ -1396,6 +1396,7 @@ Error GDCompiler::_parse_class(GDScript *p_script,GDScript *p_owner,const GDPars
 	p_script->_base=NULL;
 	p_script->members.clear();
 	p_script->constants.clear();
+	p_script->_signals.clear();
 	p_script->member_functions.clear();
 	p_script->member_indices.clear();
 	p_script->member_info.clear();

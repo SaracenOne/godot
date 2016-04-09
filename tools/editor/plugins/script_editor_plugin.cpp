@@ -1592,9 +1592,7 @@ void ScriptEditor::reload_script_dirty_list() {
 			{
 				String path = script_dirty_list[0]->get_path();
 				if (path.find("local://") == -1 && path.find("::")) {
-					if (script_dirty_list[0]->is_used()) {
-						script_dirty_list[0]->reload();
-					}
+					script_dirty_list[0]->reload();
 				}
 				else {
 					script_dirty_list[0]->reload();
