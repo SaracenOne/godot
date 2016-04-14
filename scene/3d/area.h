@@ -35,8 +35,6 @@
 class Area : public CollisionObject {
 
 	OBJ_TYPE( Area, CollisionObject );
-
-	uint32_t layer_mask;
 public:
 
 	enum SpaceOverride {
@@ -56,6 +54,8 @@ private:
 	real_t gravity_distance_scale;
 	real_t angular_damp;
 	real_t linear_damp;
+	uint32_t collision_mask;
+	uint32_t layer_mask;
 	int priority;
 	bool monitoring;
 	bool monitorable;
@@ -159,14 +159,23 @@ public:
 	void set_monitorable(bool p_enable);
 	bool is_monitorable() const;
 
+	void set_collision_mask(uint32_t p_mask);
+	uint32_t get_collision_mask() const;
+
+	void set_layer_mask(uint32_t p_mask);
+	uint32_t get_layer_mask() const;
+
+	void set_collision_mask_bit(int p_bit, bool p_value);
+	bool get_collision_mask_bit(int p_bit) const;
+
+	void set_layer_mask_bit(int p_bit, bool p_value);
+	bool get_layer_mask_bit(int p_bit) const;
+
 	Array get_overlapping_bodies() const;
 	Array get_overlapping_areas() const; //function for script
 
 	bool overlaps_area(Node* p_area) const;
 	bool overlaps_body(Node* p_body) const;
-
-	void set_layer_mask(uint32_t p_mask);
-	uint32_t get_layer_mask() const;
 
 	Area();
 	~Area();
