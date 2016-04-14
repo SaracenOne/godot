@@ -519,59 +519,59 @@ bool Area::overlaps_body(Node* p_body) const{
 	return E->get().in_tree;
 
 }
- +void Area::set_collision_mask(uint32_t p_mask) {
-+
-+	collision_mask=p_mask;
-+	PhysicsServer::get_singleton()->area_set_collision_mask(get_rid(),p_mask);
-+}
-+
-+uint32_t Area::get_collision_mask() const {
-+
-+	return collision_mask;
-+}
-+void Area::set_layer_mask(uint32_t p_mask) {
-+
-+	layer_mask=p_mask;
-+	PhysicsServer::get_singleton()->area_set_layer_mask(get_rid(),p_mask);
-+}
-+
-+uint32_t Area::get_layer_mask() const {
-+
-+	return layer_mask;
-+}
-+
-+void Area::set_collision_mask_bit(int p_bit, bool p_value) {
-+
-+	uint32_t mask = get_collision_mask();
-+	if (p_value)
-+		mask|=1<<p_bit;
-+	else
-+		mask&=~(1<<p_bit);
-+	set_collision_mask(mask);
-+
-+}
-+
-+bool Area::get_collision_mask_bit(int p_bit) const{
-+
-+	return get_collision_mask()&(1<<p_bit);
-+}
-+
-+
-+void Area::set_layer_mask_bit(int p_bit, bool p_value) {
-+
-+	uint32_t mask = get_layer_mask();
-+	if (p_value)
-+		mask|=1<<p_bit;
-+	else
-+		mask&=~(1<<p_bit);
-+	set_layer_mask(mask);
-+
-+}
-+
-+bool Area::get_layer_mask_bit(int p_bit) const{
-+
-+	return get_layer_mask()&(1<<p_bit);
-+}
+void Area::set_collision_mask(uint32_t p_mask) {
+
+	collision_mask=p_mask;
+	PhysicsServer::get_singleton()->area_set_collision_mask(get_rid(),p_mask);
+}
+
+uint32_t Area::get_collision_mask() const {
+
+	return collision_mask;
+}
+void Area::set_layer_mask(uint32_t p_mask) {
+
+	layer_mask=p_mask;
+	PhysicsServer::get_singleton()->area_set_layer_mask(get_rid(),p_mask);
+}
+
+uint32_t Area::get_layer_mask() const {
+
+	return layer_mask;
+}
+
+void Area::set_collision_mask_bit(int p_bit, bool p_value) {
+
+	uint32_t mask = get_collision_mask();
+	if (p_value)
+		mask|=1<<p_bit;
+	else
+		mask&=~(1<<p_bit);
+	set_collision_mask(mask);
+
+}
+
+bool Area::get_collision_mask_bit(int p_bit) const{
+
+	return get_collision_mask()&(1<<p_bit);
+}
+
+
+void Area::set_layer_mask_bit(int p_bit, bool p_value) {
+
+	uint32_t mask = get_layer_mask();
+	if (p_value)
+		mask|=1<<p_bit;
+	else
+		mask&=~(1<<p_bit);
+	set_layer_mask(mask);
+
+}
+
+bool Area::get_layer_mask_bit(int p_bit) const{
+
+	return get_layer_mask()&(1<<p_bit);
+}
 
 
 void Area::_bind_methods() {
