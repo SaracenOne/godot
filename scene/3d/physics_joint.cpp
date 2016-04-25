@@ -232,11 +232,11 @@ RID PinJoint::_configure_joint(PhysicsBody *body_a,PhysicsBody *body_b) {
 
 
 	Vector3 pinpos = get_global_transform().origin;
-	Vector3 local_a = body_a->get_global_transform().affine_inverse().xform(pinpos);
+	Vector3 local_a = body_a->get_global_transform().translated(body_a->get_center_of_mass()).affine_inverse().xform(pinpos);
 	Vector3 local_b;
 
 	if (body_b)
-		local_b = body_b->get_global_transform().affine_inverse().xform(pinpos);
+		local_b = body_b->get_global_transform().translated(body_b->get_center_of_mass()).affine_inverse().xform(pinpos);
 	else
 		local_b=pinpos;
 
@@ -372,14 +372,14 @@ RID HingeJoint::_configure_joint(PhysicsBody *body_a,PhysicsBody *body_b) {
 	Vector3 hingepos = gt.origin;
 	Vector3 hingedir = gt.basis.get_axis(2);
 
-	Transform ainv = body_a->get_global_transform().affine_inverse();
+	Transform ainv = body_a->get_global_transform().translated(body_a->get_center_of_mass()).affine_inverse();
 
 	Transform local_a = ainv * gt;
 	local_a.orthonormalize();
 	Transform local_b = gt;
 
 	if (body_b) {
-		Transform binv = body_b->get_global_transform().affine_inverse();
+		Transform binv = body_b->get_global_transform().translated(body_b->get_center_of_mass()).affine_inverse();
 		local_b = binv * gt;
 	}
 
@@ -535,14 +535,14 @@ RID SliderJoint::_configure_joint(PhysicsBody *body_a,PhysicsBody *body_b) {
 	Vector3 sliderpos = gt.origin;
 	Vector3 sliderdir = gt.basis.get_axis(2);
 
-	Transform ainv = body_a->get_global_transform().affine_inverse();
+	Transform ainv = body_a->get_global_transform().translated(body_a->get_center_of_mass()).affine_inverse();
 
 	Transform local_a = ainv * gt;
 	local_a.orthonormalize();
 	Transform local_b = gt;
 
 	if (body_b) {
-		Transform binv = body_b->get_global_transform().affine_inverse();
+		Transform binv = body_b->get_global_transform().translated(body_b->get_center_of_mass()).affine_inverse();
 		local_b = binv * gt;
 	}
 
@@ -667,14 +667,14 @@ RID ConeTwistJoint::_configure_joint(PhysicsBody *body_a,PhysicsBody *body_b) {
 	//Vector3 cone_twistpos = gt.origin;
 	//Vector3 cone_twistdir = gt.basis.get_axis(2);
 
-	Transform ainv = body_a->get_global_transform().affine_inverse();
+	Transform ainv = body_a->get_global_transform().translated(body_a->get_center_of_mass()).affine_inverse();
 
 	Transform local_a = ainv * gt;
 	local_a.orthonormalize();
 	Transform local_b = gt;
 
 	if (body_b) {
-		Transform binv = body_b->get_global_transform().affine_inverse();
+		Transform binv = body_b->get_global_transform().translated(body_b->get_center_of_mass()).affine_inverse();
 		local_b = binv * gt;
 	}
 
@@ -990,14 +990,14 @@ RID Generic6DOFJoint::_configure_joint(PhysicsBody *body_a,PhysicsBody *body_b) 
 	//Vector3 cone_twistpos = gt.origin;
 	//Vector3 cone_twistdir = gt.basis.get_axis(2);
 
-	Transform ainv = body_a->get_global_transform().affine_inverse();
+	Transform ainv = body_a->get_global_transform().translated(body_a->get_center_of_mass()).affine_inverse();
 
 	Transform local_a = ainv * gt;
 	local_a.orthonormalize();
 	Transform local_b = gt;
 
 	if (body_b) {
-		Transform binv = body_b->get_global_transform().affine_inverse();
+		Transform binv = body_b->get_global_transform().translated(body_b->get_center_of_mass()).affine_inverse();
 		local_b = binv * gt;
 	}
 
