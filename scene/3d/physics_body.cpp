@@ -486,7 +486,11 @@ void RigidBody::_direct_state_changed(Object *p_state) {
 	}
 
 	set_ignore_transform_notification(true);
-	set_global_transform(state->get_transform().translated(-center_of_mass));
+	Vector3 scale = get_global_transform().basis.get_scale();
+	Transform new_transform = state->get_transform();
+	new_transform.scale_basis(scale);
+	new_transform.translate(-center_of_mass);
+	set_global_transform(new_transform);
 	linear_velocity=state->get_linear_velocity();
 	angular_velocity=state->get_angular_velocity();
 	if(sleeping!=state->is_sleeping()) {
@@ -916,6 +920,8 @@ RigidBody::RigidBody() : PhysicsBody(PhysicsServer::BODY_MODE_RIGID) {
 	can_sleep=true;
 
 	axis_lock = AXIS_LOCK_DISABLED;
+
+	set_as_toplevel(true);
 
 	PhysicsServer::get_singleton()->body_set_force_integration_callback(get_rid(),this,"_direct_state_changed");
 }

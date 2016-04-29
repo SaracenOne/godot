@@ -60,6 +60,7 @@ void CollisionObject::_notification(int p_what) {
 				PhysicsServer::get_singleton()->body_set_space(rid,space);
 
 			_update_pickable();
+			_update_shapes();
 		//get space
 		};
 
@@ -70,6 +71,7 @@ void CollisionObject::_notification(int p_what) {
 			else
 				PhysicsServer::get_singleton()->body_set_state(rid,PhysicsServer::BODY_STATE_TRANSFORM,get_global_transform().translated(center_of_mass));
 
+			_update_shapes();
 		} break;
 		case NOTIFICATION_VISIBILITY_CHANGED: {
 
@@ -104,8 +106,16 @@ void CollisionObject::_update_shapes() {
 		if (area)
 			PhysicsServer::get_singleton()->area_add_shape(rid,shapes[i].shape->get_rid(),shapes[i].xform);
 		else {
+
+			Vector3 scale = Vector3(1.0, 1.0, 1.0);
+
+			if (is_inside_tree()) {
+				scale = get_global_transform().basis.get_scale(); //?>"<
+			}
+
 			Transform xform = shapes[i].xform;
-			xform.origin -= center_of_mass;
+			xform.origin -= center_of_mass; //hmmm
+			xform.scale(scale);
 
 			PhysicsServer::get_singleton()->body_add_shape(rid,shapes[i].shape->get_rid(),xform);
 			if (shapes[i].trigger)
@@ -236,7 +246,6 @@ void CollisionObject::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_shape_count"),&CollisionObject::get_shape_count);
 	ObjectTypeDB::bind_method(_MD("set_shape","shape_idx","shape:Shape"),&CollisionObject::set_shape);
 	ObjectTypeDB::bind_method(_MD("set_shape_transform","shape_idx","transform"),&CollisionObject::set_shape_transform);
-//    ObjectTypeDB::bind_method(_MD("set_shape_transform","shape_idx","transform"),&CollisionObject::set_shape_transform);
 	ObjectTypeDB::bind_method(_MD("set_shape_as_trigger","shape_idx","enable"),&CollisionObject::set_shape_as_trigger);
 	ObjectTypeDB::bind_method(_MD("is_shape_set_as_trigger","shape_idx"),&CollisionObject::is_shape_set_as_trigger);
 	ObjectTypeDB::bind_method(_MD("get_shape:Shape","shape_idx"),&CollisionObject::get_shape);
