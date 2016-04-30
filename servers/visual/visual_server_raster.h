@@ -34,7 +34,7 @@
 #include "servers/visual/rasterizer.h"
 #include "balloon_allocator.h"
 #include "octree.h"
-#include "depth_buffer_sw.h"
+//#include "depth_buffer_sw.h"
 
 /**
 	@author Juan Linietsky <reduzio@gmail.com>
@@ -1308,7 +1308,7 @@ public:
 	virtual void set_swap_buffers_active(const bool p_active);
 
 	RID get_test_cube();
-	DepthBufferSW *depth_buffer;
+	//DepthBufferSW *depth_buffer;
 
 	virtual void set_boot_image(const Image& p_image, const Color& p_color, bool p_scale);
 	virtual void set_default_clear_color(const Color& p_color);
