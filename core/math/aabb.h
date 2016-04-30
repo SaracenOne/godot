@@ -42,7 +42,7 @@
 
 class AABB {
 public:
-	const enum IntersectionType {
+	enum IntersectionType {
 		INTERSECTION_INTERSECTS = 0,
 		INTERSECTION_INSIDE,
 		INTERSECTION_OUTSIDE
