@@ -323,7 +323,7 @@ public:
 	const Map<StringName,GDFunction>& get_member_functions() const { return member_functions; }
 	const Ref<GDNativeClass>& get_native() const { return native; }
 
-	virtual const Set<Ref<Script>> get_inherited_scripts() const;
+	virtual const Set<Ref<Script> > get_inherited_scripts() const;
 
 	virtual bool has_script_signal(const StringName& p_signal) const;
 	virtual void get_script_signal_list(List<MethodInfo> *r_signals) const;

@@ -1596,8 +1596,8 @@ void ScriptEditor::add_script_to_dirty_list(Ref<Script> p_script, const bool all
 		}
 	}
 
-	Set<Ref<Script>> inherited_scripts = p_script->get_inherited_scripts();
-	for (Set<Ref<Script>>::Element *E = inherited_scripts.front(); E; E = E->next()) {
+	Set<Ref<Script> > inherited_scripts = p_script->get_inherited_scripts();
+	for (Set<Ref<Script> >::Element *E = inherited_scripts.front(); E; E = E->next()) {
 		add_script_inheritors_to_dirty_list(E->get());
 	}
 }
@@ -1618,8 +1618,8 @@ void ScriptEditor::add_script_inheritors_to_dirty_list(Ref<Script> p_script) {
 		script_dirty_list.push_back(p_script);
 	}
 
-	Set<Ref<Script>> inherited_scripts = p_script->get_inherited_scripts();
-	for (Set<Ref<Script>>::Element *E = inherited_scripts.front(); E; E = E->next()) {
+	Set<Ref<Script> > inherited_scripts = p_script->get_inherited_scripts();
+	for (Set<Ref<Script> >::Element *E = inherited_scripts.front(); E; E = E->next()) {
 		add_script_inheritors_to_dirty_list(E->get());
 	}
 }

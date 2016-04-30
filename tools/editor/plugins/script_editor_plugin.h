@@ -227,7 +227,7 @@ class ScriptEditor : public VBoxContainer {
 
 	EditorHelpIndex *help_index;
 
-	Vector<Ref<Script>> script_dirty_list;
+	Vector<Ref<Script> > script_dirty_list;
 
 	void add_script_to_dirty_list(Ref<Script> p_script, const bool allow_duplicates);
 	void add_script_base_to_dirty_list(Ref<Script> p_script);

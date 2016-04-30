@@ -1998,10 +1998,10 @@ void GDScript::_convert_instances_to_placeholders() {
 #endif
 }
 
-const Set<Ref<Script>> GDScript::get_inherited_scripts() const {
+const Set<Ref<Script> > GDScript::get_inherited_scripts() const {
 
 #ifdef TOOLS_ENABLED
-	Set<Ref<Script>> inherited_scripts;
+	Set<Ref<Script> > inherited_scripts;
 
 	//print_line("update exports for "+get_path()+" ic: "+itos(copy.size()));
 	for (Set<ObjectID>::Element *E=inheriters_cache.front(); E; E=E->next()) {
@@ -2020,7 +2020,7 @@ const Set<Ref<Script>> GDScript::get_inherited_scripts() const {
 
 	return inherited_scripts;
 #else
-	return Set<Ref<Script>>();
+	return Set<Ref<Script> >();
 #endif
 }
 
