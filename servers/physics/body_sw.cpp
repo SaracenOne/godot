@@ -662,6 +662,18 @@ void BodySW::wakeup_neighbours() {
 	}
 }
 
+void BodySW::set_as_toplevel(const bool p_true) {
+	if (fi_callback) {
+		Object *obj = ObjectDB::get_instance(fi_callback->id);
+		if (obj) {
+			const Variant *vp[1] = { &Variant(p_true) };
+
+			Variant::CallError ce;
+			obj->call("set_as_toplevel",vp,1,ce);
+		}
+	}
+}
+
 void BodySW::call_queries() {
 
 

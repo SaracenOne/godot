@@ -921,8 +921,6 @@ RigidBody::RigidBody() : PhysicsBody(PhysicsServer::BODY_MODE_RIGID) {
 
 	axis_lock = AXIS_LOCK_DISABLED;
 
-	set_as_toplevel(true);
-
 	PhysicsServer::get_singleton()->body_set_force_integration_callback(get_rid(),this,"_direct_state_changed");
 }
 
