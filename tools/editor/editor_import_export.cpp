@@ -240,12 +240,12 @@ static void _edit_files_with_filter(DirAccess *da,const List<String>& p_filters,
 		for(const List<String>::Element *F=p_filters.front();F;F=F->next()) {
 
 			if (fullpath.matchn(F->get())) {
-				String act = "Added: ";
+				String act = TTR("Added: ");
 
 				if (!exclude) {
 					r_list.insert(fullpath);
 				} else {
-					act = "Removed: ";
+					act = TTR("Removed: ");
 					r_list.erase(fullpath);
 				}
 
@@ -866,7 +866,7 @@ Error EditorExportPlatform::export_project_files(EditorExportSaveFunction p_func
 			Error err = plugin->import2(dst_file,imd,get_image_compression(),true);
 			if (err) {
 
-				EditorNode::add_io_error("Error saving atlas! "+dst_file.get_file());
+				EditorNode::add_io_error(TTR("Error saving atlas! ")+dst_file.get_file());
 				return ERR_CANT_CREATE;
 			}
 
@@ -916,7 +916,7 @@ Error EditorExportPlatform::export_project_files(EditorExportSaveFunction p_func
 				String path = EditorSettings::get_singleton()->get_settings_path()+"/tmp/tmpatlas.atex";
 				Error err = ResourceSaver::save(path,atex);
 				if (err!=OK) {
-					EditorNode::add_io_error("Could not save atlas subtexture: "+path);
+					EditorNode::add_io_error(TTR("Could not save atlas subtexture: ")+path);
 					return ERR_CANT_CREATE;
 				}
 				Vector<uint8_t> data = FileAccess::get_file_as_array(path);
@@ -1157,7 +1157,7 @@ Error EditorExportPlatform::save_pack_file(void *p_userdata,const String& p_path
 		MD5Final(&ctx);
 		pd->f->store_buffer(ctx.digest,16);
 	}
-	pd->ep->step("Storing File: "+p_path,2+p_file*100/p_total,false);
+	pd->ep->step(TTR("Storing File: ")+p_path,2+p_file*100/p_total,false);
 	pd->count++;
 	pd->ftmp->store_buffer(p_data.ptr(),p_data.size());
 	if (pd->alignment > 1) {
@@ -1195,7 +1195,7 @@ Error EditorExportPlatform::save_zip_file(void *p_userdata,const String& p_path,
 	zipWriteInFileInZip(zip,p_data.ptr(),p_data.size());
 	zipCloseFileInZip(zip);
 
-	zd->ep->step("Storing File: "+p_path,2+p_file*100/p_total,false);
+	zd->ep->step(TTR("Storing File: ")+p_path,2+p_file*100/p_total,false);
 	zd->count++;
 	return OK;
 
@@ -1203,7 +1203,7 @@ Error EditorExportPlatform::save_zip_file(void *p_userdata,const String& p_path,
 
 Error EditorExportPlatform::save_zip(const String& p_path, bool p_make_bundles) {
 
-	EditorProgress ep("savezip","Packing",102);
+	EditorProgress ep("savezip",TTR("Packing"),102);
 
 	//FileAccess *tmp = FileAccess::open(tmppath,FileAccess::WRITE);
 
@@ -1226,7 +1226,7 @@ Error EditorExportPlatform::save_zip(const String& p_path, bool p_make_bundles) 
 
 Error EditorExportPlatform::save_pack(FileAccess *dst,bool p_make_bundles, int p_alignment) {
 
-	EditorProgress ep("savepack","Packing",102);
+	EditorProgress ep("savepack",TTR("Packing"),102);
 
 	String tmppath = EditorSettings::get_singleton()->get_settings_path()+"/tmp/packtmp";
 	FileAccess *tmp = FileAccess::open(tmppath,FileAccess::WRITE);
@@ -1309,13 +1309,13 @@ Error EditorExportPlatformPC::export_project(const String& p_path, bool p_debug,
 
 
 
-	EditorProgress ep("export","Exporting for "+get_name(),102);
+	EditorProgress ep("export",TTR("Exporting for ")+get_name(),102);
 
 	const int BUFSIZE = 32768;
 
 
 
-	ep.step("Setting Up..",0);
+	ep.step(TTR("Setting Up.."),0);
 
 	String exe_path="";
 

@@ -61,6 +61,8 @@ private:
 	int max_columns;
 	Size2 min_icon_size;
 
+	int defer_select_single;
+
 	void _scroll_changed(double);
 	void _input_event(const InputEvent& p_event);
 protected:
@@ -68,6 +70,7 @@ protected:
 	void _notification(int p_what);
 	static void _bind_methods();
 public:
+
 
 	void add_item(const String& p_item,const Ref<Texture>& p_texture=Ref<Texture>(),bool p_selectable=true);
 	void add_icon_item(const Ref<Texture>& p_item,bool p_selectable=true);

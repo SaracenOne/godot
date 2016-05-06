@@ -1556,8 +1556,20 @@ Variant::operator String() const {
 			
 			return str;
 		} break;
-		case VECTOR3_ARRAY: { 
-		
+		case VECTOR2_ARRAY: {
+
+			DVector<Vector2> vec = operator DVector<Vector2>();
+			String str;
+			for(int i=0;i<vec.size();i++) {
+
+				if (i>0)
+					str+=", ";
+				str=str+Variant( vec[i] );
+			}
+			return str;
+		} break;
+		case VECTOR3_ARRAY: {
+
 			DVector<Vector3> vec = operator DVector<Vector3>();
 			String str;
 			for(int i=0;i<vec.size();i++) {

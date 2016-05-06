@@ -108,6 +108,8 @@ class RasterizerGLES2 : public Rasterizer {
 	bool use_half_float;
 	bool low_memory_2d;
 
+	bool shrink_textures_x2;
+
 	bool swap_buffers_active;
 
 	int msaa_multisamples;
@@ -1372,6 +1374,8 @@ public:
 	virtual void texture_set_path(RID p_texture,const String& p_path);
 	virtual String texture_get_path(RID p_texture) const;
 	virtual void texture_debug_usage(List<VS::TextureInfo> *r_info);
+
+	virtual void texture_set_shrink_all_x2_on_set_data(bool p_enable);
 
 	GLuint _texture_get_name(RID p_tex);
 

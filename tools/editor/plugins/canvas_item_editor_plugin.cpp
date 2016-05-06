@@ -62,8 +62,8 @@ public:
 		VBoxContainer *container;
 		GridContainer *child_container;
 
-		set_title("Configure Snap");
-		get_ok()->set_text("Close");
+		set_title(TTR("Configure Snap"));
+		get_ok()->set_text(TTR("Close"));
 
 		container = memnew( VBoxContainer );
 		add_child(container);
@@ -74,7 +74,7 @@ public:
 		container->add_child(child_container);
 
 		label = memnew( Label );
-		label->set_text("Grid Offset:");
+		label->set_text(TTR("Grid Offset:"));
 		child_container->add_child(label);
 		label->set_h_size_flags(SIZE_EXPAND_FILL);
 
@@ -91,7 +91,7 @@ public:
 		child_container->add_child(grid_offset_y);
 
 		label = memnew( Label );
-		label->set_text("Grid Step:");
+		label->set_text(TTR("Grid Step:"));
 		child_container->add_child(label);
 		label->set_h_size_flags(SIZE_EXPAND_FILL);
 
@@ -114,7 +114,7 @@ public:
 		container->add_child(child_container);
 
 		label = memnew( Label );
-		label->set_text("Rotation Offset:");
+		label->set_text(TTR("Rotation Offset:"));
 		child_container->add_child(label);
 		label->set_h_size_flags(SIZE_EXPAND_FILL);
 
@@ -125,7 +125,7 @@ public:
 		child_container->add_child(rotation_offset);
 
 		label = memnew( Label );
-		label->set_text("Rotation Step:");
+		label->set_text(TTR("Rotation Step:"));
 		child_container->add_child(label);
 		label->set_h_size_flags(SIZE_EXPAND_FILL);
 
@@ -158,7 +158,7 @@ public:
 void CanvasItemEditor::_edit_set_pivot(const Vector2& mouse_pos) {
 	List<Node*> &selection = editor_selection->get_selected_node_list();
 
-	undo_redo->create_action("Move Pivot");
+	undo_redo->create_action(TTR("Move Pivot"));
 
 	for(List<Node*>::Element *E=selection.front();E;E=E->next()) {
 
@@ -645,7 +645,7 @@ void CanvasItemEditor::_key_move(const Vector2& p_dir, bool p_snap, KeyMoveMODE 
 	if (editor_selection->get_selected_node_list().empty())
 		return;
 
-	undo_redo->create_action("Move Action",true);
+	undo_redo->create_action(TTR("Move Action"),true);
 
 	List<Node*> &selection = editor_selection->get_selected_node_list();
 
@@ -1193,7 +1193,7 @@ void CanvasItemEditor::_viewport_input_event(const InputEvent& p_event) {
 					if (bone_ik_list.size()) {
 
 
-						undo_redo->create_action("Edit IK Chain");
+						undo_redo->create_action(TTR("Edit IK Chain"));
 
 						for(List<BoneIK>::Element *E=bone_ik_list.back();E;E=E->prev()) {
 
@@ -1209,7 +1209,7 @@ void CanvasItemEditor::_viewport_input_event(const InputEvent& p_event) {
 						undo_redo->commit_action();
 					} else {
 
-						undo_redo->create_action("Edit CanvasItem");
+						undo_redo->create_action(TTR("Edit CanvasItem"));
 
 
 						List<Node*> &selection = editor_selection->get_selected_node_list();
@@ -1921,7 +1921,7 @@ void CanvasItemEditor::_viewport_draw() {
 		if (h_scroll->is_visible())
 			size.height-=h_scroll->get_size().height;
 
-		get_stylebox("EditorFocus","EditorStyles")->draw(ci,Rect2(Point2(),size));
+		get_stylebox(TTR("EditorFocus"),"EditorStyles")->draw(ci,Rect2(Point2(),size));
 	}
 
 	Ref<Texture> lock = get_icon("Lock","EditorIcons");
@@ -2244,7 +2244,7 @@ void CanvasItemEditor::_notification(int p_what) {
 		key_insert_button->set_icon(get_icon("Key","EditorIcons"));
 
 
-		//anchor_menu->add_icon_override("Align Top Left");
+		//anchor_menu->add_icon_override(TTR("Align Top Left"));
 		anchor_menu->set_icon(get_icon("Anchor","EditorIcons"));
 		PopupMenu *p=anchor_menu->get_popup();
 
@@ -2479,7 +2479,7 @@ void CanvasItemEditor::_update_scroll(float) {
 void CanvasItemEditor::_set_anchor(Control::AnchorType p_left,Control::AnchorType p_top,Control::AnchorType p_right,Control::AnchorType p_bottom) {
 	List<Node*> &selection = editor_selection->get_selected_node_list();
 
-	undo_redo->create_action("Change Anchors");
+	undo_redo->create_action(TTR("Change Anchors"));
 	for(List<Node*>::Element *E=selection.front();E;E=E->next()) {
 
 		Control *c = E->get()->cast_to<Control>();
@@ -2558,7 +2558,7 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 
 			updating_value_dialog=true;
 
-			dialog_label->set_text("Zoom (%):");
+			dialog_label->set_text(TTR("Zoom (%):"));
 			dialog_val->set_min(0.1);
 			dialog_val->set_step(0.1);
 			dialog_val->set_max(800);
@@ -2913,7 +2913,7 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 			if (!pose_clipboard.size())
 				break;
 
-			undo_redo->create_action("Paste Pose");
+			undo_redo->create_action(TTR("Paste Pose"));
 			for (List<PoseClipboard>::Element *E=pose_clipboard.front();E;E=E->next()) {
 
 				Object *o = ObjectDB::get_instance(E->get().id);
@@ -3162,7 +3162,7 @@ void CanvasItemEditor::end_drag() {
 
 	if (undo_redo) {
 
-		undo_redo->create_action("Edit CanvasItem");
+		undo_redo->create_action(TTR("Edit CanvasItem"));
 		for(CanvasItemMap::Element *E=canvas_items.front();E;E=E->next()) {
 			CanvasItem *canvas_item = E->key();
 			Variant state=canvas_item->edit_get_state();
@@ -3307,13 +3307,13 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	move_button->set_toggle_mode(true);
 	hb->add_child(move_button);
 	move_button->connect("pressed",this,"_tool_select",make_binds(TOOL_MOVE));
-	move_button->set_tooltip("Move Mode (W)");
+	move_button->set_tooltip(TTR("Move Mode (W)"));
 
 	rotate_button = memnew( ToolButton );
 	rotate_button->set_toggle_mode(true);
 	hb->add_child(rotate_button);
 	rotate_button->connect("pressed",this,"_tool_select",make_binds(TOOL_ROTATE));
-	rotate_button->set_tooltip("Rotate Mode (E)");
+	rotate_button->set_tooltip(TTR("Rotate Mode (E)"));
 
 	hb->add_child(memnew(VSeparator));
 
@@ -3327,13 +3327,13 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	pivot_button->set_toggle_mode(true);
 	hb->add_child(pivot_button);
 	pivot_button->connect("pressed",this,"_tool_select",make_binds(TOOL_EDIT_PIVOT));
-	pivot_button->set_tooltip("Click to change object's rotation pivot");
+	pivot_button->set_tooltip(TTR("Click to change object's rotation pivot"));
 
 	pan_button = memnew( ToolButton );
 	pan_button->set_toggle_mode(true);
 	hb->add_child(pan_button);
 	pan_button->connect("pressed",this,"_tool_select",make_binds(TOOL_PAN));
-	pan_button->set_tooltip("Pan Mode");
+	pan_button->set_tooltip(TTR("Pan Mode"));
 
 	hb->add_child(memnew(VSeparator));
 
@@ -3346,7 +3346,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	unlock_button = memnew( ToolButton );
 	hb->add_child(unlock_button);
 	unlock_button->connect("pressed",this,"_popup_callback",varray(UNLOCK_SELECTED));
-	unlock_button->set_tooltip("Unlock the selected object (can be moved).");
+	unlock_button->set_tooltip(TTR("Unlock the selected object (can be moved)."));
 
 	group_button = memnew( ToolButton );
 	hb->add_child(group_button);
@@ -3361,57 +3361,57 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	hb->add_child(memnew(VSeparator));
 
 	edit_menu = memnew( MenuButton );
-	edit_menu->set_text("Edit");
+	edit_menu->set_text(TTR("Edit"));
 	hb->add_child(edit_menu);
 	edit_menu->get_popup()->connect("item_pressed", this,"_popup_callback");
 
 	PopupMenu *p;
 	p = edit_menu->get_popup();
-	p->add_check_item("Use Snap",SNAP_USE);
-	p->add_check_item("Show Grid",SNAP_SHOW_GRID);
-	p->add_check_item("Use Rotation Snap",SNAP_USE_ROTATION);
-	p->add_check_item("Snap Relative",SNAP_RELATIVE);
-	p->add_item("Configure Snap..",SNAP_CONFIGURE);
+	p->add_check_item(TTR("Use Snap"),SNAP_USE);
+	p->add_check_item(TTR("Show Grid"),SNAP_SHOW_GRID);
+	p->add_check_item(TTR("Use Rotation Snap"),SNAP_USE_ROTATION);
+	p->add_check_item(TTR("Snap Relative"),SNAP_RELATIVE);
+	p->add_item(TTR("Configure Snap.."),SNAP_CONFIGURE);
 	p->add_separator();
-	p->add_check_item("Use Pixel Snap",SNAP_USE_PIXEL);
+	p->add_check_item(TTR("Use Pixel Snap"),SNAP_USE_PIXEL);
 	p->add_separator();
-	p->add_item("Expand to Parent",EXPAND_TO_PARENT,KEY_MASK_CMD|KEY_P);
+	p->add_item(TTR("Expand to Parent"),EXPAND_TO_PARENT,KEY_MASK_CMD|KEY_P);
 	p->add_separator();
-	p->add_submenu_item("Skeleton..","skeleton");
+	p->add_submenu_item(TTR("Skeleton.."),"skeleton");
 	PopupMenu *p2 = memnew(PopupMenu);
 	p->add_child(p2);
 	p2->set_name("skeleton");
-	p2->add_item("Make Bones",SKELETON_MAKE_BONES,KEY_MASK_CMD|KEY_MASK_SHIFT|KEY_B);
-	p2->add_item("Clear Bones",SKELETON_CLEAR_BONES);
+	p2->add_item(TTR("Make Bones"),SKELETON_MAKE_BONES,KEY_MASK_CMD|KEY_MASK_SHIFT|KEY_B);
+	p2->add_item(TTR("Clear Bones"),SKELETON_CLEAR_BONES);
 	p2->add_separator();
-	p2->add_item("Make IK Chain",SKELETON_SET_IK_CHAIN);
-	p2->add_item("Clear IK Chain",SKELETON_CLEAR_IK_CHAIN);
+	p2->add_item(TTR("Make IK Chain"),SKELETON_SET_IK_CHAIN);
+	p2->add_item(TTR("Clear IK Chain"),SKELETON_CLEAR_IK_CHAIN);
 	p2->connect("item_pressed", this,"_popup_callback");
 
 
 	/*
-	p->add_item("Align Horizontal",ALIGN_HORIZONTAL);
-	p->add_item("Align Vertical",ALIGN_VERTICAL);
-	p->add_item("Space Horizontal",SPACE_HORIZONTAL);
-	p->add_item("Space Vertical",SPACE_VERTICAL);*/
+	p->add_item(TTR("Align Horizontal"),ALIGN_HORIZONTAL);
+	p->add_item(TTR("Align Vertical"),ALIGN_VERTICAL);
+	p->add_item(TTR("Space Horizontal"),SPACE_HORIZONTAL);
+	p->add_item(TTR("Space Vertical"),SPACE_VERTICAL);*/
 
 	view_menu = memnew( MenuButton );
-	view_menu->set_text("View");
+	view_menu->set_text(TTR("View"));
 	hb->add_child(view_menu);
 	view_menu->get_popup()->connect("item_pressed", this,"_popup_callback");
 
 	p = view_menu->get_popup();
 
-	p->add_item("Zoom In",ZOOM_IN);
-	p->add_item("Zoom Out",ZOOM_OUT);
-	p->add_item("Zoom Reset",ZOOM_RESET);
-	p->add_item("Zoom Set..",ZOOM_SET);
+	p->add_item(TTR("Zoom In"),ZOOM_IN);
+	p->add_item(TTR("Zoom Out"),ZOOM_OUT);
+	p->add_item(TTR("Zoom Reset"),ZOOM_RESET);
+	p->add_item(TTR("Zoom Set.."),ZOOM_SET);
 	p->add_separator();
-	p->add_item("Center Selection", VIEW_CENTER_TO_SELECTION, KEY_F);
-	p->add_item("Frame Selection", VIEW_FRAME_TO_SELECTION, KEY_MASK_CMD|KEY_F);
+	p->add_item(TTR("Center Selection"), VIEW_CENTER_TO_SELECTION, KEY_F);
+	p->add_item(TTR("Frame Selection"), VIEW_FRAME_TO_SELECTION, KEY_MASK_CMD|KEY_F);
 
 	anchor_menu = memnew( MenuButton );
-	anchor_menu->set_text("Anchor");
+	anchor_menu->set_text(TTR("Anchor"));
 	hb->add_child(anchor_menu);
 	anchor_menu->get_popup()->connect("item_pressed", this,"_popup_callback");
 	anchor_menu->hide();
@@ -3451,7 +3451,7 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 	key_insert_button = memnew( Button );
 	key_insert_button->set_focus_mode(FOCUS_NONE);
 	key_insert_button->connect("pressed",this,"_popup_callback",varray(ANIM_INSERT_KEY));
-	key_insert_button->set_tooltip("Insert Keys (Insert)");
+	key_insert_button->set_tooltip(TTR("Insert Keys (Insert)"));
 
 	animation_hb->add_child(key_insert_button);
 
@@ -3462,24 +3462,24 @@ CanvasItemEditor::CanvasItemEditor(EditorNode *p_editor) {
 
 	p = animation_menu->get_popup();
 
-	p->add_item("Insert Key",ANIM_INSERT_KEY,KEY_INSERT);
-	p->add_item("Insert Key (Existing Tracks)",ANIM_INSERT_KEY_EXISTING,KEY_MASK_CMD+KEY_INSERT);
+	p->add_item(TTR("Insert Key"),ANIM_INSERT_KEY,KEY_INSERT);
+	p->add_item(TTR("Insert Key (Existing Tracks)"),ANIM_INSERT_KEY_EXISTING,KEY_MASK_CMD+KEY_INSERT);
 	p->add_separator();
-	p->add_item("Copy Pose",ANIM_COPY_POSE);
-	p->add_item("Paste Pose",ANIM_PASTE_POSE);
-	p->add_item("Clear Pose",ANIM_CLEAR_POSE,KEY_MASK_SHIFT|KEY_K);
+	p->add_item(TTR("Copy Pose"),ANIM_COPY_POSE);
+	p->add_item(TTR("Paste Pose"),ANIM_PASTE_POSE);
+	p->add_item(TTR("Clear Pose"),ANIM_CLEAR_POSE,KEY_MASK_SHIFT|KEY_K);
 
 	snap_dialog = memnew( SnapDialog );
 	snap_dialog->connect("confirmed",this,"_snap_changed");
 	add_child(snap_dialog);
 
 	value_dialog = memnew( AcceptDialog );
-	value_dialog->set_title("Set a Value");
-	value_dialog->get_ok()->set_text("Close");
+	value_dialog->set_title(TTR("Set a Value"));
+	value_dialog->get_ok()->set_text(TTR("Close"));
 	add_child(value_dialog);
 
 	Label *l = memnew(Label);
-	l->set_text("Snap (Pixels):");
+	l->set_text(TTR("Snap (Pixels):"));
 	l->set_pos(Point2(5,5));
 	value_dialog->add_child(l);
 	dialog_label=l;
