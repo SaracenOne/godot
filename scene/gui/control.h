@@ -186,7 +186,8 @@ private:
 
 	Vector2 _get_rotation_and_scale_offset(Vector2 p_point, Vector2 p_pivot, Vector2 p_scale, float p_angle) const;
 
-	void _set_rotation_deg(float p_rot);
+	// Deprecated, should be removed in a future version.
+	void _set_rotation_deg(float p_degrees);
 	float _get_rotation_deg() const;
 
 friend class Viewport;
@@ -281,8 +282,10 @@ public:
 	Rect2 get_global_rect() const;
 	Rect2 get_window_rect() const; ///< use with care, as it blocks waiting for the visual server
 
-	void set_rotation(float p_rotation);
+	void set_rotation(float p_radians);
+	void set_rotation_deg(float p_degrees);
 	float get_rotation() const;
+	float get_rotation_deg() const;
 
 	void set_scale(const Vector2& p_scale);
 	Vector2 get_scale() const;
