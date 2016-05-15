@@ -204,6 +204,8 @@ public:
 };
 
 
+
+
 class SpatialPlayerSpatialGizmo  : public EditorSpatialGizmo {
 
 	OBJ_TYPE(SpatialPlayerSpatialGizmo,EditorSpatialGizmo);
@@ -216,6 +218,8 @@ public:
 	SpatialPlayerSpatialGizmo(SpatialPlayer* p_splayer=NULL);
 
 };
+
+
 
 class TestCubeSpatialGizmo  : public EditorSpatialGizmo {
 
