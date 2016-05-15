@@ -2,7 +2,6 @@ Import('env')
 Import('env_ssl')
 
 openssl_sources = [
-"nocpuid.c",
 "ssl/t1_lib.c",
 "ssl/t1_ext.c",
 "ssl/s3_srvr.c",
@@ -652,6 +651,9 @@ env_ssl.Append(CPPPATH=["#drivers/builtin_openssl2/crypto/modes"])
 env_ssl.Append(CPPFLAGS=["-DOPENSSL_NO_ASM","-DOPENSSL_THREADS","-DL_ENDIAN"])
 #env_ssl.Append(CFLAGS=["-Wno-error=implicit-function-declaration"]);
 
+# Workaround for compilation error with GCC/Clang when -Werror is too greedy (GH-4517)
+import os
+if not (os.name=="nt" and os.getenv("VSINSTALLDIR")!=None): # not Windows and not MSVC
+	env_ssl.Append(CFLAGS=["-Wno-error=implicit-function-declaration"])
+
 env_ssl.add_source_files(env.drivers_sources,openssl_sources)
-
-
