@@ -177,6 +177,7 @@ public:
 	bool overlaps_area(Node* p_area) const;
 	bool overlaps_body(Node* p_body) const;
 
+
 	Area();
 	~Area();
 };
