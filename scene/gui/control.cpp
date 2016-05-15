@@ -2186,10 +2186,11 @@ bool Control::is_text_field() const {
 
 void Control::set_rotation(float p_radians) {
 
-	data.scale_rotate_pivot_change =true;
+	data.scale_rotate_pivot_changed = true;
 	data.rotation=p_radians;
 	update();
 	_notify_transform();
+	_size_changed();
 }
 
 float Control::get_rotation() const{
