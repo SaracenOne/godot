@@ -210,10 +210,10 @@ void SceneTreeEditor::_cell_button_pressed(Object *p_item,int p_column,int p_id)
 	}
 }
 
-void SceneTreeEditor::_add_nodes(Node *p_node,TreeItem *p_parent) {
+bool SceneTreeEditor::_add_nodes(Node *p_node,TreeItem *p_parent) {
 
 	if (!p_node)
-		return;
+		return false;
 
 	// only owned nodes are editable, since nodes can create their own (manually owned) child nodes,
 	// which the editor needs not to know about.
@@ -227,7 +227,7 @@ void SceneTreeEditor::_add_nodes(Node *p_node,TreeItem *p_parent) {
 			part_of_subscene=true;
 			//allow
 		} else {
-			return;
+			return false;
 		}
 	} else {
 		part_of_subscene = p_node!=get_scene_node() && get_scene_node()->get_scene_inherited_state().is_valid() && get_scene_node()->get_scene_inherited_state()->find_node_by_path(get_scene_node()->get_path_to(p_node))>=0;
@@ -345,10 +345,23 @@ void SceneTreeEditor::_add_nodes(Node *p_node,TreeItem *p_parent) {
 		item->set_as_cursor(0);
 	}
 
+	bool keep= ( filter==String() || String(p_node->get_name()).find(filter)!=-1 );
+
 	for (int i=0;i<p_node->get_child_count();i++) {
 
-		_add_nodes(p_node->get_child(i),item);
+		bool child_keep = _add_nodes(p_node->get_child(i),item);
+
+		keep = keep || child_keep;
+
 	}
+
+	if (!keep) {
+		memdelete(item);
+		return false;
+	} else {
+		return true;
+	}
+
 }
 
 
@@ -700,6 +713,18 @@ void SceneTreeEditor::set_marked(Node *p_marked,bool p_selectable,bool p_childre
 
 }
 
+void SceneTreeEditor::set_filter(const String& p_filter) {
+
+	filter=p_filter;
+	_update_tree();
+}
+
+String SceneTreeEditor::get_filter() const {
+
+	return filter;
+}
+
+
 void SceneTreeEditor::set_display_foreign_nodes(bool p_display) {
 
 	display_foreign=p_display;
@@ -837,6 +862,9 @@ bool SceneTreeEditor::can_drop_data_fw(const Point2& p_point,const Variant& p_da
 
 	if (!can_rename)
 		return false; //not editable tree
+	if (filter!=String())
+		return false; //can't rearrange tree with filter turned on
+
 
 	Dictionary d=p_data;
 	if (!d.has("type"))
@@ -908,6 +936,12 @@ void SceneTreeEditor::drop_data_fw(const Point2& p_point,const Variant& p_data,C
 
 }
 
+void SceneTreeEditor::_rmb_select(const Vector2& p_pos) {
+
+	emit_signal("rmb_pressed",tree->get_global_transform().xform(p_pos));
+}
+
+
 
 void SceneTreeEditor::_bind_methods() {
 
@@ -923,6 +957,7 @@ void SceneTreeEditor::_bind_methods() {
 	ObjectTypeDB::bind_method("_cell_button_pressed",&SceneTreeEditor::_cell_button_pressed);
 	ObjectTypeDB::bind_method("_cell_collapsed",&SceneTreeEditor::_cell_collapsed);
 	ObjectTypeDB::bind_method("_subscene_option",&SceneTreeEditor::_subscene_option);
+	ObjectTypeDB::bind_method("_rmb_select",&SceneTreeEditor::_rmb_select);
 
 	ObjectTypeDB::bind_method("_node_script_changed",&SceneTreeEditor::_node_script_changed);
 	ObjectTypeDB::bind_method("_node_visibility_changed",&SceneTreeEditor::_node_visibility_changed);
@@ -937,6 +972,7 @@ void SceneTreeEditor::_bind_methods() {
 	ADD_SIGNAL( MethodInfo("node_changed") );
 	ADD_SIGNAL( MethodInfo("nodes_rearranged",PropertyInfo(Variant::ARRAY,"paths"),PropertyInfo(Variant::NODE_PATH,"to_path"),PropertyInfo(Variant::INT,"type") ) );
 	ADD_SIGNAL( MethodInfo("files_dropped",PropertyInfo(Variant::STRING_ARRAY,"files"),PropertyInfo(Variant::NODE_PATH,"to_path"),PropertyInfo(Variant::INT,"type") ) );
+	ADD_SIGNAL( MethodInfo("rmb_pressed",PropertyInfo(Variant::VECTOR2,"pos")) ) ;
 
 	ADD_SIGNAL( MethodInfo("open") );
 	ADD_SIGNAL( MethodInfo("open_script") );
@@ -976,6 +1012,11 @@ SceneTreeEditor::SceneTreeEditor(bool p_label,bool p_can_rename, bool p_can_open
 	add_child( tree );
 
 	tree->set_drag_forwarding(this);
+	if (p_can_rename) {
+		tree->set_allow_rmb_select(true);
+		tree->connect("item_rmb_selected",this,"_rmb_select");
+		tree->connect("empty_tree_rmb_selected",this,"_rmb_select");
+	}
 
 	tree->connect("cell_selected", this,"_selected_changed");
 	tree->connect("item_edited", this,"_renamed",varray(),CONNECT_DEFERRED);
