@@ -62,7 +62,7 @@ BakedLightBaker::MeshTexture* BakedLightBaker::_get_mat_tex(const Ref<Texture>& 
 			return NULL;
 		if (imgtex->get_width() != imgtex->get_height())
 			return NULL;
-		Image &image=imgtex->get_data();
+		Image image=imgtex->get_data();
 		if (image.empty())
 			return NULL;
 

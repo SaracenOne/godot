@@ -108,7 +108,7 @@ void MorphData::set_vertex_normal(int p_surface, int p_idx, const Vector3& p_nor
 
 void MorphData::set_index(int p_surface, int p_idx, const int& p_index){
 
-	ERR_FAIL_INDEX_V(p_surface, surfaceMorphs.size());
+	ERR_FAIL_INDEX(p_surface, surfaceMorphs.size());
 	ERR_FAIL_INDEX(p_idx, surfaceMorphs[p_surface]->indexes.size());
 	surfaceMorphs[p_surface]->indexes[p_idx] = p_index;
 }
