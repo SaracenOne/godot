@@ -53,7 +53,7 @@ public:
 	};
 
 public:
-	Vector<Ref<MorphDataSurface>> surfaceMorphs;
+	Vector<Ref<MorphDataSurface> > surfaceMorphs;
 protected:
 
 	static void _bind_methods();
