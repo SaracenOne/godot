@@ -962,7 +962,7 @@ void BakedLightBaker::_plot_light(ThreadStack& thread_stack,const Vector3& p_plo
 }
 
 
-float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, bool p_bake_direct, const Vector3& p_begin, const Vector3& p_end, float p_rest, const Color& p_light, float *p_att_curve, float p_att_pos, int p_att_curve_len, int p_bounces, bool p_first_bounce, bool p_only_dist, Vector<int> &p_ignore_list) {
+float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_ignore_list, bool p_bake_direct, const Vector3& p_begin, const Vector3& p_end, float p_rest, const Color& p_light, float *p_att_curve, float p_att_pos, int p_att_curve_len, int p_bounces, bool p_first_bounce, bool p_only_dist) {
 
 
 	uint32_t* stack = thread_stack.ray_stack;
@@ -1018,7 +1018,7 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, bool p_bake_direct,
 		switch(mode) {
 			case TEST_AABB_BIT: {
 
-				if (p_ignore_list.find(b.id)==-1) {
+				if (p_ignore_list->find(b.id)==-1) {
 					if (b.leaf) {
 
 
@@ -1186,8 +1186,8 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, bool p_bake_direct,
 
 		if (passthrough == true && triangle_id !=-1)
 		{
-			p_ignore_list.push_back(triangle_id);
-			ret=_throw_ray(thread_stack, p_bake_direct, r_point, p_end, p_rest, p_light, p_att_curve, p_att_pos, p_att_curve_len, p_bounces, p_first_bounce, p_only_dist, p_ignore_list);
+			p_ignore_list->push_back(triangle_id);
+			ret = _throw_ray(thread_stack, p_ignore_list, p_bake_direct, r_point, p_end, p_rest, p_light, p_att_curve, p_att_pos, p_att_curve_len, p_bounces, p_first_bounce, p_only_dist);
 		}
 		else if (p_bounces>0 ) {
 
@@ -1230,7 +1230,8 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, bool p_bake_direct,
 #endif
 
 
-				ret=_throw_ray(thread_stack,p_bake_direct,r_point,r_point+rn*p_rest,p_rest,diffuse_at_point,p_att_curve,p_att_pos,p_att_curve_len,p_bounces-1);
+				Vector<int> ignore_list;
+				ret=_throw_ray(thread_stack,&ignore_list,p_bake_direct,r_point,r_point+rn*p_rest,p_rest,diffuse_at_point,p_att_curve,p_att_pos,p_att_curve_len,p_bounces-1);
 			}
 
 			if (use_specular && (specular_at_point.r>CMP_EPSILON || specular_at_point.g>CMP_EPSILON || specular_at_point.b>CMP_EPSILON)) {
@@ -1241,7 +1242,8 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, bool p_bake_direct,
 
 				Vector3 rn = n - r_normal *r_normal.dot(n) * 2.0;
 
-				_throw_ray(thread_stack,p_bake_direct,r_point,r_point+rn*p_rest,p_rest,specular_at_point,p_att_curve,p_att_pos,p_att_curve_len,p_bounces-1);
+				Vector<int> ignore_list;
+				_throw_ray(thread_stack, &ignore_list, p_bake_direct, r_point, r_point + rn*p_rest, p_rest, specular_at_point, p_att_curve, p_att_pos, p_att_curve_len, p_bounces - 1);
 			}
 		}
 
@@ -1280,7 +1282,8 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, bool p_bake_direct,
 					double r2 = double(rand()) / RAND_MAX;
 					double r3 = double(rand()) / RAND_MAX;
 					Vector3 rn = ((c1*(r1 - 0.5)) + (c2*(r2 - 0.5)) + (r_normal*r3*0.25)).normalized();
-					float d = _throw_ray(thread_stack, p_bake_direct, r_point, r_point + rn*p_rest, p_rest, diffuse_at_point, p_att_curve, p_att_pos, p_att_curve_len, p_bounces - 1, false, true);
+					Vector<int> ignore_list;
+					float d = _throw_ray(thread_stack, &ignore_list, p_bake_direct, r_point, r_point + rn*p_rest, p_rest, diffuse_at_point, p_att_curve, p_att_pos, p_att_curve_len, p_bounces - 1, false, true);
 					r = plot_size*cell_size*ao_radius;
 					if (d > 0 && d < r) {
 						//avoid accumulaiton of light on corners
@@ -1648,7 +1651,8 @@ void BakedLightBaker::throw_rays(ThreadStack& thread_stack,int p_amount) {
 					dl.rays_thrown++;
 					baked_light_baker_add_64i(&total_rays,1);
 
-					_throw_ray(thread_stack,dl.bake_direct,from,to,dl.length,col,NULL,0,0,max_bounces,true);
+					Vector<int> ignore_list;
+					_throw_ray(thread_stack,&ignore_list,dl.bake_direct,from,to,dl.length,col,NULL,0,0,max_bounces,true);
 				}
 			} break;
 			case VS::LIGHT_OMNI: {
@@ -1691,7 +1695,8 @@ void BakedLightBaker::throw_rays(ThreadStack& thread_stack,int p_amount) {
 
 					dl.rays_thrown++;
 					baked_light_baker_add_64i(&total_rays,1);
-					_throw_ray(thread_stack,dl.bake_direct,from,to,dl.radius,col,dl.attenuation_table.ptr(),0,dl.radius,max_bounces,true);
+					Vector<int> ignore_list;
+					_throw_ray(thread_stack,&ignore_list,dl.bake_direct,from,to,dl.radius,col,dl.attenuation_table.ptr(),0,dl.radius,max_bounces,true);
 //					_throw_ray(i,from,to,dl.radius,col,NULL,0,dl.radius,max_bounces,true);
 				}
 
@@ -1723,7 +1728,8 @@ void BakedLightBaker::throw_rays(ThreadStack& thread_stack,int p_amount) {
 
 					dl.rays_thrown++;
 					baked_light_baker_add_64i(&total_rays,1);
-					_throw_ray(thread_stack,dl.bake_direct,from,to,dl.radius,col,dl.attenuation_table.ptr(),0,dl.radius,max_bounces,true);
+					Vector<int> ignore_list;
+					_throw_ray(thread_stack, &ignore_list, dl.bake_direct, from, to, dl.radius, col, dl.attenuation_table.ptr(), 0, dl.radius, max_bounces, true);
 	//					_throw_ray(i,from,to,dl.radius,col,NULL,0,dl.radius,max_bounces,true);
 				}
 
