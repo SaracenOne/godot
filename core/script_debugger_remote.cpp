@@ -697,7 +697,7 @@ void ScriptDebuggerRemote::live_script_reload(const Array &p_script_name_array, 
 	Array script_name_array = p_script_name_array;
 	Array script_source_code_array = p_script_source_code_array;
 
-	ERR_FAIL_COND(script_name_array.size()!=script_source_code_array.size(),false);
+	ERR_FAIL_COND(script_name_array.size()!=script_source_code_array.size());
 
 	while (script_name_array.size() > 0) {
 		String path = script_name_array[0];
