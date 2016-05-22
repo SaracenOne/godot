@@ -176,6 +176,11 @@ public:
 	void dump_resources_to_file(const String& p_file);
 
 	void print_resources_in_use(bool p_short=false);
+
+	bool has_virtual_keyboard() const;
+	void show_virtual_keyboard(const String& p_existing_text, const Rect2& p_screen_rect);
+	void hide_virtual_keyboard();
+
 	void print_all_resources(const String& p_to_file);
 	void print_all_textures_by_size();
 	void print_resources_by_type(const Vector<String>& p_types);
