@@ -419,8 +419,8 @@ bool CustomPropertyEditor::edit(Object* p_owner,const String& p_name,Variant::Ty
 
 				//action_buttons[0];
 
-				int button_margin = get_constant("button_margin",TTR("Dialogs"));
-				int margin = get_constant("margin",TTR("Dialogs"));
+				int button_margin = get_constant("button_margin","Dialogs");
+				int margin = get_constant("margin","Dialogs");
 
 				action_buttons[0]->set_anchor( MARGIN_LEFT, ANCHOR_END );
 				action_buttons[0]->set_anchor( MARGIN_TOP, ANCHOR_END );
@@ -691,10 +691,10 @@ bool CustomPropertyEditor::edit(Object* p_owner,const String& p_name,Variant::Ty
 						int id = TYPE_BASE_ID+idx;
 						if (has_icon(t,"EditorIcons")) {
 
-							menu->add_icon_item(get_icon(t,"EditorIcons"),"New "+t,id);
+							menu->add_icon_item(get_icon(t,"EditorIcons"),TTR("New")+" "+t,id);
 						} else {
 
-							menu->add_item(TTR("New ")+t,id);
+							menu->add_item(TTR("New")+" "+t,id);
 						}
 
 						idx++;
@@ -936,7 +936,7 @@ void CustomPropertyEditor::_node_path_selected(NodePath p_path) {
 
 		if (owner->is_type("Node"))
 			node = owner->cast_to<Node>();
-		else if (owner->is_type(TTR("ArrayPropertyEdit")))
+		else if (owner->is_type("ArrayPropertyEdit"))
 			node = owner->cast_to<ArrayPropertyEdit>()->get_node();
 
 		if (!node) {
@@ -1732,7 +1732,7 @@ CustomPropertyEditor::CustomPropertyEditor() {
 		add_child(checks20[i]);
 		checks20[i]->hide();
 		checks20[i]->connect("pressed",this,"_action_pressed",make_binds(i));
-		checks20[i]->set_tooltip(TTR("Bit ")+itos(i)+", val "+itos(1<<i)+".");
+		checks20[i]->set_tooltip(vformat(TTR("Bit %d, val %d."), i, 1<<i));
 	}
 
 	text_edit = memnew( TextEdit );
@@ -2658,11 +2658,11 @@ void PropertyEditor::update_tree() {
 	TreeItem *title = tree->create_item(root);
 
 	title->set_custom_bg_color(0,get_color("prop_section","Editor"));
-	title->set_text(0,TTR("Property")); // todo, fetch name if ID exists in database
+	title->set_text(0,"Property"); // todo, fetch name if ID exists in database
 	title->set_editable(0,false);
 	title->set_selectable(0,false);
 	title->set_custom_bg_color(1,get_color("prop_section","Editor"));
-	title->set_text(1,TTR("Value")); // todo, fetch name if ID exists in database
+	title->set_text(1,"Value"); // todo, fetch name if ID exists in database
 	title->set_editable(1,false);
 	title->set_selectable(1,false);
 */
@@ -2671,7 +2671,7 @@ void PropertyEditor::update_tree() {
 	if (obj->cast_to<Node>() || obj->cast_to<Resource>()) {
 		TreeItem *type = tree->create_item(root);
 
-		type->set_text(0,TTR("Type")); // todo, fetch name if ID exists in database
+		type->set_text(0,"Type"); // todo, fetch name if ID exists in database
 		type->set_text(1,obj->get_type()); // todo, fetch name if ID exists in database
 		if (has_icon(obj->get_type(),"EditorIcons"))
 			type->set_icon(1,get_icon(obj->get_type(),"EditorIcons") );
@@ -2684,7 +2684,7 @@ void PropertyEditor::update_tree() {
 
 		TreeItem *name = tree->create_item(root);
 
-		name->set_text(0,TTR("Name")); // todo, fetch name if ID exists in database
+		name->set_text(0,"Name"); // todo, fetch name if ID exists in database
 		if (obj->is_type("Resource"))
 			name->set_text(1,obj->cast_to<Resource>()->get_name());
 		else if (obj->is_type("Node"))
@@ -2767,7 +2767,7 @@ void PropertyEditor::update_tree() {
 
 				}
 
-				sep->set_tooltip(0,TTR("Class: ")+p.name+":\n\n"+class_descr_cache[type]);
+				sep->set_tooltip(0,TTR("Class:")+" "+p.name+":\n\n"+class_descr_cache[type]);
 			}
 			//sep->set_custom_color(0,Color(1,1,1));
 
@@ -2864,7 +2864,7 @@ void PropertyEditor::update_tree() {
 					descr_cache[type][setter]=descr;
 				}
 
-				item->set_tooltip(0, TTR("Property: ")+p.name+"\n\n"+descr);
+				item->set_tooltip(0, TTR("Property:")+" "+p.name+"\n\n"+descr);
 			}
 		}
 		//EditorHelp::get_doc_data();
@@ -2988,6 +2988,32 @@ void PropertyEditor::update_tree() {
 						item->set_icon( 0,get_icon("Enum","EditorIcons") );
 					item->set_range(1, obj->get( p.name ) );
 					item->set_editable(1,!read_only);
+					break;
+				} else if (p.hint==PROPERTY_HINT_OBJECT_ID) {
+
+//					int c = p.hint_string.get_slice_count(",");
+					item->set_cell_mode(1,TreeItem::CELL_MODE_CUSTOM);
+
+					String type=p.hint_string;
+					if (type=="")
+						type="Object";
+
+					ObjectID id = obj->get( p.name );
+					if (id!=0) {
+						item->set_text(1,type+" ID: "+itos(id));
+						item->add_button(1,get_icon("EditResource","EditorIcons"));
+					} else {
+						item->set_text(1,"[Empty]");
+					}
+
+					if (has_icon(p.hint_string,"EditorIcons")) {
+						type=p.hint_string;
+					} else {
+						type="Object";
+					}
+
+					item->set_icon(0,get_icon(type,"EditorIcons"));
+
 					break;
 
 				} else {
@@ -3433,7 +3459,7 @@ void PropertyEditor::_edit_set(const String& p_name, const Variant& p_value) {
 	} else {
 
 
-		undo_redo->create_action(TTR("Set ")+p_name,true);
+		undo_redo->create_action(TTR("Set")+" "+p_name,true);
 		undo_redo->add_do_property(obj,p_name,p_value);
 		undo_redo->add_undo_property(obj,p_name,obj->get(p_name));
 		undo_redo->add_do_method(this,"_changed_callback",obj,p_name);
@@ -3758,6 +3784,11 @@ void PropertyEditor::_edit_button(Object *p_item, int p_column, int p_button) {
 
 				emit_signal("resource_selected",r,n);
 			}
+		} else if (t==Variant::INT && h==PROPERTY_HINT_OBJECT_ID) {
+
+			emit_signal("object_id_selected",obj->get(n));
+			print_line("OBJ ID SELECTED");
+
 		} else if (t==Variant::ARRAY || t==Variant::INT_ARRAY || t==Variant::REAL_ARRAY || t==Variant::STRING_ARRAY || t==Variant::VECTOR2_ARRAY || t==Variant::VECTOR3_ARRAY || t==Variant::COLOR_ARRAY || t==Variant::RAW_ARRAY) {
 
 			Variant v = obj->get(n);
@@ -3860,6 +3891,7 @@ void PropertyEditor::_bind_methods() {
 
 	ADD_SIGNAL( MethodInfo("property_toggled",PropertyInfo( Variant::STRING, "property"),PropertyInfo( Variant::BOOL, "value")));
 	ADD_SIGNAL( MethodInfo("resource_selected", PropertyInfo( Variant::OBJECT, "res"),PropertyInfo( Variant::STRING, "prop") ) );
+	ADD_SIGNAL( MethodInfo("object_id_selected", PropertyInfo( Variant::INT, "id")) );
 	ADD_SIGNAL( MethodInfo("property_keyed",PropertyInfo( Variant::STRING, "property")));
 	ADD_SIGNAL( MethodInfo("property_edited",PropertyInfo( Variant::STRING, "property")));
 }

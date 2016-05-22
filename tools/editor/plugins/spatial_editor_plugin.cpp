@@ -613,7 +613,7 @@ void SpatialEditorViewport::_select_region() {
 
 void SpatialEditorViewport::_update_name() {
 
-	String ortho = orthogonal?TTR("Orthogonal"):"Perspective";
+	String ortho = orthogonal?TTR("Orthogonal"):TTR("Perspective");
 
 	if (name!="")
 		view_menu->set_text("[ "+name+" "+ortho+" ]");
@@ -1281,7 +1281,7 @@ void SpatialEditorViewport::_sinput(const InputEvent &p_event) {
 		case InputEvent::MOUSE_MOTION: {
 			const InputEventMouseMotion &m=p_event.mouse_motion;
 			_edit.mouse_pos=Point2(p_event.mouse_motion.x,p_event.mouse_motion.y);
-			
+
 			if (spatial_editor->get_selected()) {
 
 
@@ -1317,7 +1317,7 @@ void SpatialEditorViewport::_sinput(const InputEvent &p_event) {
 
 			NavigationScheme nav_scheme = _get_navigation_schema("3d_editor/navigation_scheme");
 			NavigationMode nav_mode = NAVIGATION_NONE;
-			
+
 			if (_edit.gizmo.is_valid()) {
 
 				Plane plane=Plane(_edit.gizmo_initial_pos,_get_camera_normal());
@@ -1405,7 +1405,7 @@ void SpatialEditorViewport::_sinput(const InputEvent &p_event) {
 								scale = Math::stepify(scale,spatial_editor->get_scale_snap());
 							}
 
-							set_message(TTR("Scaling to ")+String::num(scale,1)+"%.");
+							set_message(vformat(TTR("Scaling to %s%%."),String::num(scale,1)));
 							scale/=100.0;
 
 							Transform r;
@@ -1483,7 +1483,7 @@ void SpatialEditorViewport::_sinput(const InputEvent &p_event) {
 								motion.snap(snap);
 							}
 
-							//set_message(TTR("Translating: ")+motion);
+							//set_message("Translating: "+motion);
 
 							List<Node*> &selection = editor_selection->get_selected_node_list();
 
@@ -1545,13 +1545,13 @@ void SpatialEditorViewport::_sinput(const InputEvent &p_event) {
 								if (snap) {
 									angle=Math::rad2deg(angle)+snap*0.5; //else it wont reach +180
 									angle-=Math::fmod(angle,snap);
-									set_message(TTR("Rotating ")+rtos(angle)+" degrees.");
+									set_message(vformat(TTR("Rotating %s degrees."),rtos(angle)));
 									angle=Math::deg2rad(angle);
 								} else
-									set_message(TTR("Rotating ")+rtos(Math::rad2deg(angle))+" degrees.");
+									set_message(vformat(TTR("Rotating %s degrees."),rtos(Math::rad2deg(angle))));
 
 							} else {
-								set_message(TTR("Rotating ")+rtos(Math::rad2deg(angle))+" degrees.");
+								set_message(vformat(TTR("Rotating %s degrees."),rtos(Math::rad2deg(angle))));
 							}
 
 
@@ -1643,7 +1643,7 @@ void SpatialEditorViewport::_sinput(const InputEvent &p_event) {
 					mod=KEY_CONTROL;
 				if (m.mod.meta)
 					mod=KEY_META;
-				
+
 				if(mod){
 					if (mod == _get_key_modifier("3d_editor/pan_modifier"))
 						nav_mode = NAVIGATION_PAN;
@@ -1867,7 +1867,7 @@ void SpatialEditorViewport::_notification(int p_what) {
 
 		if (visible)
 			_update_camera();
-		
+
 		call_deferred("update_transform_gizmo_view");
 	}
 
@@ -2019,7 +2019,7 @@ void SpatialEditorViewport::_draw() {
 	if (surface->has_focus()) {
 		Size2 size = surface->get_size();
 		Rect2 r =Rect2(Point2(),size);
-		get_stylebox(TTR("EditorFocus"),"EditorStyles")->draw(surface->get_canvas_item(),r);
+		get_stylebox("EditorFocus","EditorStyles")->draw(surface->get_canvas_item(),r);
 	}
 
 
@@ -2534,7 +2534,7 @@ SpatialEditorViewport::SpatialEditorViewport(SpatialEditor *p_spatial_editor, Ed
 	view_menu->get_popup()->add_check_item(TTR("Orthogonal (Num5)"),VIEW_ORTHOGONAL);
 	view_menu->get_popup()->set_item_checked(view_menu->get_popup()->get_item_index(VIEW_PERSPECTIVE),true);
 	view_menu->get_popup()->add_separator();
-	view_menu->get_popup()->add_check_item("Environment",VIEW_ENVIRONMENT);
+	view_menu->get_popup()->add_check_item(TTR("Environment"),VIEW_ENVIRONMENT);
 	view_menu->get_popup()->set_item_checked( view_menu->get_popup()->get_item_index(VIEW_ENVIRONMENT),true);
 	view_menu->get_popup()->add_separator();
 	view_menu->get_popup()->add_check_item(TTR("Audio Listener"),VIEW_AUDIO_LISTENER);

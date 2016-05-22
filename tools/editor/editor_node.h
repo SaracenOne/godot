@@ -159,7 +159,7 @@ private:
 		OBJECT_CALL_METHOD,
 		OBJECT_REQUEST_HELP,
 		RUN_PLAY,
-		RUN_PAUSE,
+
 		RUN_STOP,
 		RUN_PLAY_SCENE,
 		RUN_PLAY_NATIVE,
@@ -451,7 +451,7 @@ private:
 	void _display_top_editors(bool p_display);
 	void _set_top_editors(Vector<EditorPlugin*> p_editor_plugins_over);
 	void _set_editing_top_editors(Object * p_current_object);
-        
+
 	void _quick_opened();
 	void _quick_run();
 
@@ -692,6 +692,8 @@ public:
 
 	void update_keying();
 
+	ToolButton *get_pause_button() { return pause_button; }
+
 
 	ToolButton* add_bottom_panel_item(String p_text,Control *p_item);
 	bool are_bottom_panels_hidden() const;
@@ -746,7 +748,7 @@ public:
 	EditorPluginList();
 	~EditorPluginList();
 
-} ; 
+} ;
 
 struct EditorProgressBG {
 
