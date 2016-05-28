@@ -85,6 +85,7 @@ enum PropertyUsageFlags {
 	PROPERTY_USAGE_STORE_IF_NONZERO=512, //only store if nonzero
 	PROPERTY_USAGE_STORE_IF_NONONE=1024, //only store if false
 	PROPERTY_USAGE_NO_INSTANCE_STATE=2048,
+	PROPERTY_USAGE_RESTART_IF_CHANGED=4096,
 
 	PROPERTY_USAGE_DEFAULT=PROPERTY_USAGE_STORAGE|PROPERTY_USAGE_EDITOR|PROPERTY_USAGE_NETWORK,
 	PROPERTY_USAGE_DEFAULT_INTL=PROPERTY_USAGE_STORAGE|PROPERTY_USAGE_EDITOR|PROPERTY_USAGE_NETWORK|PROPERTY_USAGE_INTERNATIONALIZED,
@@ -388,6 +389,7 @@ friend void postinitialize_handler(Object*);
 	bool _can_translate;
 #ifdef TOOLS_ENABLED
 	bool _edited;
+	uint32_t _edited_version;
 #endif
 	ScriptInstance *script_instance;
 	RefPtr script;
@@ -591,6 +593,7 @@ public:
 #ifdef TOOLS_ENABLED
 	void set_edited(bool p_edited);
 	bool is_edited() const;
+	uint32_t get_edited_version() const; //this function is used to check when something changed beyond a point, it's used mainly for generating previews
 #endif
 
 	void set_script_instance(ScriptInstance *p_instance);
