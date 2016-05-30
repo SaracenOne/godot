@@ -7751,7 +7751,7 @@ void RasterizerGLES2::end_scene() {
 		copy_shader.set_conditional(CopyShaderGLES2::USE_SRGB,current_env && current_env->fx_enabled[VS::ENV_FX_SRGB]);
 		copy_shader.set_conditional(CopyShaderGLES2::USE_GLOW,current_env && current_env->fx_enabled[VS::ENV_FX_GLOW]);
 		copy_shader.set_conditional(CopyShaderGLES2::USE_HDR,current_env && current_env->fx_enabled[VS::ENV_FX_HDR]);
-		copy_shader.set_conditional(CopyShaderGLES2::USE_NO_ALPHA,true);
+		copy_shader.set_conditional(CopyShaderGLES2::USE_NO_ALPHA,(current_rt && current_rt_transparent) ? false : true);
 		copy_shader.set_conditional(CopyShaderGLES2::USE_FXAA,current_env && current_env->fx_enabled[VS::ENV_FX_FXAA]);
 
 		copy_shader.bind();
