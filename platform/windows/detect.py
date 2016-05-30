@@ -204,8 +204,8 @@ def configure(env):
 
 		if (env["freetype"]!="no"):
 			env.Append(CCFLAGS=['/DFREETYPE_ENABLED'])
-			env.Append(CPPPATH=['#tools/freetype'])
-			env.Append(CPPPATH=['#tools/freetype/freetype/include'])
+			env.Append(CPPPATH=['#drivers/freetype'])
+			env.Append(CPPPATH=['#drivers/freetype/freetype/include'])
 
 		if (env["target"]=="release"):
 
@@ -243,7 +243,7 @@ def configure(env):
 		env.Append(CCFLAGS=['/DGLES2_ENABLED'])
 
 		env.Append(CCFLAGS=['/DGLEW_ENABLED'])
-		LIBS=['winmm','opengl32','dsound','kernel32','ole32','oleaut32','user32','gdi32', 'IPHLPAPI','Shlwapi', 'wsock32', 'shell32','advapi32','dinput8','dxguid']
+		LIBS=['winmm','opengl32','dsound','kernel32','ole32','oleaut32','user32','gdi32', 'IPHLPAPI','Shcore','Shlwapi', 'wsock32', 'shell32','advapi32','dinput8','dxguid']
 		env.Append(LINKFLAGS=[p+env["LIBSUFFIX"] for p in LIBS])
 
 		env.Append(LIBPATH=[os.getenv("WindowsSdkDir")+"/Lib"])
@@ -352,8 +352,9 @@ def configure(env):
 
 		if (env["freetype"]!="no"):
 			env.Append(CCFLAGS=['-DFREETYPE_ENABLED'])
-			env.Append(CPPPATH=['#tools/freetype'])
-			env.Append(CPPPATH=['#tools/freetype/freetype/include'])
+			env.Append(CPPPATH=['#drivers/freetype'])
+			env.Append(CPPPATH=['#drivers/freetype/freetype/include'])
+
 
 		env["CC"]=mingw_prefix+"gcc"
 		env['AS']=mingw_prefix+"as"

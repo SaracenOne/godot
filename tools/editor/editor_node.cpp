@@ -2732,8 +2732,8 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 			String exec = OS::get_singleton()->get_executable_path();
 
 			List<String> args;
-			//args.push_back ( "-path" );
-			//args.push_back (exec.get_base_dir() );
+			args.push_back("-path");
+			args.push_back(exec.get_base_dir());
 			args.push_back("-pm");
 
 			OS::ProcessID pid=0;
@@ -5225,7 +5225,7 @@ EditorNode::EditorNode() {
 	//theme->set_icon("folder","EditorFileDialog",Theme::get_default()->get_icon("folder","EditorFileDialog"));
 	//theme->set_color("files_disabled","EditorFileDialog",Color(0,0,0,0.7));
 
-	String global_font = EditorSettings::get_singleton()->get("global/font");
+	String global_font = EditorSettings::get_singleton()->get("global/custom_font");
 	if (global_font!="") {
 		Ref<Font> fnt = ResourceLoader::load(global_font);
 		if (fnt.is_valid()) {

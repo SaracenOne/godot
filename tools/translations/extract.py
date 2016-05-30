@@ -83,7 +83,9 @@ for fname in matches:
 				unique_loc[msg] = [location]
 			elif (not location in unique_loc[msg]):
 				# Add additional location to previous occurence too
-				msg_pos = main_po.find('\nmsgid "' + msg)
+				msg_pos = main_po.find('\nmsgid "' + msg + '"')
+				if (msg_pos == -1):
+					print("Someone apparently thought writing Python was as easy as GDScript. Ping Akien.")
 				main_po = main_po[:msg_pos] + ' ' + location + main_po[msg_pos:]
 				unique_loc[msg].append(location)
 
@@ -107,5 +109,5 @@ shutil.move("tools.pot", "tools/translations/tools.pot")
 if (os.name == "posix"):
 	added = subprocess.check_output("git diff tools/translations/tools.pot | grep \+msgid | wc -l", shell = True)
 	removed = subprocess.check_output("git diff tools/translations/tools.pot | grep \\\-msgid | wc -l", shell = True)
-	print("Template changes compared to the staged status:")
-	print("  Additions: %s msgids.\n  Deletions: %s msgids." % (int(added), int(removed)))
+	print("\n# Template changes compared to the staged status:")
+	print("#   Additions: %s msgids.\n#   Deletions: %s msgids." % (int(added), int(removed)))
