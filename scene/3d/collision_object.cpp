@@ -260,7 +260,6 @@ void CollisionObject::_bind_methods() {
 	
 	ObjectTypeDB::bind_method(_MD("set_center_of_mass", "center_of_mass"), &CollisionObject::set_center_of_mass);
 	ObjectTypeDB::bind_method(_MD("get_center_of_mass"), &CollisionObject::get_center_of_mass);
-	ObjectTypeDB::bind_method(_MD("set_global_center_of_mass", "center_of_mass"), &CollisionObject::set_global_center_of_mass);
 	ObjectTypeDB::bind_method(_MD("get_global_center_of_mass"), &CollisionObject::get_global_center_of_mass);
 	ObjectTypeDB::bind_method(_MD("calculate_center_of_mass"), &CollisionObject::calculate_center_of_mass);
 
@@ -386,11 +385,6 @@ Vector3 CollisionObject::get_center_of_mass() const{
 	return center_of_mass;
 }
 
-void CollisionObject::set_global_center_of_mass(const Vector3& p_center_of_mass){
-
-	center_of_mass = p_center_of_mass; // DOESN'T WORK
-
-}
 Vector3 CollisionObject::get_global_center_of_mass() const {
 	return get_global_transform().translated(center_of_mass).origin;
 }

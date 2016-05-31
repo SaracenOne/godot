@@ -99,7 +99,6 @@ public:
 	void set_center_of_mass(const Vector3& p_center_of_mass);
 	Vector3 get_center_of_mass() const;
 
-	void set_global_center_of_mass(const Vector3& p_center_of_mass);
 	Vector3 get_global_center_of_mass() const;
 
 	void calculate_center_of_mass();
