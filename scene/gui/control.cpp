@@ -999,7 +999,7 @@ bool Control::has_constant_override(const StringName& p_name) const {
 
 bool Control::has_icon(const StringName& p_name,const StringName& p_type) const {
 
-	if (p_type==StringName()) {
+	if (p_type==StringName() || p_type=="") {
 		if (has_icon_override(p_name) == true)
 			return true;
 	}
@@ -1028,7 +1028,7 @@ bool Control::has_icon(const StringName& p_name,const StringName& p_type) const 
 
 bool Control::has_shader(const StringName &p_name, const StringName &p_type) const {
 
-	if (p_type==StringName()) {
+	if (p_type==StringName() || p_type=="") {
 		if (has_shader_override(p_name)==true)
 			return true;
 	}
@@ -1056,7 +1056,7 @@ bool Control::has_shader(const StringName &p_name, const StringName &p_type) con
 }
 bool Control::has_stylebox(const StringName& p_name,const StringName& p_type) const {
 
-	if (p_type==StringName()) {
+	if (p_type==StringName() || p_type=="") {
 		if (has_stylebox_override(p_name)==true)
 			return true;
 	}
@@ -1084,7 +1084,7 @@ bool Control::has_stylebox(const StringName& p_name,const StringName& p_type) co
 }
 bool Control::has_font(const StringName& p_name,const StringName& p_type) const {
 
-	if (p_type==StringName()) {
+	if (p_type==StringName() || p_type=="") {
 		if (has_font_override(p_name)==true)
 			return true;
 	}
@@ -1114,7 +1114,7 @@ bool Control::has_font(const StringName& p_name,const StringName& p_type) const 
 
 bool Control::has_color(const StringName& p_name, const StringName& p_type) const {
 
-	if (p_type==StringName()) {
+	if (p_type==StringName() || p_type=="") {
 		if (has_color_override(p_name)==true)
 			return true;
 	}
@@ -1143,7 +1143,7 @@ bool Control::has_color(const StringName& p_name, const StringName& p_type) cons
 
 bool Control::has_constant(const StringName& p_name,const StringName& p_type) const {
 
-	if (p_type==StringName()) {
+	if (p_type==StringName() || p_type=="") {
 		if (has_constant_override(p_name) == true)
 			return true;
 	}
@@ -2412,11 +2412,11 @@ void Control::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_color","name","type"),&Control::get_color,DEFVAL(""));
 	ObjectTypeDB::bind_method(_MD("get_constant","name","type"),&Control::get_constant,DEFVAL(""));
 
-	ObjectTypeDB::bind_method(_MD("has_icon_override", "name"), &Control::has_icon_override, DEFVAL(""));
-	ObjectTypeDB::bind_method(_MD("has_stylebox_override", "name"), &Control::has_stylebox_override, DEFVAL(""));
-	ObjectTypeDB::bind_method(_MD("has_font_override", "name"), &Control::has_font_override, DEFVAL(""));
-	ObjectTypeDB::bind_method(_MD("has_color_override", "name"), &Control::has_color_override, DEFVAL(""));
-	ObjectTypeDB::bind_method(_MD("has_constant_override", "name"), &Control::has_constant_override, DEFVAL(""));
+	ObjectTypeDB::bind_method(_MD("has_icon_override", "name"), &Control::has_icon_override);
+	ObjectTypeDB::bind_method(_MD("has_stylebox_override", "name"), &Control::has_stylebox_override);
+	ObjectTypeDB::bind_method(_MD("has_font_override", "name"), &Control::has_font_override);
+	ObjectTypeDB::bind_method(_MD("has_color_override", "name"), &Control::has_color_override);
+	ObjectTypeDB::bind_method(_MD("has_constant_override", "name"), &Control::has_constant_override);
 
 	ObjectTypeDB::bind_method(_MD("has_icon", "name", "type"), &Control::has_icon, DEFVAL(""));
 	ObjectTypeDB::bind_method(_MD("has_stylebox", "name", "type"), &Control::has_stylebox, DEFVAL(""));
