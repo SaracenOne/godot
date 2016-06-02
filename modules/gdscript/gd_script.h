@@ -111,9 +111,6 @@ friend class GDScriptLanguage;
 
 
 	GDInstance* _create_instance(const Variant** p_args,int p_argcount,Object *p_owner,bool p_isref,Variant::CallError &r_error);
-	virtual void _update_instances(Map<StringName, MemberInfo> &p_original_member_indices);
-	virtual void _convert_placeholders_to_instances();
-	virtual void _convert_instances_to_placeholders();
 
 	void _set_subclass_path(Ref<GDScript>& p_sc,const String& p_path);
 
@@ -146,15 +143,12 @@ public:
 	const Map<StringName,GDFunction*>& get_member_functions() const { return member_functions; }
 	const Ref<GDNativeClass>& get_native() const { return native; }
 
-	virtual const Set<Ref<Script> > get_inherited_scripts() const;
-
 	virtual bool has_script_signal(const StringName& p_signal) const;
 	virtual void get_script_signal_list(List<MethodInfo> *r_signals) const;
 
-	virtual const bool is_used() const;
 
 	bool is_tool() const { return tool; }
-	virtual Ref<Script> get_base() const;
+	Ref<GDScript> get_base() const;
 
 	const Map<StringName,MemberInfo>& debug_get_member_indices() const { return member_indices; }
 	const Map<StringName,GDFunction*>& debug_get_member_functions() const; //this is debug only
@@ -176,8 +170,8 @@ public:
 
 	virtual String get_node_type() const;
 	void set_script_path(const String& p_path) { path=p_path; } //because subclasses need a path too...
-	virtual Error load_source_code(const String& p_path);
-	virtual Error load_byte_code(const String& p_path);
+	Error load_source_code(const String& p_path);
+	Error load_byte_code(const String& p_path);
 
 	Vector<uint8_t> get_as_byte_code() const;
 
