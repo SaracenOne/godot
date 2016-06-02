@@ -33,7 +33,6 @@
 #include "os/file_access.h"
 #include "io/file_access_encrypted.h"
 #include "os/os.h"
-#include "scene/main/node.h"
 
 ///////////////////////////
 
@@ -102,23 +101,24 @@ GDInstance* GDScript::_create_instance(const Variant** p_args,int p_argcount,Obj
 	instance->members.resize(member_indices.size());
 	instance->script=Ref<GDScript>(this);
 	instance->owner=p_owner;
+#ifdef DEBUG_ENABLED
+	//needed for hot reloading
+	for(Map<StringName,MemberInfo>::Element *E=member_indices.front();E;E=E->next()) {
+		instance->member_indices_cache[E->key()]=E->get().index;
+	}
+#endif
 	instance->owner->set_script_instance(instance);
 
 	/* STEP 2, INITIALIZE AND CONSRTUCT */
 
 	instances.insert(instance->owner);
 
-	if (initializer)
-		initializer->call(instance,p_args,p_argcount,r_error);
+	initializer->call(instance,p_args,p_argcount,r_error);
 
 	if (r_error.error!=Variant::CallError::CALL_OK) {
 		instance->script=Ref<GDScript>();
 		instance->owner->set_script_instance(NULL);
 		instances.erase(p_owner);
-		if (r_error.error != Variant::CallError::CALL_OK) {
-			printf("SOMETHING: ");
-			printf("%u\n", r_error.error);
-		}
 		ERR_FAIL_COND_V(r_error.error!=Variant::CallError::CALL_OK, NULL); //error constructing
 	}
 
@@ -506,9 +506,10 @@ void GDScript::_set_subclass_path(Ref<GDScript>& p_sc,const String& p_path) {
 	}
 }
 
-Error GDScript::reload() {
+Error GDScript::reload(bool p_keep_state) {
 
 
+	ERR_FAIL_COND_V(!p_keep_state && instances.size(),ERR_ALREADY_IN_USE);
 
 	String basedir=path;
 
@@ -518,19 +519,10 @@ Error GDScript::reload() {
 	if (basedir!="")
 		basedir=basedir.get_base_dir();
 
-#if TOOLS_ENABLED
-	// If this script has instances, cache original members for updating them instances
-	ERR_FAIL_COND_V(instances.size() > 0 && placeholders.size() > 0, ERR_INVALID_DATA);
-
-	Map<StringName, MemberInfo> original_member_indices;
-
-	if (instances.size() > 0) {
-		original_member_indices = member_indices;
-	}
-#endif
 
 
-	valid = false;
+
+	valid=false;
 	GDParser parser;
 	Error err = parser.parse(source,basedir,false,path);
 	if (err) {
@@ -545,7 +537,7 @@ Error GDScript::reload() {
 	bool can_run = ScriptServer::is_scripting_enabled() || parser.is_tool_script();
 
 	GDCompiler compiler;
-	err = compiler.compile(&parser,this);
+	err = compiler.compile(&parser,this,p_keep_state);
 
 	if (err) {
 
@@ -567,109 +559,13 @@ Error GDScript::reload() {
 		_set_subclass_path(E->get(),path);
 	}
 
-
-
 #ifdef TOOLS_ENABLED
-	if(can_run)
-	{
-		if(placeholders.size()>0) {
-			_convert_placeholders_to_instances();
-		}
-		else {
-			if(instances.size()>0) {
-				_update_instances(original_member_indices);
-			}
-		}
-	}
-	else {
-		if(instances.size()>0) {
-			_convert_instances_to_placeholders();
-		}
-	}
-#endif
+	/*for (Set<PlaceHolderScriptInstance*>::Element *E=placeholders.front();E;E=E->next()) {
 
+		_update_placeholder(E->get());
+	}*/
+#endif
 	return OK;
-}
-
-// Attempt to copy members from old indicies map to new one
-void GDScript::_update_instances(Map<StringName,MemberInfo> &p_original_member_indices) {
-#if TOOLS_ENABLED
-	Set<Object *>::Element *E=instances.front();
-	while (E) {
-		Set<Object *>::Element *E_next = E->next();
-
-		Object *object=E->get();
-		GDInstance *instance = static_cast<GDInstance *>(object->get_script_instance());
-
-		Vector<Variant> original_members=instance->members;
-
-		object->refresh_script_instance();
-		instance=static_cast<GDInstance *>(object->get_script_instance());
-		
-		for(Map<StringName, MemberInfo>::Element *original_element = p_original_member_indices.front(); original_element; original_element = original_element->next()) {
-			Map<StringName, MemberInfo>::Element *matching_element = member_indices.find(original_element->key());
-			if(matching_element) {
-				instance->members[matching_element->value().index] = original_members[original_element->value().index];
-			}
-		}
-		E = E_next;
-	}
-#endif
-}
-
-void GDScript::_convert_placeholders_to_instances() {
-#ifdef TOOLS_ENABLED
-	Set<PlaceHolderScriptInstance *>::Element *E=placeholders.front();
-	while(E) {
-		Set<PlaceHolderScriptInstance *>::Element *E_next=E->next();
-		PlaceHolderScriptInstance *instance=static_cast<PlaceHolderScriptInstance *>(E->get());
-		Object *object=instance->get_owner();
-
-		object->refresh_script_instance();
-
-		E = E_next;
-	}
-#endif
-}
-
-void GDScript::_convert_instances_to_placeholders() {
-#ifdef TOOLS_ENABLED
-	Set<Object *>::Element *E=instances.front();
-	while (E) {
-		Set<Object *>::Element *E_next=E->next();
-		Object *object=E->get();
-
-		object->refresh_script_instance();
-
-		E = E_next;
-	}
-#endif
-}
-
-const Set<Ref<Script> > GDScript::get_inherited_scripts() const {
-
-#ifdef TOOLS_ENABLED
-	Set<Ref<Script> > inherited_scripts;
-
-	//print_line("update exports for "+get_path()+" ic: "+itos(copy.size()));
-	for (Set<ObjectID>::Element *E=inheriters_cache.front(); E; E=E->next()) {
-		Object *id = ObjectDB::get_instance(E->get());
-		if (!id)
-			continue;
-		GDScript *s=id->cast_to<GDScript>();
-		if (!s)
-			continue;
-
-		Ref<GDScript> new_ref(s);
-		if (inherited_scripts.find(new_ref)==NULL) {
-			inherited_scripts.insert(new_ref);
-		}
-	}
-
-	return inherited_scripts;
-#else
-	return Set<Ref<Script> >();
-#endif
 }
 
 String GDScript::get_node_type() const {
@@ -901,7 +797,7 @@ StringName GDScript::debug_get_member_by_index(int p_idx) const {
 }
 
 
-Ref<Script> GDScript::get_base() const {
+Ref<GDScript> GDScript::get_base() const {
 
 	return base;
 }
@@ -946,20 +842,8 @@ void GDScript::get_script_signal_list(List<MethodInfo> *r_signals) const {
 
 }
 
-const bool GDScript::is_used() const {
-#ifdef TOOLS_ENABLED
-	if (placeholders.size() > 0 || instances.size() > 0 || inheriters_cache.size() > 0) {
-#else
-	if (instances.size() > 0) {
-#endif
-		return true;
-	}
-	else {
-		return false;
-	}
-}
 
-GDScript::GDScript() {
+GDScript::GDScript() : script_list(this) {
 
 
 	_static_ref=this;
@@ -973,12 +857,33 @@ GDScript::GDScript() {
 	source_changed_cache=false;
 #endif
 
+#ifdef DEBUG_ENABLED
+	if (GDScriptLanguage::get_singleton()->lock) {
+		GDScriptLanguage::get_singleton()->lock->lock();
+	}
+	GDScriptLanguage::get_singleton()->script_list.add(&script_list);
+
+	if (GDScriptLanguage::get_singleton()->lock) {
+		GDScriptLanguage::get_singleton()->lock->unlock();
+	}
+#endif
 }
 
 GDScript::~GDScript() {
 	for (Map<StringName,GDFunction*>::Element *E=member_functions.front();E;E=E->next()) {
 		memdelete( E->get() );
 	}
+
+#ifdef DEBUG_ENABLED
+	if (GDScriptLanguage::get_singleton()->lock) {
+		GDScriptLanguage::get_singleton()->lock->lock();
+	}
+	GDScriptLanguage::get_singleton()->script_list.remove(&script_list);
+
+	if (GDScriptLanguage::get_singleton()->lock) {
+		GDScriptLanguage::get_singleton()->lock->unlock();
+	}
+#endif
 }
 
 
@@ -1340,6 +1245,37 @@ ScriptLanguage *GDInstance::get_language() {
 	return GDScriptLanguage::get_singleton();
 }
 
+void GDInstance::reload_members() {
+
+#ifdef DEBUG_ENABLED
+
+	members.resize(script->member_indices.size()); //resize
+
+	Vector<Variant> new_members;
+	new_members.resize(script->member_indices.size());
+
+	//pass the values to the new indices
+	for(Map<StringName,GDScript::MemberInfo>::Element *E=script->member_indices.front();E;E=E->next()) {
+
+		if (member_indices_cache.has(E->key())) {
+			Variant value = members[member_indices_cache[E->key()]];
+			new_members[E->get().index]=value;
+		}
+
+	}
+
+	//apply
+	members=new_members;
+
+	//pass the values to the new indices
+	member_indices_cache.clear();
+	for(Map<StringName,GDScript::MemberInfo>::Element *E=script->member_indices.front();E;E=E->next()) {
+
+		member_indices_cache[E->key()]=E->get().index;
+	}
+
+#endif
+}
 
 GDInstance::GDInstance() {
 	owner=NULL;
@@ -1562,6 +1498,65 @@ int GDScriptLanguage::profiling_get_frame_data(ProfilingInfo *p_info_arr,int p_i
 
 }
 
+
+struct GDScriptDepSort {
+
+	//must support sorting so inheritance works properly (parent must be reloaded first)
+	bool operator()(const Ref<GDScript> &A, const Ref<GDScript>& B) const {
+
+		if (A==B)
+			return false; //shouldn't happen but..
+		const GDScript *I=B->get_base().ptr();
+		while(I) {
+			if (I==A.ptr()) {
+				// A is a base of B
+				return true;
+			}
+
+			I=I->get_base().ptr();
+		}
+
+		return false; //not a base
+	}
+};
+
+void GDScriptLanguage::reload_all_scripts() {
+
+
+
+#ifdef DEBUG_ENABLED
+	print_line("RELOAD ALL SCRIPTS");
+	if (lock) {
+		lock->lock();
+	}
+
+	List<Ref<GDScript> > scripts;
+
+	SelfList<GDScript> *elem=script_list.first();
+	while(elem) {
+		if (elem->self()->get_path().is_resource_file()) {
+			print_line("FOUND: "+elem->self()->get_path());
+			scripts.push_back(Ref<GDScript>(elem->self())); //cast to gdscript to avoid being erased by accident
+		}
+		elem=elem->next();
+	}
+
+	if (lock) {
+		lock->unlock();
+	}
+
+	//as scripts are going to be reloaded, must proceed without locking here
+
+	scripts.sort_custom<GDScriptDepSort>(); //update in inheritance dependency order
+
+	for(List<Ref<GDScript> >::Element *E=scripts.front();E;E=E->next()) {
+
+		print_line("RELOADING: "+E->get()->get_path());
+		E->get()->load_source_code(E->get()->get_path());
+		E->get()->reload(true);
+	}
+#endif
+}
 
 void GDScriptLanguage::frame() {
 

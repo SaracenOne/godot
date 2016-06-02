@@ -218,6 +218,8 @@ public:
 
 	void set_tool_button(Button *p_tb) { debugger_button=p_tb; }
 
+	void reload_scripts();
+
 	virtual Size2 get_minimum_size() const;
 	ScriptEditorDebugger(EditorNode *p_editor=NULL);
 	~ScriptEditorDebugger();

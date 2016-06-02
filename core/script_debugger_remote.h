@@ -60,6 +60,7 @@ class ScriptDebuggerRemote : public ScriptDebugger {
 	bool profiling;
 	int max_frame_functions;
 	bool skip_profile_frame;
+	bool reload_all_scripts;
 
 
 	Ref<StreamPeerTCP> tcp_client;
@@ -168,7 +169,7 @@ public:
 	virtual void profiling_end();
 	virtual void profiling_set_frame_times(float p_frame_time,float p_idle_time,float p_fixed_time,float p_fixed_frame_time);
 
-	virtual void live_script_reload(const Array &p_script_name_array, const Array &p_script_source_code_array);
+
 	ScriptDebuggerRemote();
 	~ScriptDebuggerRemote();
 };

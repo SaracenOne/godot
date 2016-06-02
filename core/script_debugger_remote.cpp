@@ -293,6 +293,8 @@ void ScriptDebuggerRemote::debug(ScriptLanguage *p_script,bool p_can_continue) {
 
 				_set_object_property(cmd[1],cmd[2],cmd[3]);
 
+			} else if (command=="reload_scripts") {
+				reload_all_scripts=true;
 			} else if (command=="breakpoint") {
 
 				bool set = cmd[3];
@@ -703,7 +705,8 @@ void ScriptDebuggerRemote::_poll_events() {
 			profiling=false;
 			_send_profiling_data(false);
 			print_line("PROFILING END!");
-
+		} else if (command=="reload_scripts") {
+			reload_all_scripts=true;
 		} else if (command=="breakpoint") {
 
 			bool set = cmd[3];
@@ -866,6 +869,14 @@ void ScriptDebuggerRemote::idle_poll() {
 			//send profiling info normally
 			_send_profiling_data(true);
 		    }
+	    }
+
+	    if (reload_all_scripts) {
+
+		    for(int i=0;i<ScriptServer::get_language_count();i++) {
+			    ScriptServer::get_language(i)->reload_all_scripts();
+		    }
+		    reload_all_scripts=false;
 	    }
 
 	    _poll_events();
@@ -1045,6 +1056,7 @@ ScriptDebuggerRemote::ScriptDebuggerRemote() {
 	profile_info_ptrs.resize(profile_info.size());
 	profiling=false;
 	max_frame_functions=16;
+	reload_all_scripts=false;
 
 }
 
