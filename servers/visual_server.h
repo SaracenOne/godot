@@ -665,11 +665,17 @@ public:
 	virtual void camera_set_visible_layers(RID p_camera,uint32_t p_layers)=0;
 	virtual uint32_t camera_get_visible_layers(RID p_camera) const=0;
 
+	virtual void camera_set_depth(RID p_camera, int32_t p_depth)=0;
+	virtual int32_t camera_get_depth(RID p_camera) const=0;
+
 	virtual void camera_set_environment(RID p_camera,RID p_env)=0;
 	virtual RID camera_get_environment(RID p_camera) const=0;
 
 	virtual void camera_set_use_vertical_aspect(RID p_camera,bool p_enable)=0;
 	virtual bool camera_is_using_vertical_aspect(RID p_camera,bool p_enable) const=0;
+
+	virtual void camera_set_room_cull_enabled(RID p_camera, bool p_enable)=0;
+	virtual bool camera_is_room_cull_enabled(RID p_camera) const=0;
 
 /*
 	virtual void camera_add_layer(RID p_camera);
@@ -735,8 +741,8 @@ public:
 	virtual void viewport_set_disable_environment(RID p_viewport,bool p_disable)=0;
 
 	virtual void viewport_attach_camera(RID p_viewport,RID p_camera)=0;
+	virtual void viewport_detach_camera(RID p_viewport, RID p_camera) = 0;
 	virtual void viewport_set_scenario(RID p_viewport,RID p_scenario)=0;
-	virtual RID viewport_get_attached_camera(RID  p_viewport) const=0;
 	virtual RID viewport_get_scenario(RID  p_viewport) const=0;
 	virtual void viewport_attach_canvas(RID p_viewport,RID p_canvas)=0;
 	virtual void viewport_remove_canvas(RID p_viewport,RID p_canvas)=0;

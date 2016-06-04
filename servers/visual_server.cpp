@@ -482,7 +482,7 @@ void VisualServer::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("viewport_set_rect"),&VisualServer::_viewport_set_rect);
 	ObjectTypeDB::bind_method(_MD("viewport_get_rect"),&VisualServer::_viewport_get_rect);
 	ObjectTypeDB::bind_method(_MD("viewport_attach_camera"),&VisualServer::viewport_attach_camera,DEFVAL(RID()));
-	ObjectTypeDB::bind_method(_MD("viewport_get_attached_camera"),&VisualServer::viewport_get_attached_camera);
+	ObjectTypeDB::bind_method(_MD("viewport_detach_camera"), &VisualServer::viewport_detach_camera, DEFVAL(RID()));
 	ObjectTypeDB::bind_method(_MD("viewport_get_scenario"),&VisualServer::viewport_get_scenario);
 	ObjectTypeDB::bind_method(_MD("viewport_attach_canvas"),&VisualServer::viewport_attach_canvas);
 	ObjectTypeDB::bind_method(_MD("viewport_remove_canvas"),&VisualServer::viewport_remove_canvas);

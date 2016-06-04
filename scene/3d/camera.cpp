@@ -90,6 +90,8 @@ bool Camera::_set(const StringName& p_name, const Variant& p_value) {
 		h_offset=p_value;
 	else if (p_name=="v_offset")
 		v_offset=p_value;
+	else if (p_name == "room_cull_enabled")
+		set_room_cull_enabled(bool(p_value));
 	else if (p_name=="current") {
 		if (p_value.operator bool()) {
 			make_current();
@@ -98,6 +100,10 @@ bool Camera::_set(const StringName& p_name, const Variant& p_value) {
 		}
 	} else if (p_name=="visible_layers") {
 		set_visible_layers(p_value);
+	} else if (p_name=="raycast_layers") {
+		set_raycast_layers(p_value);
+	} else if (p_name == "depth") {
+		set_depth(p_value);
 	} else if (p_name=="environment") {
 		set_environment(p_value);
 	} else
@@ -132,10 +138,16 @@ bool Camera::_get(const StringName& p_name,Variant &r_ret) const {
 		}
 	} else if (p_name=="visible_layers") {
 		r_ret=get_visible_layers();
+	} else if (p_name=="raycast_layers") {
+		r_ret=get_raycast_layers();
+	} else if (p_name == "depth") {
+		r_ret = get_depth();
 	} else if (p_name=="h_offset") {
 		r_ret=get_h_offset();
 	} else if (p_name=="v_offset") {
 		r_ret=get_v_offset();
+	} else if (p_name=="room_cull_enabled") {
+		r_ret=is_room_cull_enabled();
 	} else if (p_name=="environment") {
 		r_ret=get_environment();
 	} else
@@ -177,10 +189,12 @@ void Camera::_get_property_list( List<PropertyInfo> *p_list) const {
 	p_list->push_back( PropertyInfo( Variant::INT, "keep_aspect",PROPERTY_HINT_ENUM,"Keep Width,Keep Height") );
 	p_list->push_back( PropertyInfo( Variant::BOOL, "current" ) );
 	p_list->push_back( PropertyInfo( Variant::INT, "visible_layers",PROPERTY_HINT_ALL_FLAGS ) );
+	p_list->push_back( PropertyInfo( Variant::INT, "raycast_layers", PROPERTY_HINT_ALL_FLAGS ) );
+	p_list->push_back( PropertyInfo( Variant::INT, "depth"));
 	p_list->push_back( PropertyInfo( Variant::OBJECT, "environment",PROPERTY_HINT_RESOURCE_TYPE,"Environment" ) );
 	p_list->push_back( PropertyInfo( Variant::REAL, "h_offset" ) );
 	p_list->push_back( PropertyInfo( Variant::REAL, "v_offset" ) );
-
+	p_list->push_back( PropertyInfo( Variant::BOOL, "room_cull_enabled"));
 }
 
 void Camera::_update_camera() {
@@ -317,18 +331,22 @@ void Camera::clear_current() {
 	if (!is_inside_tree())
 		return;
 
-	if (get_viewport()->get_camera()==this) {
-		get_viewport()->_camera_set(NULL);
+	if (get_viewport()->get_cameras().find(this)==-1) {
+		get_viewport()->_camera_unset(this);
 		get_viewport()->_camera_make_next_current(this);
-	}
+		}
 
 }
 
 bool Camera::is_current() const {
 
 	if (is_inside_tree() && !get_tree()->is_node_being_edited(this)) {
-
-		return get_viewport()->get_camera()==this;
+		if (get_viewport()) {
+			if (get_viewport()->get_cameras().find(this) != -1)
+				return true;
+			else
+				return false;
+		}
 	} else
 		return current;
 
@@ -650,10 +668,14 @@ void Camera::_bind_methods() {
 	ObjectTypeDB::bind_method( _MD("get_projection"),&Camera::get_projection );
 	ObjectTypeDB::bind_method( _MD("set_visible_layers","mask"),&Camera::set_visible_layers );
 	ObjectTypeDB::bind_method( _MD("get_visible_layers"),&Camera::get_visible_layers );
+	ObjectTypeDB::bind_method(_MD("set_raycast_layers", "mask"), &Camera::set_raycast_layers);
+	ObjectTypeDB::bind_method(_MD("get_raycast_layers"), &Camera::get_raycast_layers);
 	ObjectTypeDB::bind_method(_MD("set_environment","env:Environment"),&Camera::set_environment);
 	ObjectTypeDB::bind_method(_MD("get_environment:Environment"),&Camera::get_environment);
 	ObjectTypeDB::bind_method(_MD("set_keep_aspect_mode","mode"),&Camera::set_keep_aspect_mode);
 	ObjectTypeDB::bind_method(_MD("get_keep_aspect_mode"),&Camera::get_keep_aspect_mode);
+	ObjectTypeDB::bind_method(_MD("set_room_cull_enabled", "room_cull_enabled"), &Camera::set_room_cull_enabled);
+	ObjectTypeDB::bind_method(_MD("is_room_cull_enabled"), &Camera::is_room_cull_enabled);
 	//ObjectTypeDB::bind_method( _MD("_camera_make_current"),&Camera::_camera_make_current );
 
 	BIND_CONSTANT( PROJECTION_PERSPECTIVE );
@@ -692,15 +714,39 @@ Camera::Projection Camera::get_projection() const {
 
 void Camera::set_visible_layers(uint32_t p_layers) {
 
-	layers=p_layers;
-	VisualServer::get_singleton()->camera_set_visible_layers(camera,layers);
+	visible_layers=p_layers;
+	VisualServer::get_singleton()->camera_set_visible_layers(camera,visible_layers);
 }
 
 uint32_t Camera::get_visible_layers() const{
 
-	return layers;
+	return visible_layers;
 }
 
+void Camera::set_raycast_layers(uint32_t p_layers) {
+
+	raycast_layers = p_layers;
+}
+
+uint32_t Camera::get_raycast_layers() const{
+
+	return raycast_layers;
+}
+
+void Camera::set_depth(int32_t p_depth) {
+	if(depth!=p_depth) {
+		depth = p_depth;
+		VisualServer::get_singleton()->camera_set_depth(camera, depth);
+		if (current == true && get_viewport() != NULL) {
+			get_viewport()->_camera_unset(this);
+			get_viewport()->_camera_set(this);
+		}
+	}
+}
+
+int32_t Camera::get_depth() const {
+	return depth;
+}
 
 Vector<Plane> Camera::get_frustum() const {
 
@@ -741,10 +787,20 @@ float Camera::get_h_offset() const {
 	return h_offset;
 }
 
+void Camera::set_room_cull_enabled(bool p_room_cull_enabled) {
+	VisualServer::get_singleton()->camera_set_room_cull_enabled(camera, p_room_cull_enabled);
+}
+
+bool Camera::is_room_cull_enabled() const {
+	return VisualServer::get_singleton()->camera_is_room_cull_enabled(camera);
+}
+
 
 Camera::Camera() {
 
 	camera = VisualServer::get_singleton()->camera_create();
+	physics_object_capture = 0;
+	physics_object_over = 0;
 	size=1;
 	fov=0;
 	near=0;
@@ -754,10 +810,14 @@ Camera::Camera() {
 	mode=PROJECTION_PERSPECTIVE;
 	set_perspective(60.0,0.1,100.0);
 	keep_aspect=KEEP_HEIGHT;
-	layers=0xfffff;
+	visible_layers=0xfffff;
+	raycast_layers = 0xfffff;
+	depth=-1;
 	v_offset=0;
 	h_offset=0;
-	VisualServer::get_singleton()->camera_set_visible_layers(camera,layers);
+	VisualServer::get_singleton()->camera_set_room_cull_enabled(camera, true);
+	VisualServer::get_singleton()->camera_set_visible_layers(camera,visible_layers);
+	VisualServer::get_singleton()->camera_set_depth(camera, depth);
 	//active=false;
 }
 

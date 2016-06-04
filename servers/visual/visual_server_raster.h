@@ -126,7 +126,9 @@ class VisualServerRaster : public VisualServer {
 		float znear,zfar;
 		float size;
 		uint32_t visible_layers;
+		int32_t depth;
 		bool vaspect;
+		bool room_cull_enabled;
 		RID env;
 
 		Transform transform;
@@ -134,11 +136,13 @@ class VisualServerRaster : public VisualServer {
  		Camera() {
 
 			visible_layers=0xFFFFFFFF;
+			depth=-1;
 			fov=60;
 			type=PERSPECTIVE;
 			znear=0.1; zfar=100;
 			size=1.0;
 			vaspect=false;
+			room_cull_enabled=true;
 
  		}
  	};
@@ -473,7 +477,7 @@ class VisualServerRaster : public VisualServer {
 		RID parent;
 
 		VisualServer::ViewportRect rect;
-		RID camera;
+		Vector<RID> active_cameras;
 		RID scenario;
 		RID viewport_data;
 
@@ -983,11 +987,17 @@ public:
 	virtual void camera_set_visible_layers(RID p_camera,uint32_t p_layers);
 	virtual uint32_t camera_get_visible_layers(RID p_camera) const;
 
+	virtual void camera_set_depth(RID p_camera,int32_t p_depth);
+	virtual int32_t camera_get_depth(RID p_camera) const;
+
 	virtual void camera_set_environment(RID p_camera,RID p_env);
 	virtual RID camera_get_environment(RID p_camera) const;
 
 	virtual void camera_set_use_vertical_aspect(RID p_camera,bool p_enable);
 	virtual bool camera_is_using_vertical_aspect(RID p_camera,bool p_enable) const;
+
+	virtual void camera_set_room_cull_enabled(RID p_camera, bool p_enable);
+	virtual bool camera_is_room_cull_enabled(RID p_camera) const;
 
 	/* VIEWPORT API */
 
@@ -1016,11 +1026,11 @@ public:
 
 	virtual void viewport_set_hide_scenario(RID p_viewport,bool p_hide);
 	virtual void viewport_set_hide_canvas(RID p_viewport,bool p_hide);
-	virtual void viewport_set_disable_environment(RID p_viewport,bool p_disable);
-	virtual void viewport_attach_camera(RID p_viewport,RID p_camera);
-	virtual void viewport_set_scenario(RID p_viewport,RID p_scenario);
+	virtual void viewport_set_disable_environment(RID p_viewport, bool p_disable);
+	virtual void viewport_attach_camera(RID p_viewport, RID p_camera);
+	virtual void viewport_detach_camera(RID p_viewport, RID p_camera);
+	virtual void viewport_set_scenario(RID p_viewport, RID p_scenario);
 
-	virtual RID viewport_get_attached_camera(RID  p_viewport) const;
 	virtual RID viewport_get_scenario(RID  p_viewport) const;
 	virtual void viewport_attach_canvas(RID p_viewport,RID p_canvas);
 	virtual void viewport_remove_canvas(RID p_viewport,RID p_canvas);

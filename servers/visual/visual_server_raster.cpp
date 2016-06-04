@@ -1530,6 +1530,24 @@ uint32_t VisualServerRaster::camera_get_visible_layers(RID p_camera) const{
 	return camera->visible_layers;
 }
 
+void VisualServerRaster::camera_set_depth(RID p_camera,int32_t p_depth) {
+
+	VS_CHANGED;
+	Camera *camera=camera_owner.get(p_camera);
+	ERR_FAIL_COND(!camera);
+
+	camera->depth=p_depth;
+
+}
+
+int32_t VisualServerRaster::camera_get_depth(RID p_camera) const{
+
+	const Camera *camera=camera_owner.get(p_camera);
+	ERR_FAIL_COND_V(!camera, 0);
+
+	return camera->depth;
+}
+
 void VisualServerRaster::camera_set_environment(RID p_camera,RID p_env) {
 
 	Camera *camera = camera_owner.get( p_camera );
@@ -1560,7 +1578,20 @@ bool VisualServerRaster::camera_is_using_vertical_aspect(RID p_camera,bool p_ena
 	return camera->vaspect;
 
 }
+void VisualServerRaster::camera_set_room_cull_enabled(RID p_camera, bool p_enable){
 
+	Camera *camera = camera_owner.get(p_camera);
+	ERR_FAIL_COND(!camera);
+	camera->room_cull_enabled = p_enable;
+
+}
+bool VisualServerRaster::camera_is_room_cull_enabled(RID p_camera) const{
+
+	const Camera *camera = camera_owner.get(p_camera);
+	ERR_FAIL_COND_V(!camera, false);
+	return camera->room_cull_enabled;
+
+}
 
 /* VIEWPORT API */
 
@@ -1804,14 +1835,41 @@ void VisualServerRaster::viewport_attach_camera(RID p_viewport,RID p_camera) {
 
 
 
+	
+	if (p_camera.is_valid()) {
+
+		ERR_FAIL_COND(!camera_owner.owns(p_camera));
+		Camera *camera = camera = camera_owner.get(p_camera);
+		// a camera						
+		int i;
+		int cameras_size = viewport->active_cameras.size();
+		for (i = 0; i < cameras_size; i++) {
+			if (camera->depth < camera_owner.get(viewport->active_cameras.get(i))->depth) {
+				break;
+			};
+		};
+		viewport->active_cameras.insert(i, p_camera);
+	}
+}
+
+void VisualServerRaster::viewport_detach_camera(RID p_viewport, RID p_camera) {
+	VS_CHANGED;
+
+	Viewport *viewport = NULL;
+	viewport = viewport_owner.get(p_viewport);
+	ERR_FAIL_COND(!viewport);
 
 	if (p_camera.is_valid()) {
 
 		ERR_FAIL_COND(!camera_owner.owns(p_camera));
-		// a camera
-		viewport->camera=p_camera;
-	} else {
-		viewport->camera=RID();
+		Camera *camera = camera = camera_owner.get(p_camera);
+		// a camera						
+		int camera_count = viewport->active_cameras.size();
+		int camera_index = viewport->active_cameras.find(p_camera);
+		if (camera_index >= 0)
+		{
+			viewport->active_cameras.remove(camera_index);
+		}
 	}
 
 }
@@ -1833,16 +1891,6 @@ void VisualServerRaster::viewport_set_scenario(RID p_viewport,RID p_scenario) {
 		viewport->scenario=RID();
 	}
 
-}
-
-RID VisualServerRaster::viewport_get_attached_camera(RID p_viewport) const {
-
-	const Viewport *viewport=NULL;
-
-	viewport = viewport_owner.get( p_viewport );
-	ERR_FAIL_COND_V(!viewport, RID());
-
-	return viewport->camera;
 }
 
 void VisualServerRaster::viewport_attach_canvas(RID p_viewport,RID p_canvas) {
@@ -6532,7 +6580,7 @@ void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, S
 	exterior_visited=false;
 	exterior_portal_cull_count=0;
 
-	if (room_cull_enabled) {
+	if (room_cull_enabled && p_camera->room_cull_enabled) {
 		for(int i=0;i<cull_count;i++) {
 
 			Instance *ins = instance_cull_result[i];
@@ -6652,7 +6700,7 @@ void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, S
 
 				// test if this geometry should be visible
 
-				if (room_cull_enabled) {
+				if (room_cull_enabled && p_camera->room_cull_enabled) {
 
 
 					if (ins->visible_in_all_rooms) {
@@ -7128,18 +7176,22 @@ void VisualServerRaster::_render_canvas(Canvas *p_canvas,const Matrix32 &p_trans
 
 void VisualServerRaster::_draw_viewport_camera(Viewport *p_viewport,bool p_ignore_camera) {
 
-
-	Camera *camera=NULL;
-	if (camera_owner.owns( p_viewport->camera ))
-		camera=camera_owner.get( p_viewport->camera );
 	Scenario *scenario = scenario_owner.get( p_viewport->scenario );
 
 	_update_instances(); // check dirty instances before rendering
 
 	if (p_ignore_camera)
-		_render_no_camera(p_viewport, camera,scenario );
-	else
-		_render_camera(p_viewport, camera,scenario );
+		_render_no_camera(p_viewport, NULL,scenario );
+	else {
+		for (int i = 0; i < p_viewport->active_cameras.size(); i++){
+			Camera *camera = NULL;
+			if (camera_owner.owns(p_viewport->active_cameras[i])) {
+				camera = camera_owner.get(p_viewport->active_cameras[i]);
+
+				_render_camera(p_viewport, camera, scenario);
+			}
+		}
+	}
 
 }
 
@@ -7191,8 +7243,23 @@ void VisualServerRaster::_draw_viewport(Viewport *p_viewport,int p_ofs_x, int p_
 		}
 	}
 
-	bool can_draw_3d=!p_viewport->hide_scenario && camera_owner.owns(p_viewport->camera) && scenario_owner.owns(p_viewport->scenario);
+	bool invalid_camera;
+	int active_camera_count = p_viewport->active_cameras.size();
+	if (active_camera_count > 0) {
+		invalid_camera = false;
+		for (int i = 0; i < p_viewport->active_cameras.size(); i++)
+		{
+			if (!camera_owner.owns(p_viewport->active_cameras[i])) {
+				invalid_camera = true;
+				break;
+			}
+		}
+	}
+	else {
+		invalid_camera = true;
+	}
 
+	bool can_draw_3d = !p_viewport->hide_scenario && invalid_camera == false && scenario_owner.owns(p_viewport->scenario);
 
 	if (scenario_draw_canvas_bg) {
 
