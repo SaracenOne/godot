@@ -791,7 +791,7 @@ void OS_Windows::process_key_events() {
 				    k.mod=ke.mod_state;
 				    k.pressed=true;
 				    k.scancode=KeyMappingWindows::get_keysym(ke.wParam);
-                    k.unicode=ke.wParam;
+				    k.unicode=ke.wParam;
 				    if (k.unicode && gr_mem) {
 					    k.mod.alt=false;
 					    k.mod.control=false;
@@ -2277,7 +2277,7 @@ String OS_Windows::get_system_dir(SystemDir p_dir) const {
 }
 String OS_Windows::get_data_dir() const {
 
-	String an = Globals::get_singleton()->get("application/name");
+	String an = get_safe_application_name();
 	if (an!="") {
 
 		if (has_environment("APPDATA")) {
