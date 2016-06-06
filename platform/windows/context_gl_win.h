@@ -49,6 +49,8 @@
 
 #include <windows.h>
 
+typedef bool (APIENTRY *PFNWGLSWAPINTERVALEXTPROC) (int interval);
+
 class ContextGL_Win : public ContextGL {
 
 	HDC hDC;
@@ -59,6 +61,10 @@ class ContextGL_Win : public ContextGL {
 
 	bool multisample_supported;
 	int multisample_format;
+	bool use_vsync;
+
+
+	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 public:
 
 	virtual void release_current();
@@ -73,6 +79,8 @@ public:
 
 	int test_multisample_support(int p_samples);
 	void set_active_hwnd(HWND hwnd);
+	virtual void set_use_vsync(bool p_use);
+	virtual bool is_using_vsync() const;
 
 	ContextGL_Win();
 	~ContextGL_Win();

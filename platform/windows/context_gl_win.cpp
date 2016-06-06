@@ -105,6 +105,21 @@ static GLWrapperFuncPtr wrapper_get_proc_address(const char* p_function) {
 }
 */
 
+void ContextGL_Win::set_use_vsync(bool p_use) {
+
+	if (wglSwapIntervalEXT) {
+		wglSwapIntervalEXT(p_use?1:0);
+	}
+	use_vsync=p_use;
+
+}
+
+bool ContextGL_Win::is_using_vsync() const {
+
+	return use_vsync;
+}
+
+
 Error ContextGL_Win::initialize() {
 
 	static	PIXELFORMATDESCRIPTOR pfd= {
@@ -160,6 +175,8 @@ Error ContextGL_Win::initialize() {
 
 	wglMakeCurrent(hDC,hRC);
 
+	wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)  wglGetProcAddress ("wglSwapIntervalEXT");
+//	glWrapperInit(wrapper_get_proc_address);
 
 
 	return OK;
@@ -229,6 +246,7 @@ ContextGL_Win::ContextGL_Win() {
 
 	multisample_supported = false;
 	multisample_format = 0;
+	use_vsync=false;
 }
 
 ContextGL_Win::~ContextGL_Win() {
