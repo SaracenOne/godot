@@ -285,16 +285,16 @@ void Viewport::update_worlds() {
 }
 
 
-void Viewport::_test_new_mouseover(ObjectID new_collider) {
+void Viewport::_test_new_mouseover(Camera* p_camera,ObjectID new_collider) {
 #ifndef _3D_DISABLED
-	if (new_collider!=physics_object_over) {
+	if (new_collider!=p_camera->physics_object_over) {
 
-		if (physics_object_over) {
-			Object *obj = ObjectDB::get_instance(physics_object_over);
+		if (p_camera->physics_object_over) {
+			Object *obj = ObjectDB::get_instance(p_camera->physics_object_over);
 			if (obj) {
 				CollisionObject *co = obj->cast_to<CollisionObject>();
 				if (co) {
-					co->_mouse_exit();
+					co->_mouse_exit(p_camera);
 				}
 			}
 		}
@@ -304,14 +304,14 @@ void Viewport::_test_new_mouseover(ObjectID new_collider) {
 			if (obj) {
 				CollisionObject *co = obj->cast_to<CollisionObject>();
 				if (co) {
-					co->_mouse_enter();
+					co->_mouse_enter(p_camera);
 
 				}
 			}
 
 		}
 
-		physics_object_over=new_collider;
+		p_camera->physics_object_over=new_collider;
 
 	}
 #endif
@@ -402,7 +402,7 @@ void Viewport::_notification(int p_what) {
 					first->make_current();
 			}
 
-			if (cameras.size() && !camera) {
+			if (cameras.size() && !active_cameras.size()) {
 				//there are cameras but no current camera, pick first in tree and make it current
 				Camera *first=NULL;
 				for(Set<Camera*>::Element *E=cameras.front();E;E=E->next()) {
@@ -595,24 +595,25 @@ void Viewport::_notification(int p_what) {
 #ifndef _3D_DISABLED
 					bool captured=false;
 
-					if (physics_object_capture!=0) {
-
-
-						Object *obj = ObjectDB::get_instance(physics_object_capture);
-						if (obj) {
-							CollisionObject *co = obj->cast_to<CollisionObject>();
-							if (co) {
-								co->_input_event(camera,ev,Vector3(),Vector3(),0);
-								captured=true;
-								if (ev.type==InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index==1 && !ev.mouse_button.pressed) {
-									physics_object_capture=0;
+					for (int i = 0; i < active_cameras.size(); i++) {
+						Node *cam_node = active_cameras.get(i);
+						Camera *camera = (Camera *)cam_node;
+						if (camera->physics_object_capture != 0) {
+							Object *obj = ObjectDB::get_instance(camera->physics_object_capture);
+							if (obj) {
+								CollisionObject *co = obj->cast_to<CollisionObject>();
+								if (co) {
+									co->_input_event(cam_node, ev, Vector3(), Vector3(), 0);
+									captured = true;
+									if (ev.type == InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index == 1 && !ev.mouse_button.pressed) {
+										camera->physics_object_capture = 0;
+									}
+								} else {
+									camera->physics_object_capture = 0;
 								}
-
 							} else {
-								physics_object_capture=0;
+								camera->physics_object_capture=0;
 							}
-						} else {
-							physics_object_capture=0;
 						}
 					}
 
@@ -624,9 +625,13 @@ void Viewport::_notification(int p_what) {
 						if (last_id) {
 							if (ObjectDB::get_instance(last_id)) {
 								//good, exists
-								last_object->_input_event(camera,ev,result.position,result.normal,result.shape);
-								if (last_object->get_capture_input_on_drag() && ev.type==InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index==1 && ev.mouse_button.pressed) {
-									physics_object_capture=last_id;
+								for (int i = 0; i < active_cameras.size(); i++) {
+									Node *cam_node = active_cameras.get(i);
+									Camera *camera = (Camera *)cam_node;
+									last_object->_input_event(cam_node, ev, result.position, result.normal, result.shape);
+									if (last_object->get_capture_input_on_drag() && ev.type == InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index == 1 && ev.mouse_button.pressed) {
+										camera->physics_object_capture = last_id;
+									}
 								}
 
 
@@ -637,68 +642,78 @@ void Viewport::_notification(int p_what) {
 
 
 
-						if (camera) {
+						if (active_cameras.size()) {
+							for (int i = 0; i < active_cameras.size(); i++) {
+								Object *cam_obj = active_cameras.get(i);
+								Camera *camera = (Camera *)cam_obj;
+								Vector3 from = camera->project_ray_origin(pos);
+								Vector3 dir = camera->project_ray_normal(pos);
 
-							Vector3 from = camera->project_ray_origin(pos);
-							Vector3 dir = camera->project_ray_normal(pos);
+								if (camera->get_raycast_layers() > 0) {
+								PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
+									if (space) {
 
+								bool col = space->intersect_ray(from,from+dir*10000,result,Set<RID>(),camera->get_raycast_layers(),0xFFFFFFFF,true);
+										ObjectID new_collider = 0;
+										if (col) {
+
+											if (result.collider) {
+
+												CollisionObject *co = result.collider->cast_to<CollisionObject>();
+												if (co) {
+
+													co->_input_event(active_cameras.get(i), ev, result.position, result.normal, result.shape);
+													last_object = co;
+													last_id = result.collider_id;
+													new_collider = last_id;
+													if (co->get_capture_input_on_drag() && ev.type == InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index == 1 && ev.mouse_button.pressed) {
+														camera->physics_object_capture = last_id;
+													}
+
+												}
+											}
+										}
+
+										if (ev.type == InputEvent::MOUSE_MOTION) {
+											_test_new_mouseover(camera, new_collider);
+										}
+									}
+								}
+
+								last_pos = pos;
+							}
+						}
+					}
+				}
+
+				if (!motion_tested && active_cameras.size() && physics_last_mousepos != Vector2(1e20, 1e20)) {
+					for (int i = 0; i < active_cameras.size(); i++) {
+						//test anyway for mouseenter/exit because objects might move
+						Object *cam_obj = active_cameras.get(i);
+						Camera *camera = (Camera *)cam_obj;
+						Vector3 from = camera->project_ray_origin(physics_last_mousepos);
+						Vector3 dir = camera->project_ray_normal(physics_last_mousepos);
+
+						if (camera->get_raycast_layers() > 0) {
 							PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
 							if (space) {
 
-								bool col = space->intersect_ray(from,from+dir*10000,result,Set<RID>(),0xFFFFFFFF,0xFFFFFFFF,true);
-								ObjectID new_collider=0;
+						bool col = space->intersect_ray(from,from+dir*10000,result,Set<RID>(),camera->get_raycast_layers(),0xFFFFFFFF,true);
+								ObjectID new_collider = 0;
 								if (col) {
-
 									if (result.collider) {
-
 										CollisionObject *co = result.collider->cast_to<CollisionObject>();
 										if (co) {
-
-											co->_input_event(camera,ev,result.position,result.normal,result.shape);
-											last_object=co;
-											last_id=result.collider_id;
-											new_collider=last_id;
-											if (co->get_capture_input_on_drag() && ev.type==InputEvent::MOUSE_BUTTON && ev.mouse_button.button_index==1 && ev.mouse_button.pressed) {
-												physics_object_capture=last_id;
-											}
+											new_collider = result.collider_id;
 
 										}
 									}
 								}
 
-								if (ev.type==InputEvent::MOUSE_MOTION) {
-									_test_new_mouseover(new_collider);
-								}
-							}
+								_test_new_mouseover(camera, new_collider);
 
-							last_pos=pos;
-						}
-					}
-				}
-
-				if (!motion_tested && camera && physics_last_mousepos!=Vector2(1e20,1e20)) {
-
-					//test anyway for mouseenter/exit because objects might move
-					Vector3 from = camera->project_ray_origin(physics_last_mousepos);
-					Vector3 dir = camera->project_ray_normal(physics_last_mousepos);
-
-					PhysicsDirectSpaceState *space = PhysicsServer::get_singleton()->space_get_direct_state(find_world()->get_space());
-					if (space) {
-
-						bool col = space->intersect_ray(from,from+dir*10000,result,Set<RID>(),0xFFFFFFFF,0xFFFFFFFF,true);
-						ObjectID new_collider=0;
-						if (col) {
-							if (result.collider) {
-								CollisionObject *co = result.collider->cast_to<CollisionObject>();
-								if (co) {
-									new_collider=result.collider_id;
-
-								}
 							}
 						}
-
-						_test_new_mouseover(new_collider);
-
 					}
 #endif
 				}
@@ -754,7 +769,7 @@ Rect2 Viewport::get_rect() const {
 
 void Viewport::_update_listener() {
 
-	if (is_inside_tree() && audio_listener && (camera || listener) && (!get_parent() || (get_parent()->cast_to<Control>() && get_parent()->cast_to<Control>()->is_visible())))  {
+	if (is_inside_tree() && audio_listener && (active_cameras.size() || listener) && (!get_parent() || (get_parent()->cast_to<Control>() && get_parent()->cast_to<Control>()->is_visible())))  {
 		SpatialSoundServer::get_singleton()->listener_set_space(internal_listener, find_world()->get_sound_space());
 	} else {
 		SpatialSoundServer::get_singleton()->listener_set_space(internal_listener, RID());
@@ -915,7 +930,7 @@ void Viewport::_listener_make_next_current(Listener* p_exclude) {
 	}
 	else {
 		// Attempt to reset listener to the camera position
-		if (camera != NULL) {
+		if (active_cameras.size() > 0) {
 			_update_listener();
 			_camera_transform_changed_notify();
 		}
@@ -926,9 +941,14 @@ void Viewport::_listener_make_next_current(Listener* p_exclude) {
 void Viewport::_camera_transform_changed_notify() {
 
 #ifndef _3D_DISABLED
-	// If there is an active listener in the scene, it takes priority over the camera
-	if (camera && !listener)
-		SpatialSoundServer::get_singleton()->listener_set_transform(internal_listener, camera->get_camera_transform());
+	if (active_cameras.size()) {
+		for (int i = 0; i < active_cameras.size(); i++)
+		{
+			Object *cam_obj = active_cameras.get(i);
+			Camera *camera = (Camera *)cam_obj;
+			SpatialSoundServer::get_singleton()->listener_set_transform(internal_listener, camera->get_camera_transform());
+		}
+	}
 #endif
 }
 
@@ -936,20 +956,20 @@ void Viewport::_camera_set(Camera* p_camera) {
 
 #ifndef _3D_DISABLED
 
-	if (camera==p_camera)
+	int active_index = active_cameras.find(p_camera);
+
+	if (active_index >= 0)
 		return;
 
-	if (camera && find_world().is_valid()) {
-		camera->notification(Camera::NOTIFICATION_LOST_CURRENT);
-	}
-	camera=p_camera;
-	if (camera)
-		VisualServer::get_singleton()->viewport_attach_camera(viewport,camera->get_camera());
+	active_cameras.append(p_camera);
+
+	if (p_camera)
+		VisualServer::get_singleton()->viewport_attach_camera(viewport, p_camera->get_camera());
 	else
 		VisualServer::get_singleton()->viewport_attach_camera(viewport,RID());
 
-	if (camera && find_world().is_valid()) {
-		camera->notification(Camera::NOTIFICATION_BECAME_CURRENT);
+	if (p_camera && find_world().is_valid()) {
+		p_camera->notification(Camera::NOTIFICATION_BECAME_CURRENT);
 	}
 
 	_update_listener();
@@ -957,18 +977,38 @@ void Viewport::_camera_set(Camera* p_camera) {
 #endif
 }
 
+void Viewport::_camera_unset(Camera* p_camera) {
+
+#ifndef _3D_DISABLED
+
+	int camera_index = active_cameras.find(p_camera);
+
+	if (camera_index < 0)
+		return;
+
+	active_cameras.remove(camera_index);
+
+	if (p_camera)
+		VisualServer::get_singleton()->viewport_detach_camera(viewport, p_camera->get_camera());
+
+	if (p_camera && find_world().is_valid()) {
+		p_camera->notification(Camera::NOTIFICATION_LOST_CURRENT);
+	}
+
+	_update_listener();
+#endif
+}
+
 bool Viewport::_camera_add(Camera* p_camera) {
 
 	cameras.insert(p_camera);
-	return cameras.size()==1;
+	return cameras.size()>0;
 }
 
 void Viewport::_camera_remove(Camera* p_camera) {
 
 	cameras.erase(p_camera);
-	if (camera==p_camera) {
-		camera=NULL;
-	}
+	_camera_unset(p_camera);
 }
 
 #ifndef _3D_DISABLED
@@ -980,8 +1020,6 @@ void Viewport::_camera_make_next_current(Camera* p_exclude) {
 			continue;
 		if (!E->get()->is_inside_tree())
 			continue;
-		if (camera!=NULL)
-			return;
 
 		E->get()->make_current();
 
@@ -1112,8 +1150,12 @@ void Viewport::set_world(const Ref<World>& p_world) {
 		_propagate_exit_world(this);
 
 #ifndef _3D_DISABLED
-	if (find_world().is_valid() && camera)
-		camera->notification(Camera::NOTIFICATION_LOST_CURRENT);
+	if (find_world().is_valid() && active_cameras.size()) {
+		for (int i = 0; i < active_cameras.size(); i++) {
+			Object *cam_obj = active_cameras.get(i);
+			cam_obj->notification(Camera::NOTIFICATION_LOST_CURRENT);
+		}
+	}
 #endif
 
 	world=p_world;
@@ -1122,8 +1164,12 @@ void Viewport::set_world(const Ref<World>& p_world) {
 		_propagate_enter_world(this);
 
 #ifndef _3D_DISABLED
-	if (find_world().is_valid() && camera)
-		camera->notification(Camera::NOTIFICATION_BECAME_CURRENT);
+	if (find_world().is_valid() && active_cameras.size()) {
+		for (int i = 0; i < active_cameras.size(); i++) {
+			Object *cam_obj = active_cameras.get(i);
+			cam_obj->notification(Camera::NOTIFICATION_BECAME_CURRENT);
+		}
+	}
 #endif
 
 	//propagate exit
@@ -1158,9 +1204,9 @@ Listener* Viewport::get_listener() const {
 	return listener;
 }
 
-Camera* Viewport::get_camera() const {
+Array Viewport::get_cameras() const {
 
-	return camera;
+	return active_cameras;
 }
 
 
@@ -2397,8 +2443,12 @@ void Viewport::set_use_own_world(bool p_world) {
 		_propagate_exit_world(this);
 
 #ifndef _3D_DISABLED
-	if (find_world().is_valid() && camera)
-		camera->notification(Camera::NOTIFICATION_LOST_CURRENT);
+	if (find_world().is_valid() && active_cameras.size()) {
+		for (int i = 0; i < active_cameras.size(); i++) {
+			Object *obj = active_cameras.get(i);
+			obj->notification(Camera::NOTIFICATION_LOST_CURRENT);
+		}
+	}
 #endif
 
 	if (!p_world)
@@ -2410,8 +2460,14 @@ void Viewport::set_use_own_world(bool p_world) {
 		_propagate_enter_world(this);
 
 #ifndef _3D_DISABLED
-	if (find_world().is_valid() && camera)
-		camera->notification(Camera::NOTIFICATION_BECAME_CURRENT);
+	if (find_world().is_valid() && active_cameras.size())
+	{
+		for (int i = 0; i < active_cameras.size(); i++)
+		{
+			Object *cam_obj = active_cameras.get(i);
+			cam_obj->notification(Camera::NOTIFICATION_BECAME_CURRENT);
+		}
+	}
 #endif
 
 	//propagate exit
@@ -2573,7 +2629,7 @@ void Viewport::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("set_use_own_world","enable"), &Viewport::set_use_own_world);
 	ObjectTypeDB::bind_method(_MD("is_using_own_world"), &Viewport::is_using_own_world);
 
-	ObjectTypeDB::bind_method(_MD("get_camera:Camera"), &Viewport::get_camera);
+	ObjectTypeDB::bind_method(_MD("get_camera:Camera"), &Viewport::get_cameras);
 
 	ObjectTypeDB::bind_method(_MD("set_as_audio_listener","enable"), &Viewport::set_as_audio_listener);
 	ObjectTypeDB::bind_method(_MD("is_audio_listener","enable"), &Viewport::is_audio_listener);
@@ -2635,7 +2691,6 @@ Viewport::Viewport() {
 	transparent_bg=false;
 	parent=NULL;
 	listener=NULL;
-	camera=NULL;
 	size_override=false;
 	size_override_stretch=false;
 	size_override_size=Size2(1,1);
@@ -2648,8 +2703,6 @@ Viewport::Viewport() {
 	render_target_texture = Ref<RenderTargetTexture>( memnew( RenderTargetTexture(this) ) );
 
 	physics_object_picking=false;
-	physics_object_capture=0;
-	physics_object_over=0;
 	physics_last_mousepos=Vector2(1e20,1e20);
 
 

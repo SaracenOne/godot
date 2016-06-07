@@ -96,7 +96,7 @@ friend class RenderTargetTexture;
 	Listener *listener;
 	Set<Listener*> listeners;
 
-	Camera *camera;
+	Array active_cameras;
 	Set<Camera*> cameras;
 
 	RID viewport;
@@ -137,10 +137,8 @@ friend class RenderTargetTexture;
 
 	bool physics_object_picking;
 	List<InputEvent> physics_picking_events;
-	ObjectID physics_object_capture;
-	ObjectID physics_object_over;
 	Vector2 physics_last_mousepos;
-	void _test_new_mouseover(ObjectID new_collider);
+	void _test_new_mouseover(Camera* p_camera, ObjectID new_collider);
 	Map<ObjectID,uint64_t> physics_2d_mouseover;
 
 	void _update_rect();
@@ -277,6 +275,7 @@ friend class Listener;
 friend class Camera;
 	void _camera_transform_changed_notify();
 	void _camera_set(Camera* p_camera);
+	void _camera_unset(Camera* p_camera);
 	bool _camera_add(Camera* p_camera); //true if first
 	void _camera_remove(Camera* p_camera);
 	void _camera_make_next_current(Camera* p_exclude);
@@ -288,7 +287,7 @@ protected:
 public:
 
 	Listener* get_listener() const;
-	Camera* get_camera() const;
+	Array get_cameras() const;
 
 	void set_as_audio_listener(bool p_enable);
 	bool is_audio_listener() const;

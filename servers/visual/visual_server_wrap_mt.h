@@ -420,6 +420,9 @@ public:
 	FUNC2(camera_set_visible_layers,RID,uint32_t);
 	FUNC1RC(uint32_t,camera_get_visible_layers,RID);
 
+	FUNC2(camera_set_depth, RID, int32_t);
+	FUNC1RC(int32_t, camera_get_depth, RID);
+
 	FUNC2(camera_set_environment,RID,RID);
 	FUNC1RC(RID,camera_get_environment,RID);
 
@@ -427,6 +430,8 @@ public:
 	FUNC2(camera_set_use_vertical_aspect,RID,bool);
 	FUNC2RC(bool,camera_is_using_vertical_aspect,RID,bool);
 
+	FUNC2(camera_set_room_cull_enabled,RID,bool);
+	FUNC1RC(bool, camera_is_room_cull_enabled, RID);
 
 	/* VIEWPORT API */
 
@@ -457,10 +462,10 @@ public:
 	FUNC2(viewport_set_hide_scenario,RID,bool );
 	FUNC2(viewport_set_hide_canvas,RID,bool );
 	FUNC2(viewport_attach_camera,RID,RID );
+	FUNC2(viewport_detach_camera, RID, RID);
 	FUNC2(viewport_set_scenario,RID,RID );
 	FUNC2(viewport_set_disable_environment,RID,bool );
 
-	FUNC1RC(RID,viewport_get_attached_camera,RID);
 	FUNC1RC(RID,viewport_get_scenario,RID );
 	FUNC2(viewport_attach_canvas,RID,RID);
 	FUNC2(viewport_remove_canvas,RID,RID);
@@ -539,9 +544,9 @@ public:
 	FUNC2(instance_set_extra_visibility_margin,RID, real_t  );
 	FUNC1RC(real_t,instance_get_extra_visibility_margin,RID );
 
-	FUNC2RC(Vector<RID>,instances_cull_aabb,const AABB& , RID );
-	FUNC3RC(Vector<RID>,instances_cull_ray,const Vector3& ,const Vector3&, RID );
-	FUNC2RC(Vector<RID>,instances_cull_convex,const Vector<Plane>& , RID );
+	FUNC3RC(Vector<RID>,instances_cull_aabb,const AABB& ,uint32_t, RID );
+	FUNC4RC(Vector<RID>,instances_cull_ray,const Vector3& ,const Vector3&, uint32_t,RID );
+	FUNC3RC(Vector<RID>,instances_cull_convex,const Vector<Plane>&, uint32_t, RID );
 
 	FUNC3(instance_geometry_set_flag,RID,InstanceFlags ,bool );
 	FUNC2RC(bool,instance_geometry_get_flag,RID,InstanceFlags );

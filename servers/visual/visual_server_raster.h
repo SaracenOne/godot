@@ -126,7 +126,9 @@ class VisualServerRaster : public VisualServer {
 		float znear,zfar;
 		float size;
 		uint32_t visible_layers;
+		int32_t depth;
 		bool vaspect;
+		bool room_cull_enabled;
 		RID env;
 
 		Transform transform;
@@ -134,11 +136,13 @@ class VisualServerRaster : public VisualServer {
  		Camera() {
 
 			visible_layers=0xFFFFFFFF;
+			depth=-1;
 			fov=60;
 			type=PERSPECTIVE;
 			znear=0.1; zfar=100;
 			size=1.0;
 			vaspect=false;
+			room_cull_enabled=true;
 
  		}
  	};
@@ -155,8 +159,23 @@ class VisualServerRaster : public VisualServer {
 			MAX_LIGHTS=4
 		};
 
+		struct OctreeLayer {
+			int layer_index;
+			OctreeElementID octree_id;
+
+			OctreeLayer() {
+				layer_index = -1;
+				octree_id = -1;
+			}
+
+			OctreeLayer(int p_layer_index, OctreeElementID p_octree_id) {
+				layer_index = p_layer_index;
+				octree_id = p_octree_id;
+			}
+		};
+	
 		RID self;
-		OctreeElementID octree_id;
+		Vector<OctreeLayer> octree_layers;
 		Scenario *scenario;
 		bool update;
 		bool update_aabb;
@@ -289,7 +308,6 @@ class VisualServerRaster : public VisualServer {
 
 
 		Instance() {
-			octree_id=0;
 			update_next=0;
 			object_ID=0;
 			last_render_pass=0;
@@ -359,7 +377,7 @@ class VisualServerRaster : public VisualServer {
 		// well wtf, balloon allocator is slower?
 		typedef ::Octree<Instance,true> Octree;
 
-		Octree octree;
+		Octree octree[32];
 
 		List<RID> directional_lights;
 		RID environment;
@@ -473,7 +491,7 @@ class VisualServerRaster : public VisualServer {
 		RID parent;
 
 		VisualServer::ViewportRect rect;
-		RID camera;
+		Vector<RID> active_cameras;
 		RID scenario;
 		RID viewport_data;
 
@@ -623,7 +641,14 @@ class VisualServerRaster : public VisualServer {
 
 	ViewportRect viewport_rect;
 	_FORCE_INLINE_ void _instance_draw(Instance *p_instance);
-
+	_FORCE_INLINE_ void _instance_clear_layers(Instance *p_instance) {
+		while (p_instance->octree_layers.size() > 0) {
+			Instance::OctreeLayer octree_layer = p_instance->octree_layers[0];
+			p_instance->scenario->octree[octree_layer.layer_index].erase(octree_layer.octree_id);
+			p_instance->octree_layers.remove(0);
+		}
+	}
+	
 	bool _test_portal_cull(Camera *p_camera, Instance *p_portal_from, Instance *p_portal_to);
 	void _cull_portal(Camera *p_camera, Instance *p_portal,Instance *p_from_portal);
 	void _cull_room(Camera *p_camera, Instance *p_room,Instance *p_from_portal=NULL);
@@ -983,11 +1008,17 @@ public:
 	virtual void camera_set_visible_layers(RID p_camera,uint32_t p_layers);
 	virtual uint32_t camera_get_visible_layers(RID p_camera) const;
 
+	virtual void camera_set_depth(RID p_camera,int32_t p_depth);
+	virtual int32_t camera_get_depth(RID p_camera) const;
+
 	virtual void camera_set_environment(RID p_camera,RID p_env);
 	virtual RID camera_get_environment(RID p_camera) const;
 
 	virtual void camera_set_use_vertical_aspect(RID p_camera,bool p_enable);
 	virtual bool camera_is_using_vertical_aspect(RID p_camera,bool p_enable) const;
+
+	virtual void camera_set_room_cull_enabled(RID p_camera, bool p_enable);
+	virtual bool camera_is_room_cull_enabled(RID p_camera) const;
 
 	/* VIEWPORT API */
 
@@ -1016,11 +1047,11 @@ public:
 
 	virtual void viewport_set_hide_scenario(RID p_viewport,bool p_hide);
 	virtual void viewport_set_hide_canvas(RID p_viewport,bool p_hide);
-	virtual void viewport_set_disable_environment(RID p_viewport,bool p_disable);
-	virtual void viewport_attach_camera(RID p_viewport,RID p_camera);
-	virtual void viewport_set_scenario(RID p_viewport,RID p_scenario);
+	virtual void viewport_set_disable_environment(RID p_viewport, bool p_disable);
+	virtual void viewport_attach_camera(RID p_viewport, RID p_camera);
+	virtual void viewport_detach_camera(RID p_viewport, RID p_camera);
+	virtual void viewport_set_scenario(RID p_viewport, RID p_scenario);
 
-	virtual RID viewport_get_attached_camera(RID  p_viewport) const;
 	virtual RID viewport_get_scenario(RID  p_viewport) const;
 	virtual void viewport_attach_canvas(RID p_viewport,RID p_canvas);
 	virtual void viewport_remove_canvas(RID p_viewport,RID p_canvas);
@@ -1101,9 +1132,9 @@ public:
 	virtual void instance_set_extra_visibility_margin( RID p_instance, real_t p_margin );
 	virtual real_t instance_get_extra_visibility_margin( RID p_instance ) const;
 
-	virtual Vector<RID> instances_cull_aabb(const AABB& p_aabb, RID p_scenario=RID()) const;
-	virtual Vector<RID> instances_cull_ray(const Vector3& p_from, const Vector3& p_to, RID p_scenario=RID()) const;
-	virtual Vector<RID> instances_cull_convex(const Vector<Plane>& p_convex, RID p_scenario=RID()) const;
+	virtual Vector<RID> instances_cull_aabb(const AABB& p_aabb, uint32_t layer_mask, RID p_scenario=RID()) const;
+	virtual Vector<RID> instances_cull_ray(const Vector3& p_from, const Vector3& p_to, uint32_t layer_mask, RID p_scenario=RID()) const;
+	virtual Vector<RID> instances_cull_convex(const Vector<Plane>& p_convex, uint32_t layer_mask, RID p_scenario=RID()) const;
 
 	virtual void instance_geometry_set_flag(RID p_instance,InstanceFlags p_flags,bool p_enabled);
 	virtual bool instance_geometry_get_flag(RID p_instance,InstanceFlags p_flags) const;

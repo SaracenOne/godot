@@ -52,6 +52,8 @@ public:
 	};
 
 private:
+	ObjectID physics_object_capture;
+	ObjectID physics_object_over;
 
 	bool force_change;
 	bool current;
@@ -70,7 +72,9 @@ private:
 
 	//String camera_group;
 
-	uint32_t layers;
+	uint32_t visible_layers;
+	uint32_t raycast_layers;
+	int8_t depth;
 
 	Ref<Environment> environment;
 
@@ -129,6 +133,12 @@ public:
 	void set_visible_layers(uint32_t p_layers);
 	uint32_t get_visible_layers() const;
 
+	void set_raycast_layers(uint32_t p_layers);
+	uint32_t get_raycast_layers() const;
+
+	void set_depth(int32_t p_depth);
+	int32_t get_depth() const;
+
 	Vector<Plane> get_frustum() const;
 
 	void set_environment(const Ref<Environment>& p_environment);
@@ -144,6 +154,8 @@ public:
 	void set_h_offset(float p_offset);
 	float get_h_offset() const;
 
+	void set_room_cull_enabled(bool p_room_cull_enabled);
+	bool is_room_cull_enabled() const;
 
 	Camera();
 	~Camera();
