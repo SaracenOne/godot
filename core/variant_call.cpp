@@ -447,6 +447,7 @@ static void _call_##m_type##_##m_method(Variant& r_ret,Variant& p_self,const Var
 	VCALL_LOCALMEM1(Dictionary,erase);
 	VCALL_LOCALMEM0R(Dictionary,hash);
 	VCALL_LOCALMEM0R(Dictionary,keys);
+	VCALL_LOCALMEM0R(Dictionary,values);
 	VCALL_LOCALMEM1R(Dictionary,parse_json);
 	VCALL_LOCALMEM0R(Dictionary,to_json);
 
@@ -1438,6 +1439,7 @@ _VariantCall::addfunc(Variant::m_vtype,Variant::m_ret,_SCS(#m_method),VCALL(m_cl
 	ADDFUNC1(DICTIONARY,NIL,Dictionary,erase,NIL,"value",varray());
 	ADDFUNC0(DICTIONARY,INT,Dictionary,hash,varray());
 	ADDFUNC0(DICTIONARY,ARRAY,Dictionary,keys,varray());
+	ADDFUNC0(DICTIONARY,ARRAY,Dictionary,values,varray());
 
 	ADDFUNC1(DICTIONARY,INT,Dictionary,parse_json,STRING,"json",varray());
 	ADDFUNC0(DICTIONARY,STRING,Dictionary,to_json,varray());
@@ -1663,6 +1665,9 @@ _VariantCall::addfunc(Variant::m_vtype,Variant::m_ret,_SCS(#m_method),VCALL(m_cl
 	_VariantCall::constant_data[Variant::IMAGE].value["FORMAT_ATC_ALPHA_INTERPOLATED"]=Image::FORMAT_ATC_ALPHA_INTERPOLATED;
 	_VariantCall::constant_data[Variant::IMAGE].value["FORMAT_CUSTOM"]=Image::FORMAT_CUSTOM;
 
+	_VariantCall::constant_data[Variant::IMAGE].value["INTERPOLATE_NEAREST"]=Image::INTERPOLATE_NEAREST;
+	_VariantCall::constant_data[Variant::IMAGE].value["INTERPOLATE_BILINEAR"]=Image::INTERPOLATE_BILINEAR;
+	_VariantCall::constant_data[Variant::IMAGE].value["INTERPOLATE_CUBIC"]=Image::INTERPOLATE_CUBIC;
 }
 
 void unregister_variant_methods() {

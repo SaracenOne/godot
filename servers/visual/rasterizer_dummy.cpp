@@ -1679,7 +1679,7 @@ void RasterizerDummy::canvas_draw_rect(const Rect2& p_rect, int p_flags, const R
 
 
 }
-void RasterizerDummy::canvas_draw_style_box(const Rect2& p_rect, RID p_texture,const float *p_margin, bool p_draw_center,const Color& p_modulate) {
+void RasterizerDummy::canvas_draw_style_box(const Rect2& p_rect, const Rect2& p_src_region, RID p_texture,const float *p_margin, bool p_draw_center,const Color& p_modulate) {
 
 
 }
@@ -2015,4 +2015,3 @@ RasterizerDummy::RasterizerDummy() {
 RasterizerDummy::~RasterizerDummy() {
 
 };
-
