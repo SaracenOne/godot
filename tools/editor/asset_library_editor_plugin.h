@@ -1,5 +1,33 @@
-#ifndef ADDON_EDITOR_PLUGIN_H
-#define ADDON_EDITOR_PLUGIN_H
+/*************************************************************************/
+/*  asset_library_editor_plugin.h                                        */
+/*************************************************************************/
+/*                       This file is part of:                           */
+/*                           GODOT ENGINE                                */
+/*                    http://www.godotengine.org                         */
+/*************************************************************************/
+/* Copyright (c) 2007-2016 Juan Linietsky, Ariel Manzur.                 */
+/*                                                                       */
+/* Permission is hereby granted, free of charge, to any person obtaining */
+/* a copy of this software and associated documentation files (the       */
+/* "Software"), to deal in the Software without restriction, including   */
+/* without limitation the rights to use, copy, modify, merge, publish,   */
+/* distribute, sublicense, and/or sell copies of the Software, and to    */
+/* permit persons to whom the Software is furnished to do so, subject to */
+/* the following conditions:                                             */
+/*                                                                       */
+/* The above copyright notice and this permission notice shall be        */
+/* included in all copies or substantial portions of the Software.       */
+/*                                                                       */
+/* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,       */
+/* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF    */
+/* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.*/
+/* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY  */
+/* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,  */
+/* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
+/* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
+/*************************************************************************/
+#ifndef ASSET_LIBRARY_EDITOR_PLUGIN_H
+#define ASSET_LIBRARY_EDITOR_PLUGIN_H
 
 
 #include "editor_plugin.h"
@@ -58,9 +86,9 @@ public:
 };
 
 
-class EditorAddonLibraryItemDescription : public ConfirmationDialog {
+class EditorAssetLibraryItemDescription : public ConfirmationDialog {
 
-	OBJ_TYPE(EditorAddonLibraryItemDescription, ConfirmationDialog);
+	OBJ_TYPE(EditorAssetLibraryItemDescription, ConfirmationDialog);
 
 	EditorAssetLibraryItem *item;
 	RichTextLabel *description;
@@ -69,8 +97,10 @@ class EditorAddonLibraryItemDescription : public ConfirmationDialog {
 
 	struct Preview {
 		int id;
+		bool is_video;
 		String video_link;
 		Button *button;
+		Ref<Texture> image;
 	};
 
 	Vector<Preview> preview_images;
@@ -84,31 +114,33 @@ class EditorAddonLibraryItemDescription : public ConfirmationDialog {
 	Ref<Texture> icon;
 
 	void _link_click(const String& p_url);
+	void _preview_click(int p_index);
 protected:
 
 	static void _bind_methods();
 public:
 
-	void configure(const String& p_title,int p_asset_id,const String& p_category,int p_category_id,const String& p_author,int p_author_id,int p_rating,const String& p_cost,const String& p_version,const String& p_description,const String& p_download_url,const String& p_browse_url);
+	void configure(const String& p_title,int p_asset_id,const String& p_category,int p_category_id,const String& p_author,int p_author_id,int p_rating,const String& p_cost,int p_version,const String& p_version_string,const String& p_description,const String& p_download_url,const String& p_browse_url);
 	void add_preview(int p_id, bool p_video,const String& p_url);
 
 	String get_title() { return title; }
 	Ref<Texture> get_preview_icon() { return icon; }
 	String get_download_url() { return download_url; }
 	int get_asset_id() { return asset_id; }
-	EditorAddonLibraryItemDescription();
+	EditorAssetLibraryItemDescription();
 
 };
 
-class EditorAddonLibraryItemDownload : public PanelContainer {
+class EditorAssetLibraryItemDownload : public PanelContainer {
 
-	OBJ_TYPE(EditorAddonLibraryItemDownload, PanelContainer);
+	OBJ_TYPE(EditorAssetLibraryItemDownload, PanelContainer);
 
 
 	TextureFrame *icon;
 	Label* title;
 	ProgressBar *progress;
 	Button *install;
+	Button *retry;
 	TextureButton *dismiss;
 
 	AcceptDialog *download_error;
@@ -124,6 +156,7 @@ class EditorAddonLibraryItemDownload : public PanelContainer {
 
 	void _close();
 	void _install();
+	void _make_request();
 	void _http_download_completed(int p_status, int p_code, const StringArray& headers, const ByteArray& p_data);
 
 protected:
@@ -134,12 +167,12 @@ public:
 
 	int get_asset_id() { return asset_id; }
 	void configure(const String& p_title,int p_asset_id,const Ref<Texture>& p_preview, const String& p_download_url);
-	EditorAddonLibraryItemDownload();
+	EditorAssetLibraryItemDownload();
 
 };
 
-class EditorAddonLibrary : public PanelContainer {
-	OBJ_TYPE(EditorAddonLibrary,PanelContainer);
+class EditorAssetLibrary : public PanelContainer {
+	OBJ_TYPE(EditorAssetLibrary,PanelContainer);
 
 	String host;
 
@@ -157,11 +190,12 @@ class EditorAddonLibrary : public PanelContainer {
 	OptionButton *categories;
 	OptionButton *repository;
 	OptionButton *sort;
-	CheckBox *reverse;
+	ToolButton *reverse;
 	Button *search;
 	ProgressBar *load_status;
 	HBoxContainer *error_hb;
 	Label *error_label;
+	MenuButton *support;
 
 	HBoxContainer *contents;
 
@@ -171,6 +205,13 @@ class EditorAddonLibrary : public PanelContainer {
 
 	HTTPRequest *request;
 
+	bool templates_only;
+
+	enum Support {
+		SUPPORT_OFFICIAL,
+		SUPPORT_COMMUNITY,
+		SUPPORT_TESTING
+	};
 
 	enum SortOrder {
 		SORT_RATING,
@@ -202,6 +243,7 @@ class EditorAddonLibrary : public PanelContainer {
 		int asset_id;
 		ImageType image_type;
 		int image_index;
+		String image_url;
 		HTTPRequest *request;
 		ObjectID target;
 	};
@@ -209,27 +251,27 @@ class EditorAddonLibrary : public PanelContainer {
 	int last_queue_id;
 	Map<int,ImageQueue> image_queue;
 
-
+	void _image_update(bool use_cache, bool final, const ByteArray& p_data, int p_queue_id);
 	void _image_request_completed(int p_status, int p_code, const StringArray& headers, const ByteArray& p_data, int p_queue_id);
-
-	void _request_image(ObjectID p_for,int p_asset_id,ImageType p_type,int p_image_index);
+	void _request_image(ObjectID p_for,String p_image_url,ImageType p_type,int p_image_index);
 	void _update_image_queue();
 
-	HBoxContainer* _make_pages(int p_page, int p_max_page, int p_page_len, int p_total_items, int p_current_items);
+	HBoxContainer* _make_pages(int p_page, int p_page_count, int p_page_len, int p_total_items, int p_current_items);
 
 	//
-	EditorAddonLibraryItemDescription *description;
-
-	String current_request;
+	EditorAssetLibraryItemDescription *description;
 	//
 
 	enum RequestType {
 		REQUESTING_NONE,
 		REQUESTING_CONFIG,
+		REQUESTING_SEARCH,
+		REQUESTING_ASSET,
 	};
 
 
 	RequestType requesting;
+	Dictionary category_map;
 
 
 	ScrollContainer *downloads_scroll;
@@ -246,30 +288,32 @@ class EditorAddonLibrary : public PanelContainer {
 	void _manage_plugins();
 
 	void _search(int p_page=0);
-	void _api_request(const String& p_request, const String &p_arguments="");
+	void _api_request(const String& p_request, RequestType p_request_type, const String &p_arguments="");
 	void _http_request_completed(int p_status, int p_code, const StringArray& headers, const ByteArray& p_data);
 	void _http_download_completed(int p_status, int p_code, const StringArray& headers, const ByteArray& p_data);
 
-friend class EditorAddonLibraryItemDescription;
+	void _repository_changed(int p_repository_id);
+
+friend class EditorAssetLibraryItemDescription;
 friend class EditorAssetLibraryItem;
 protected:
 
 	static void _bind_methods();
 	void _notification(int p_what);
 public:
-	EditorAddonLibrary();
+	EditorAssetLibrary(bool p_templates_only=false);
 };
 
-class AddonEditorPlugin : public EditorPlugin {
+class AssetLibraryEditorPlugin : public EditorPlugin {
 
-	OBJ_TYPE( AddonEditorPlugin, EditorPlugin );
+	OBJ_TYPE( AssetLibraryEditorPlugin, EditorPlugin );
 
-	EditorAddonLibrary *addon_library;
+	EditorAssetLibrary *addon_library;
 	EditorNode *editor;
 
 public:
 
-	virtual String get_name() const { return "Addons"; }
+	virtual String get_name() const { return "AssetLib"; }
 	bool has_main_screen() const { return true; }
 	virtual void edit(Object *p_object) {}
 	virtual bool handles(Object *p_object) const { return false; }
@@ -278,8 +322,8 @@ public:
 	//virtual Dictionary get_state() const;
 	//virtual void set_state(const Dictionary& p_state);
 
-	AddonEditorPlugin(EditorNode *p_node);
-	~AddonEditorPlugin();
+	AssetLibraryEditorPlugin(EditorNode *p_node);
+	~AssetLibraryEditorPlugin();
 
 };
 
