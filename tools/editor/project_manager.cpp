@@ -39,7 +39,7 @@
 #include "scene/gui/line_edit.h"
 #include "scene/gui/panel_container.h"
 #include "scene/gui/center_container.h"
-
+#include "io/stream_peer_ssl.h"
 
 #include "scene/gui/texture_frame.h"
 #include "scene/gui/margin_container.h"
@@ -986,10 +986,14 @@ ProjectManager::ProjectManager() {
 	tree_vb->add_spacer();
 
 
+	if (StreamPeerSSL::is_available()) {
 
-	asset_library = memnew( EditorAssetLibrary(true) );
-	asset_library->set_name("Templates");
-	tabs->add_child(asset_library);
+		asset_library = memnew( EditorAssetLibrary(true) );
+		asset_library->set_name("Templates");
+		tabs->add_child(asset_library);
+	} else {
+		WARN_PRINT("Asset Library not available, as it requires SSL to work.");
+	}
 
 
 	CenterContainer *cc = memnew( CenterContainer );

@@ -92,7 +92,9 @@ void Label::_notification(int p_what) {
 		VisualServer::get_singleton()->canvas_item_set_distance_field_mode(get_canvas_item(),font.is_valid() && font->is_distance_field_hint());
 
 		int font_h = font->get_height()+line_spacing;
-		int lines_visible = size.y/font_h;
+
+		int lines_visible = (size.y+line_spacing)/font_h;
+
 		int space_w=font->get_char_size(' ').width;
 		int chars_total=0;
 
@@ -488,9 +490,9 @@ void Label::regenerate_word_cache() {
 	if (!autowrap) {
 		minsize.width=width;
 		if (max_lines_visible > 0 && line_count > max_lines_visible) {
-			minsize.height=(font->get_height()+line_spacing)*max_lines_visible;
+			minsize.height=(font->get_height() * max_lines_visible) + (line_spacing * (max_lines_visible - 1));
 		} else {
-			minsize.height=(font->get_height()+line_spacing)*line_count;
+			minsize.height=(font->get_height() * line_count)+(line_spacing * (line_count - 1));
 		}
 	}
 

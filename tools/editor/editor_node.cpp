@@ -56,7 +56,7 @@
 #include "io/zip_io.h"
 #include "io/config_file.h"
 #include "animation_editor.h"
-
+#include "io/stream_peer_ssl.h"
 // plugins
 #include "plugins/sprite_frames_editor_plugin.h"
 #include "plugins/texture_region_editor_plugin.h"
@@ -3089,6 +3089,7 @@ void EditorNode::set_addon_plugin_enabled(const String& p_addon,bool p_enabled) 
 	if (!p_enabled) {
 
 		EditorPlugin *addon = plugin_addons[p_addon];
+		editor_data.remove_editor_plugin( addon );
 		memdelete(addon); //bye
 		plugin_addons.erase(p_addon);
 		_update_addon_config();
@@ -6274,7 +6275,7 @@ EditorNode::EditorNode() {
 	logo->set_texture(gui_base->get_icon("Logo","EditorIcons") );
 
 	warning = memnew( AcceptDialog );
-	add_child(warning);
+	gui_base->add_child(warning);
 
 
 
@@ -6381,8 +6382,12 @@ EditorNode::EditorNode() {
 	add_editor_plugin( memnew( CanvasItemEditorPlugin(this) ) );
 	add_editor_plugin( memnew( SpatialEditorPlugin(this) ) );
 	add_editor_plugin( memnew( ScriptEditorPlugin(this) ) );
-	add_editor_plugin( memnew( AssetLibraryEditorPlugin(this) ) );
 
+	if (StreamPeerSSL::is_available()) {
+		add_editor_plugin( memnew( AssetLibraryEditorPlugin(this) ) );
+	} else {
+		WARN_PRINT("Asset Library not available, as it requires SSL to work.");
+	}
 	//more visually meaningful to have this later
 	raise_bottom_panel_item(AnimationPlayerEditor::singleton);
 

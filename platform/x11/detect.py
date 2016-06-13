@@ -45,6 +45,11 @@ def can_build():
 		print("xinerama not found.. x11 disabled.")
 		return False
 
+	x11_error=os.system("pkg-config xrandr --modversion > /dev/null ")
+	if (x11_error):
+			print("xrandr not found.. x11 disabled.")
+			return False
+
 
 	return True # X11 enabled
 
@@ -67,6 +72,8 @@ def get_flags():
 	('builtin_zlib', 'no'),
 	('glew', 'yes'),
 	("openssl", "yes"),
+	('freetype','yes'), #use system freetype
+
 	#("theora","no"),
         ]
 
@@ -132,6 +139,7 @@ def configure(env):
 	env.ParseConfig('pkg-config x11 --cflags --libs')
 	env.ParseConfig('pkg-config xinerama --cflags --libs')
 	env.ParseConfig('pkg-config xcursor --cflags --libs')
+	env.ParseConfig('pkg-config xrandr --cflags --libs')
 
 	if (env["openssl"]=="yes"):
 		env.ParseConfig('pkg-config openssl --cflags --libs')
@@ -141,11 +149,6 @@ def configure(env):
 		env.ParseConfig('pkg-config freetype2 --cflags --libs')
 
 
-	if (env["freetype"]!="no"):
-		env.Append(CCFLAGS=['-DFREETYPE_ENABLED'])
-		if (env["freetype"]=="builtin"):
-			env.Append(CPPPATH=['#drivers/freetype'])
-			env.Append(CPPPATH=['#drivers/freetype/freetype/include'])
 
 
 	env.Append(CPPFLAGS=['-DOPENGL_ENABLED'])
@@ -179,7 +182,7 @@ def configure(env):
 			print("PulseAudio development libraries not found, disabling driver")
 
 	env.Append(CPPFLAGS=['-DX11_ENABLED','-DUNIX_ENABLED','-DGLES2_ENABLED','-DGLES_OVER_GL'])
-	env.Append(LIBS=['GL', 'GLU', 'pthread', 'z'])
+	env.Append(LIBS=['GL', 'GLU', 'pthread', 'z', 'dl'])
 	#env.Append(CPPFLAGS=['-DMPC_FIXED_POINT'])
 
 #host compiler is default..
