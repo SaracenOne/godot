@@ -247,8 +247,18 @@ void FindReplaceBar::_get_search_from(int& r_line, int& r_col) {
 	r_col=text_edit->cursor_get_column();
 
 	if (text_edit->is_selection_active() && !replace_all_mode) {
-		r_line=text_edit->get_selection_from_line();
-		r_col=text_edit->get_selection_to_column();
+
+		int selection_line=text_edit->get_selection_from_line();
+
+		if (text_edit->get_selection_text()==get_search_text() && r_line==selection_line) {
+
+			int selection_from_col=text_edit->get_selection_from_column();
+
+			if (r_col>=selection_from_col && r_col<=text_edit->get_selection_to_column()) {
+				r_col=selection_line;
+				r_col=selection_from_col;
+			}
+		}
 	}
 
 	if (r_line==result_line && r_col>=result_col && r_col<=result_col+get_search_text().length()) {
@@ -521,6 +531,9 @@ FindReplaceBar::FindReplaceBar() {
 
 	error_label = memnew(Label);
 	search_options->add_child(error_label);
+	error_label->add_color_override("font_color", Color(1,1,0,1));
+	error_label->add_color_override("font_color_shadow", Color(0,0,0,1));
+	error_label->add_constant_override("shadow_as_outline", 1);
 
 	search_options->add_spacer();
 
