@@ -1829,6 +1829,8 @@
 		</constant>
 		<constant name="PROPERTY_USAGE_RESTART_IF_CHANGED" value="4096">
 		</constant>
+		<constant name="PROPERTY_USAGE_SCRIPT_VARIABLE" value="8192">
+		</constant>
 		<constant name="PROPERTY_USAGE_DEFAULT" value="7">
 			Default usage (storage and editor).
 		</constant>
@@ -2392,7 +2394,35 @@
 			</description>
 		</method>
 		<method name="get_sprite_frames" qualifiers="const">
-			<return type="Texture">
+			<return type="SpriteFrames">
+			</return>
+			<description>
+			</description>
+		</method>
+		<method name="set_animation">
+			<argument index="0" name="animation" type="String">
+			</argument>
+			<description>
+			</description>
+		</method>
+		<method name="get_animation" qualifiers="const">
+			<return type="String">
+			</return>
+			<description>
+			</description>
+		</method>
+		<method name="play">
+			<argument index="0" name="anim" type="String" default="&quot;&quot;">
+			</argument>
+			<description>
+			</description>
+		</method>
+		<method name="stop">
+			<description>
+			</description>
+		</method>
+		<method name="is_playing" qualifiers="const">
+			<return type="bool">
 			</return>
 			<description>
 			</description>
@@ -4474,9 +4504,11 @@
 			</description>
 		</method>
 		<method name="rfind">
+			<return type="int">
+			</return>
 			<argument index="0" name="what" type="var">
 			</argument>
-			<argument index="1" name="from" type="int">
+			<argument index="1" name="from" type="int" default="-1">
 			</argument>
 			<description>
 			Searches the array in reverse order. Optionally, a start search index can be passed. If negative, the start index is considered relative to the end of the array.
@@ -6849,6 +6881,12 @@
 			</return>
 			<description>
 			Return a rect containing the editable contents of the item.
+			</description>
+		</method>
+		<method name="get_item_and_children_rect" qualifiers="const">
+			<return type="Rect2">
+			</return>
+			<description>
 			</description>
 		</method>
 		<method name="get_canvas_item" qualifiers="const">
@@ -10408,7 +10446,7 @@ This approximation makes straight segments between each point, then subdivides t
 			</description>
 		</method>
 		<method name="erase">
-			<argument index="0" name="value" type="var">
+			<argument index="0" name="key" type="var">
 			</argument>
 			<description>
 			Erase a dictionary key/value pair by key.
@@ -10417,7 +10455,7 @@ This approximation makes straight segments between each point, then subdivides t
 		<method name="has">
 			<return type="bool">
 			</return>
-			<argument index="0" name="value" type="var">
+			<argument index="0" name="key" type="var">
 			</argument>
 			<description>
 			Return true if the dictionary has a given key.
@@ -10426,7 +10464,7 @@ This approximation makes straight segments between each point, then subdivides t
 		<method name="has_all">
 			<return type="bool">
 			</return>
-			<argument index="0" name="values" type="Array">
+			<argument index="0" name="keys" type="Array">
 			</argument>
 			<description>
 			Return true if the dictionary has all of the keys in the given array.
@@ -15788,6 +15826,44 @@ Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 			Returns a SDL2 compatible device guid on platforms that use gamepad remapping. Returns "Default Gamepad" otherwise.
 			</description>
 		</method>
+		<method name="get_joy_vibration_strength">
+			<return type="Vector2">
+			</return>
+			<argument index="0" name="device" type="int">
+			</argument>
+			<description>
+			Returns the strength of the joystick vibration: x is the strength of the weak motor, and y is the strength of the strong motor.
+			</description>
+		</method>
+		<method name="get_joy_vibration_duration">
+			<return type="float">
+			</return>
+			<argument index="0" name="device" type="int">
+			</argument>
+			<description>
+			Returns the duration of the current vibration effect in seconds.
+			</description>
+		</method>
+		<method name="start_joy_vibration">
+			<argument index="0" name="device" type="int">
+			</argument>
+			<argument index="1" name="weak_magnitude" type="float">
+			</argument>
+			<argument index="2" name="strong_magnitude" type="float">
+			</argument>
+			<argument index="3" name="duration" type="float">
+			</argument>
+			<description>
+			Starts to vibrate the joystick. Joysticks usually come with two rumble motors, a strong and a weak one. weak_magnitude is the strength of the weak motor (between 0 and 1) and strong_magnitude is the strength of the strong motor (between 0 and 1). duration is the duration of the effect in seconds (a duration of 0 will play the vibration indefinitely).
+			</description>
+		</method>
+		<method name="stop_joy_vibration">
+			<argument index="0" name="device" type="int">
+			</argument>
+			<description>
+			Stops the vibration of the joystick.
+			</description>
+		</method>
 		<method name="get_accelerometer">
 			<return type="Vector3">
 			</return>
@@ -17315,25 +17391,13 @@ Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 			<description>
 			</description>
 		</method>
-		<method name="set_min_icon_size">
+		<method name="set_fixed_icon_size">
 			<argument index="0" name="size" type="Vector2">
 			</argument>
 			<description>
 			</description>
 		</method>
-		<method name="get_min_icon_size" qualifiers="const">
-			<return type="Vector2">
-			</return>
-			<description>
-			</description>
-		</method>
-		<method name="set_max_icon_size">
-			<argument index="0" name="size" type="Vector2">
-			</argument>
-			<description>
-			</description>
-		</method>
-		<method name="get_max_icon_size" qualifiers="const">
+		<method name="get_fixed_icon_size" qualifiers="const">
 			<return type="Vector2">
 			</return>
 			<description>
@@ -23430,7 +23494,10 @@ Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 	</description>
 	<methods>
 		<method name="get_var" qualifiers="const">
+			<return type="Variant">
+			</return>
 			<description>
+			Get a Variant.
 			</description>
 		</method>
 		<method name="put_var">
@@ -23439,12 +23506,14 @@ Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 			<argument index="0" name="var" type="Variant">
 			</argument>
 			<description>
+			Send a Variant as a packet.
 			</description>
 		</method>
 		<method name="get_packet" qualifiers="const">
 			<return type="RawArray">
 			</return>
 			<description>
+			Get a raw packet.
 			</description>
 		</method>
 		<method name="put_packet">
@@ -23453,18 +23522,21 @@ Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 			<argument index="0" name="buffer" type="RawArray">
 			</argument>
 			<description>
+			Send a raw packet.
 			</description>
 		</method>
 		<method name="get_packet_error" qualifiers="const">
 			<return type="Error">
 			</return>
 			<description>
+			Return the error state of the last packet received (via [method get_packet] and [method get_var]).
 			</description>
 		</method>
 		<method name="get_available_packet_count" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the number of packets currently available in the ring-buffer.
 			</description>
 		</method>
 	</methods>
@@ -23492,8 +23564,10 @@ Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 </class>
 <class name="PacketPeerUDP" inherits="PacketPeer" category="Core">
 	<brief_description>
+		UDP packet peer.
 	</brief_description>
 	<description>
+		UDP packet peer. Can be used to send raw UDP packets as well as [Variant]s.
 	</description>
 	<methods>
 		<method name="listen">
@@ -23504,40 +23578,47 @@ Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 			<argument index="1" name="recv_buf_size" type="int" default="65536">
 			</argument>
 			<description>
+			Make this [PacketPeerUDP] listen on the "port" using a buffer size "recv_buf_size". Listens on all available adresses.
 			</description>
 		</method>
 		<method name="close">
 			<description>
+			Close the UDP socket the [PacketPeerUDP] is currently listening on.
 			</description>
 		</method>
 		<method name="wait">
 			<return type="Error">
 			</return>
 			<description>
+			Wait for a packet to arrive on the listening port, see [method listen].
 			</description>
 		</method>
 		<method name="is_listening" qualifiers="const">
 			<return type="bool">
 			</return>
 			<description>
+			Return whether this [PacketPeerUDP] is listening.
 			</description>
 		</method>
 		<method name="get_packet_ip" qualifiers="const">
 			<return type="String">
 			</return>
 			<description>
+			Return the IP of the remote peer that sent the last packet(that was received with [method get_packet] or [method get_var]).
 			</description>
 		</method>
 		<method name="get_packet_address" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the address of the remote peer(as a 32bit integer) that sent the last packet(that was received with [method get_packet] or [method get_var]).
 			</description>
 		</method>
 		<method name="get_packet_port" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the port of the remote peer that sent the last packet(that was received with [method get_packet] or [method get_var]).
 			</description>
 		</method>
 		<method name="set_send_address">
@@ -23548,6 +23629,7 @@ Example: (content-length:12), (Content-Type:application/json; charset=UTF-8)
 			<argument index="1" name="port" type="int">
 			</argument>
 			<description>
+			Set the destination address and port for sending packets and variables, a hostname will be resolved if valid.
 			</description>
 		</method>
 	</methods>
@@ -25369,8 +25451,6 @@ This method controls whether the position between two cached points is interpola
 			</description>
 		</method>
 		<method name="shape_get_data" qualifiers="const">
-			<return type="Variant">
-			</return>
 			<argument index="0" name="shape" type="RID">
 			</argument>
 			<description>
@@ -25595,8 +25675,6 @@ This method controls whether the position between two cached points is interpola
 			</description>
 		</method>
 		<method name="area_get_param" qualifiers="const">
-			<return type="Variant">
-			</return>
 			<argument index="0" name="area" type="RID">
 			</argument>
 			<argument index="1" name="param" type="int">
@@ -25771,8 +25849,6 @@ This method controls whether the position between two cached points is interpola
 			</description>
 		</method>
 		<method name="body_get_shape_metadata" qualifiers="const">
-			<return type="Variant">
-			</return>
 			<argument index="0" name="body" type="RID">
 			</argument>
 			<argument index="1" name="shape_idx" type="int">
@@ -25926,8 +26002,6 @@ This method controls whether the position between two cached points is interpola
 			</description>
 		</method>
 		<method name="body_get_state" qualifiers="const">
-			<return type="Variant">
-			</return>
 			<argument index="0" name="body" type="RID">
 			</argument>
 			<argument index="1" name="state" type="int">
@@ -26351,15 +26425,6 @@ This method controls whether the position between two cached points is interpola
 		</constant>
 		<constant name="JOINT_DAMPED_SPRING" value="2">
 			Constant to create damped spring joints.
-		</constant>
-		<constant name="JOINT_PARAM_BIAS" value="0">
-			Constant to set/get the solver bias for a joint.
-		</constant>
-		<constant name="JOINT_PARAM_MAX_BIAS" value="1">
-			Constant to set/get the maximum speed at which a joint can correct its bodies.
-		</constant>
-		<constant name="JOINT_PARAM_MAX_FORCE" value="2">
-			Constant to set the maximum force a joint can exert on its bodies.
 		</constant>
 		<constant name="DAMPED_STRING_REST_LENGTH" value="0">
 			Set the resting length of the spring joint. The joint will always try to go to back this length when pulled apart.
@@ -36657,150 +36722,175 @@ This method controls whether the position between two cached points is interpola
 			<return type="int">
 			</return>
 			<description>
+			Return the amount of bytes this [StreamPeer] has available.
 			</description>
 		</method>
 		<method name="set_big_endian">
 			<argument index="0" name="enable" type="bool">
 			</argument>
 			<description>
+			Set this [StreamPeer] to use big-endian format. Default is false.
 			</description>
 		</method>
 		<method name="is_big_endian_enabled" qualifiers="const">
 			<return type="bool">
 			</return>
 			<description>
+			Return whether this [StreamPeer] is using big-endian format.
 			</description>
 		</method>
 		<method name="put_8">
 			<argument index="0" name="val" type="int">
 			</argument>
 			<description>
+			Put a signed byte into the stream.
 			</description>
 		</method>
 		<method name="put_u8">
 			<argument index="0" name="val" type="int">
 			</argument>
 			<description>
+			Put an unsigned byte into the stream.
 			</description>
 		</method>
 		<method name="put_16">
 			<argument index="0" name="val" type="int">
 			</argument>
 			<description>
+			Put a signed 16 bit value into the stream.
 			</description>
 		</method>
 		<method name="put_u16">
 			<argument index="0" name="val" type="int">
 			</argument>
 			<description>
+			Put an unsigned 16 bit value into the stream.
 			</description>
 		</method>
 		<method name="put_32">
 			<argument index="0" name="val" type="int">
 			</argument>
 			<description>
+			Put a signed 32 bit value into the stream.
 			</description>
 		</method>
 		<method name="put_u32">
 			<argument index="0" name="val" type="int">
 			</argument>
 			<description>
+			Put an unsigned 32 bit value into the stream.
 			</description>
 		</method>
 		<method name="put_64">
 			<argument index="0" name="val" type="int">
 			</argument>
 			<description>
+			Put a signed 64 bit value into the stream.
 			</description>
 		</method>
 		<method name="put_u64">
 			<argument index="0" name="val" type="int">
 			</argument>
 			<description>
+			Put an unsigned 64 bit value into the stream.
 			</description>
 		</method>
 		<method name="put_float">
 			<argument index="0" name="val" type="float">
 			</argument>
 			<description>
+			Put a single-precision float into the stream.
 			</description>
 		</method>
 		<method name="put_double">
 			<argument index="0" name="val" type="float">
 			</argument>
 			<description>
+			Put a double-precision float into the stream.
 			</description>
 		</method>
 		<method name="put_utf8_string">
 			<argument index="0" name="val" type="String">
 			</argument>
 			<description>
+			Put a zero-terminated utf8 string into the stream.
 			</description>
 		</method>
 		<method name="put_var">
 			<argument index="0" name="val" type="Variant">
 			</argument>
 			<description>
+			Put a Variant into the stream.
 			</description>
 		</method>
 		<method name="get_8">
 			<return type="int">
 			</return>
 			<description>
+			Get a signed byte from the stream.
 			</description>
 		</method>
 		<method name="get_u8">
 			<return type="int">
 			</return>
 			<description>
+			Get an unsigned byte from the stream.
 			</description>
 		</method>
 		<method name="get_16">
 			<return type="int">
 			</return>
 			<description>
+			Get a signed 16 bit value from the stream.
 			</description>
 		</method>
 		<method name="get_u16">
 			<return type="int">
 			</return>
 			<description>
+			Get an unsigned 16 bit value from the stream.
 			</description>
 		</method>
 		<method name="get_32">
 			<return type="int">
 			</return>
 			<description>
+			Get a signed 32 bit value from the stream.
 			</description>
 		</method>
 		<method name="get_u32">
 			<return type="int">
 			</return>
 			<description>
+			Get an unsigned 32 bit value from the stream.
 			</description>
 		</method>
 		<method name="get_64">
 			<return type="int">
 			</return>
 			<description>
+			Get a signed 64 bit value from the stream.
 			</description>
 		</method>
 		<method name="get_u64">
 			<return type="int">
 			</return>
 			<description>
+			Get an unsigned 16 bit value from the stream.
 			</description>
 		</method>
 		<method name="get_float">
 			<return type="float">
 			</return>
 			<description>
+			Get a single-precision float from the stream.
 			</description>
 		</method>
 		<method name="get_double">
 			<return type="float">
 			</return>
 			<description>
+			Get a double-precision float from the stream.
 			</description>
 		</method>
 		<method name="get_string">
@@ -36809,6 +36899,7 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="bytes" type="int">
 			</argument>
 			<description>
+			Get a string with byte-length "bytes" from the stream.
 			</description>
 		</method>
 		<method name="get_utf8_string">
@@ -36817,12 +36908,14 @@ This method controls whether the position between two cached points is interpola
 			<argument index="0" name="bytes" type="int">
 			</argument>
 			<description>
+			Get an utf8 string with byte-length "bytes" from the stream (this decodes the string sent as utf8).
 			</description>
 		</method>
 		<method name="get_var">
 			<return type="Variant">
 			</return>
 			<description>
+			Get a Variant from the stream.
 			</description>
 		</method>
 	</methods>
@@ -36831,8 +36924,10 @@ This method controls whether the position between two cached points is interpola
 </class>
 <class name="StreamPeerSSL" inherits="StreamPeer" category="Core">
 	<brief_description>
+	SSL Stream peer.
 	</brief_description>
 	<description>
+	SSL Stream peer. This object can be used to connect to SSL servers.
 	</description>
 	<methods>
 		<method name="accept">
@@ -36853,27 +36948,34 @@ This method controls whether the position between two cached points is interpola
 			<argument index="2" name="for_hostname" type="String" default="&quot;&quot;">
 			</argument>
 			<description>
+			Connect to a peer using an underlying [StreamPeer] "stream", when "validate_certs" is true, [StreamPeerSSL] will validate that the certificate presented by the peer matches the "for_hostname".
 			</description>
 		</method>
 		<method name="get_status" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the status of the connection, one of STATUS_* enum.
 			</description>
 		</method>
 		<method name="disconnect">
 			<description>
+			Disconnect from host.
 			</description>
 		</method>
 	</methods>
 	<constants>
 		<constant name="STATUS_DISCONNECTED" value="0">
+			A status representing a [StreamPeerSSL] that is disconnected.
 		</constant>
 		<constant name="STATUS_CONNECTED" value="1">
+			A status representing a [StreamPeerSSL] that is connected to a host.
 		</constant>
 		<constant name="STATUS_ERROR_NO_CERTIFICATE" value="2">
+			An errot status that shows the peer did not present a SSL certificate and validation was requested.
 		</constant>
 		<constant name="STATUS_ERROR_HOSTNAME_MISMATCH" value="3">
+			An error status that shows a mismatch in the SSL certificate domain presented by the host and the domain requested for validation.
 		</constant>
 	</constants>
 </class>
@@ -36893,45 +36995,55 @@ This method controls whether the position between two cached points is interpola
 			<argument index="1" name="port" type="int">
 			</argument>
 			<description>
+			Connect to the specified IP:port pair. Returns [OK] on success or [FAILED] on failure.
 			</description>
 		</method>
 		<method name="is_connected" qualifiers="const">
 			<return type="bool">
 			</return>
 			<description>
+			Return whether this peer is connected. Returns true while connecting and connected.
 			</description>
 		</method>
 		<method name="get_status" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the status of the connection, one of STATUS_* enum.
 			</description>
 		</method>
 		<method name="get_connected_host" qualifiers="const">
 			<return type="String">
 			</return>
 			<description>
+			Return the IP of this peer.
 			</description>
 		</method>
 		<method name="get_connected_port" qualifiers="const">
 			<return type="int">
 			</return>
 			<description>
+			Return the port of this peer.
 			</description>
 		</method>
 		<method name="disconnect">
 			<description>
+			Disconnect from host.
 			</description>
 		</method>
 	</methods>
 	<constants>
 		<constant name="STATUS_NONE" value="0">
+			The initial status of the [StreamPeerTCP], also the status after a disconnect.
 		</constant>
 		<constant name="STATUS_CONNECTING" value="1">
+			A status representing a [StreamPeerTCP] that is connecting to a host.
 		</constant>
 		<constant name="STATUS_CONNECTED" value="2">
+			A status representing a [StreamPeerTCP] that is connected to a host.
 		</constant>
 		<constant name="STATUS_ERROR" value="3">
+			A staus representing a [StreamPeerTCP] in error state.
 		</constant>
 	</constants>
 </class>
@@ -37401,7 +37513,7 @@ This method controls whether the position between two cached points is interpola
 			</description>
 		</method>
 		<method name="ord_at">
-			<return type="String">
+			<return type="int">
 			</return>
 			<argument index="0" name="at" type="int">
 			</argument>
@@ -39155,6 +39267,10 @@ This method controls whether the position between two cached points is interpola
 		<constant name="STRETCH_KEEP" value="3">
 		</constant>
 		<constant name="STRETCH_KEEP_CENTERED" value="4">
+		</constant>
+		<constant name="STRETCH_KEEP_ASPECT" value="5">
+		</constant>
+		<constant name="STRETCH_KEEP_ASPECT_CENTERED" value="6">
 		</constant>
 	</constants>
 </class>
@@ -42856,7 +42972,7 @@ This method controls whether the position between two cached points is interpola
 			<description>
 			</description>
 		</method>
-		<method name="get_linear_velocity">
+		<method name="get_linear_velocity" qualifiers="const">
 			<return type="Vector3">
 			</return>
 			<description>
@@ -45264,7 +45380,7 @@ This method controls whether the position between two cached points is interpola
 			<description>
 			</description>
 		</method>
-		<method name="free">
+		<method name="free_rid">
 			<argument index="0" name="arg0" type="RID">
 			</argument>
 			<description>

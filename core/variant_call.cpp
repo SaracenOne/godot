@@ -1291,7 +1291,7 @@ _VariantCall::addfunc(Variant::m_vtype,Variant::m_ret,_SCS(#m_method),VCALL(m_cl
 	ADDFUNC0(STRING,STRING,String,extension,varray());
 	ADDFUNC0(STRING,STRING,String,basename,varray());
 	ADDFUNC1(STRING,STRING,String,plus_file,STRING,"file",varray());
-	ADDFUNC1(STRING,STRING,String,ord_at,INT,"at",varray());
+	ADDFUNC1(STRING,INT,String,ord_at,INT,"at",varray());
 	ADDFUNC2(STRING,NIL,String,erase,INT,"pos",INT,"chars", varray());
 	ADDFUNC0(STRING,INT,String,hash,varray());
 	ADDFUNC0(STRING,STRING,String,md5_text,varray());
@@ -1439,9 +1439,9 @@ _VariantCall::addfunc(Variant::m_vtype,Variant::m_ret,_SCS(#m_method),VCALL(m_cl
 	ADDFUNC0(DICTIONARY,INT,Dictionary,size,varray());
 	ADDFUNC0(DICTIONARY,BOOL,Dictionary,empty,varray());
 	ADDFUNC0(DICTIONARY,NIL,Dictionary,clear,varray());
-	ADDFUNC1(DICTIONARY,BOOL,Dictionary,has,NIL,"value",varray());
-	ADDFUNC1(DICTIONARY,BOOL,Dictionary,has_all,ARRAY,"values",varray());
-	ADDFUNC1(DICTIONARY,NIL,Dictionary,erase,NIL,"value",varray());
+	ADDFUNC1(DICTIONARY,BOOL,Dictionary,has,NIL,"key",varray());
+	ADDFUNC1(DICTIONARY,BOOL,Dictionary,has_all,ARRAY,"keys",varray());
+	ADDFUNC1(DICTIONARY,NIL,Dictionary,erase,NIL,"key",varray());
 	ADDFUNC0(DICTIONARY,INT,Dictionary,hash,varray());
 	ADDFUNC0(DICTIONARY,ARRAY,Dictionary,keys,varray());
 	ADDFUNC0(DICTIONARY,ARRAY,Dictionary,values,varray());
