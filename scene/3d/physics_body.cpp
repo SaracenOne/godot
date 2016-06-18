@@ -398,6 +398,22 @@ void RigidBody::_direct_state_changed(Object *p_state) {
 	state=(PhysicsDirectBodyState*)p_state; //trust it
 #endif
 
+	set_ignore_transform_notification(true);
+	Vector3 scale = get_global_transform().basis.get_scale();
+	Transform new_transform = state->get_transform();
+	new_transform.scale_basis(scale);
+	new_transform.translate(-center_of_mass);
+	set_global_transform(new_transform);
+	linear_velocity=state->get_linear_velocity();
+	angular_velocity=state->get_angular_velocity();
+	if(sleeping!=state->is_sleeping()) {
+		sleeping=state->is_sleeping();
+		emit_signal(SceneStringNames::get_singleton()->sleeping_state_changed);
+	}
+	if (get_script_instance())
+		get_script_instance()->call("_integrate_forces",state);
+	set_ignore_transform_notification(false);
+
 	if (contact_monitor) {
 
 		contact_monitor->locked=true;
@@ -485,21 +501,6 @@ void RigidBody::_direct_state_changed(Object *p_state) {
 
 	}
 
-	set_ignore_transform_notification(true);
-	Vector3 scale = get_global_transform().basis.get_scale();
-	Transform new_transform = state->get_transform();
-	new_transform.scale_basis(scale);
-	new_transform.translate(-center_of_mass);
-	set_global_transform(new_transform);
-	linear_velocity=state->get_linear_velocity();
-	angular_velocity=state->get_angular_velocity();
-	if(sleeping!=state->is_sleeping()) {
-		sleeping=state->is_sleeping();
-		emit_signal(SceneStringNames::get_singleton()->sleeping_state_changed);
-	}
-	if (get_script_instance())
-		get_script_instance()->call("_integrate_forces",state);
-	set_ignore_transform_notification(false);
 
 	state=NULL;
 }
