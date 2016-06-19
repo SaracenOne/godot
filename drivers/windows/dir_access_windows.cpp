@@ -191,22 +191,20 @@ Error DirAccessWindows::make_dir(String p_dir) {
 
 #else
 
-	p_dir=fix_path(p_dir);
-
-	//p_dir.replace("/","\\");
+	if (p_dir.is_rel_path())
+		p_dir=get_current_dir().plus_file(p_dir);
+	else
+		p_dir=fix_path(p_dir);
+	p_dir = p_dir.replace("/","\\");
 
 	bool success;
 	int err;
 
-	wchar_t real_current_dir_name[2048];
-	GetCurrentDirectoryW(2048,real_current_dir_name);
-
-	SetCurrentDirectoryW(current_dir.c_str());
+	p_dir="\\\\?\\"+p_dir; //done according to
+// https://msdn.microsoft.com/en-us/library/windows/desktop/aa363855(v=vs.85).aspx
 
 	success=CreateDirectoryW(p_dir.c_str(), NULL);
 	err = GetLastError();
-
-	SetCurrentDirectoryW(real_current_dir_name);
 
 	if (success) {
 		return OK;
@@ -315,6 +313,7 @@ Error DirAccessWindows::remove(String p_path)  {
 	else
 		p_path=fix_path(p_path);
 
+
 	printf("erasing %s\n",p_path.utf8().get_data());
 	//WIN32_FILE_ATTRIBUTE_DATA    fileInfo;
 	//DWORD fileAttr = GetFileAttributesExW(p_path.c_str(), GetFileExInfoStandard, &fileInfo);
@@ -360,7 +359,8 @@ FileType DirAccessWindows::get_file_type(const String& p_file) const {
 size_t  DirAccessWindows::get_space_left() {
 
 	uint64_t bytes = 0;
-	GetDiskFreeSpaceEx(NULL,(PULARGE_INTEGER)&bytes,NULL,NULL);
+	if (!GetDiskFreeSpaceEx(NULL,(PULARGE_INTEGER)&bytes,NULL,NULL))
+		return 0;
 
 	//this is either 0 or a value in bytes.
 	return (size_t)bytes;
