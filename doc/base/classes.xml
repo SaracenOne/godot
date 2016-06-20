@@ -804,10 +804,10 @@
 			Backspace Key
 		</constant>
 		<constant name="KEY_RETURN" value="16777221">
-			Return Key
+			Return Key (On Main Keyboard)
 		</constant>
 		<constant name="KEY_ENTER" value="16777222">
-			Enter Key
+			Enter Key (On Numpad)
 		</constant>
 		<constant name="KEY_INSERT" value="16777223">
 			Insert Key
@@ -37284,6 +37284,13 @@ This method controls whether the position between two cached points is interpola
 			Return true if the strings begins with the given string.
 			</description>
 		</method>
+		<method name="bigrams">
+			<return type="StringArray">
+			</return>
+			<description>
+			Return the bigrams (pairs of consecutive letters) of this string.
+			</description>
+		</method>
 		<method name="c_escape">
 			<return type="String">
 			</return>
@@ -37641,6 +37648,15 @@ This method controls whether the position between two cached points is interpola
 			<return type="String">
 			</return>
 			<description>
+			</description>
+		</method>
+		<method name="similarity">
+			<return type="float">
+			</return>
+			<argument index="0" name="text" type="String">
+			</argument>
+			<description>
+			Return the similarity index of the text compared to this string. 1 means totally similar and 0 means totally dissimilar.
 			</description>
 		</method>
 		<method name="split">

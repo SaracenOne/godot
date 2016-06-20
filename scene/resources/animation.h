@@ -72,7 +72,8 @@ private:
 		TrackType type;
 		InterpolationType interpolation;
 		NodePath path; // path to something
-		Track() { interpolation=INTERPOLATION_LINEAR; }
+		bool imported;
+		Track() { interpolation=INTERPOLATION_LINEAR; imported=false;}
 		virtual ~Track() {}
 	};
 
@@ -171,6 +172,7 @@ private:
 	float length;
 	float step;
 	bool loop;
+	bool loop_interpolation;
 
 // bind helpers
 private:
@@ -240,7 +242,10 @@ public:
 	void track_move_up(int p_track);
 	void track_move_down(int p_track);
 
-	int transform_track_insert_key(int p_track, float p_time, const Vector3& p_loc=Vector3(), const Quat& p_rot=Quat(), const Vector3& p_scale=Vector3());
+	void track_set_imported(int p_track,bool p_imported);
+	bool track_is_imported(int p_track) const;
+
+	int transform_track_insert_key(int p_track, float p_time, const Vector3 p_loc, const Quat& p_rot=Quat(), const Vector3& p_scale=Vector3());
 	void track_insert_key(int p_track, float p_time, const Variant& p_key, float p_transition=1);
 	void track_set_key_transition(int p_track, int p_key_idx,float p_transition);
 	void track_set_key_value(int p_track, int p_key_idx,const Variant& p_value);
@@ -274,7 +279,9 @@ public:
 	float get_length() const;
 
 	void set_loop(bool p_enabled);
+	void set_loop_interpolation(bool p_enabled);
 	bool has_loop() const;
+	bool has_loop_interpolation() const;
 
 	void set_step(float p_step);
 	float get_step() const;

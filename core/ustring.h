@@ -46,11 +46,9 @@ public:
 	operator const char*() {return get_data();};
 };
 
-#ifndef CHARTYPE_16BITS
+
 typedef wchar_t CharType;
-#else
-typedef wchar_t uint16_t;
-#endif
+
 
 struct StrRange {
 
@@ -125,6 +123,8 @@ public:
 	bool ends_with(const String& p_string) const;
 	bool is_subsequence_of(const String& p_string) const;
 	bool is_subsequence_ofi(const String& p_string) const;
+	Vector<String> bigrams() const;
+	float similarity(const String& p_string) const;
 	String replace_first(String p_key,String p_with) const;
 	String replace(String p_key,String p_with) const;
 	String replacen(String p_key,String p_with) const;

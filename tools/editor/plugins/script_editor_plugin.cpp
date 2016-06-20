@@ -531,7 +531,7 @@ static void _find_changed_scripts_for_external_editor(Node* p_base, Node*p_curre
 
 }
 
-void ScriptEditor::_update_modified_scripts_for_external_editor() {
+void ScriptEditor::_update_modified_scripts_for_external_editor(Ref<Script> p_for_script) {
 
 	if (!bool(EditorSettings::get_singleton()->get("external_editor/use_external_editor")))
 		return;
@@ -546,6 +546,9 @@ void ScriptEditor::_update_modified_scripts_for_external_editor() {
 	for (Set<Ref<Script> >::Element *E=scripts.front();E;E=E->next()) {
 
 		Ref<Script> script = E->get();
+
+		if (p_for_script.is_valid() && p_for_script!=script)
+			continue;
 
 		if (script->get_path()=="" || script->get_path().find("local://")!=-1 || script->get_path().find("::")!=-1) {
 
@@ -900,7 +903,7 @@ void ScriptEditor::_live_auto_reload_running_scripts() {
 }
 
 
-bool ScriptEditor::_test_script_times_on_disk() {
+bool ScriptEditor::_test_script_times_on_disk(Ref<Script> p_for_script) {
 
 
 	disk_changed_list->clear();
@@ -919,6 +922,9 @@ bool ScriptEditor::_test_script_times_on_disk() {
 		if (ste) {
 
 			Ref<Script> script = ste->get_edited_script();
+
+			if (p_for_script.is_valid() && p_for_script!=script)
+				continue;
 
 			if (script->get_path()=="" || script->get_path().find("local://")!=-1 || script->get_path().find("::")!=-1)
 				continue; //internal script, who cares
@@ -2128,6 +2134,12 @@ void ScriptEditor::edit(const Ref<Script>& p_script) {
 	if (!restoring_layout) {
 		EditorNode::get_singleton()->save_layout();
 	}
+
+	//test for modification, maybe the script was not edited but was loaded
+
+	_test_script_times_on_disk(p_script);
+	_update_modified_scripts_for_external_editor(p_script);
+
 }
 
 void ScriptEditor::save_all_scripts() {
@@ -2201,7 +2213,7 @@ void ScriptEditor::_editor_stop() {
 
 void ScriptEditor::_add_callback(Object *p_obj, const String& p_function, const StringArray& p_args) {
 
-	print_line("add callback! hohoho");
+	//print_line("add callback! hohoho"); kinda sad to remove this
 	ERR_FAIL_COND(!p_obj);
 	Ref<Script> script = p_obj->get_script();
 	ERR_FAIL_COND( !script.is_valid() );
@@ -2243,7 +2255,6 @@ void ScriptEditor::_add_callback(Object *p_obj, const String& p_function, const 
 
 void ScriptEditor::_editor_settings_changed() {
 
-	print_line("settings changed");
 	trim_trailing_whitespace_on_save = EditorSettings::get_singleton()->get("text_editor/trim_trailing_whitespace_on_save");
 	float autosave_time = EditorSettings::get_singleton()->get("text_editor/autosave_interval_secs");
 	if (autosave_time>0) {
@@ -2284,7 +2295,6 @@ void ScriptEditor::_editor_settings_changed() {
 
 void ScriptEditor::_autosave_scripts() {
 
-	print_line("autosaving");
 	save_all_scripts();
 }
 
