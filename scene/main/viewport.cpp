@@ -1627,16 +1627,31 @@ void Viewport::_gui_call_input(Control *p_control,const InputEvent& p_input) {
 
 //	_block();
 
-	while(p_control) {
 
-		p_control->call_multilevel(SceneStringNames::get_singleton()->_input_event,p_input);
-		if (gui.key_event_accepted)
-			break;
-		if (!p_control->is_inside_tree())
-			break;
-		p_control->emit_signal(SceneStringNames::get_singleton()->input_event,p_input);
-		if (!p_control->is_inside_tree() || p_control->is_set_as_toplevel()) {
-			break;
+	//mouse wheel events can't be stopped
+	bool cant_stop_me_now = (p_input.type==InputEvent::MOUSE_BUTTON &&
+				 (p_input.mouse_button.button_index==BUTTON_WHEEL_DOWN ||
+				  p_input.mouse_button.button_index==BUTTON_WHEEL_UP ||
+				  p_input.mouse_button.button_index==BUTTON_WHEEL_LEFT ||
+				  p_input.mouse_button.button_index==BUTTON_WHEEL_RIGHT ) );
+
+	CanvasItem *ci=p_control;
+	while(ci) {
+
+		Control *control = ci->cast_to<Control>();
+		if (control) {
+			control->call_multilevel(SceneStringNames::get_singleton()->_input_event,p_input);
+			if (gui.key_event_accepted)
+				break;
+			if (!control->is_inside_tree())
+				break;
+			control->emit_signal(SceneStringNames::get_singleton()->input_event,p_input);
+			if (!control->is_inside_tree() || control->is_set_as_toplevel())
+				break;
+			if (gui.key_event_accepted)
+				break;
+			if (!cant_stop_me_now && control->data.stop_mouse && (p_input.type==InputEvent::MOUSE_BUTTON || p_input.type==InputEvent::MOUSE_MOTION))
+				break;
 		}
 		if (gui.key_event_accepted)
 			break;
@@ -2407,8 +2422,8 @@ void Viewport::input(const InputEvent& p_event) {
 	ERR_FAIL_COND(!is_inside_tree());
 
 
-	get_tree()->_call_input_pause(input_group,"_input",p_event);
 	_gui_input_event(p_event);
+	get_tree()->_call_input_pause(input_group,"_input",p_event);
 	//get_tree()->call_group(SceneTree::GROUP_CALL_REVERSE|SceneTree::GROUP_CALL_REALTIME|SceneTree::GROUP_CALL_MULIILEVEL,gui_input_group,"_gui_input",p_event); //special one for GUI, as controls use their own process check
 }
 
