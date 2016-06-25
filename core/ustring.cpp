@@ -257,13 +257,10 @@ bool String::operator==(const StrRange &p_range) const {
 		return true;
 
 	const CharType *c_str=p_range.c_str;
-
-	int l=length();
-
-	const CharType *dst = p_range.c_str;
+	const CharType *dst = &operator[](0);
 
 	/* Compare char by char */
-	for (int i=0;i<l;i++) {
+	for (int i=0;i<len;i++) {
 
 		if (c_str[i]!=dst[i])
 			return false;
@@ -2418,6 +2415,23 @@ Vector<uint8_t> String::md5_buffer() const {
 
 	return ret;
 };
+
+Vector<uint8_t> String::sha256_buffer() const {
+	CharString cs = utf8();
+	unsigned char hash[32];
+	sha256_context ctx;
+	sha256_init(&ctx);
+	sha256_hash(&ctx, (unsigned char*)cs.ptr(), cs.length());
+	sha256_done(&ctx, hash);
+
+	Vector<uint8_t> ret;
+	ret.resize(32);
+	for (int i = 0; i < 32; i++) {
+		ret[i] = hash[i];
+	}
+
+	return ret;
+}
 
 
 String String::insert(int p_at_pos,String p_string) const {
