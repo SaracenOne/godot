@@ -315,5 +315,6 @@ struct _GlobalLock {
 
 #define USE_QUAD_VECTORS
 
+
 #endif  /* typedefs.h */
 
