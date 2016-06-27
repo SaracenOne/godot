@@ -49,14 +49,22 @@
 
 Variant Control::edit_get_state() const {
 
-	return get_rect();
+	Dictionary s;
+	s["rect"]=get_rect();
+	s["rot"]=get_rotation();
+	s["scale"]=get_scale();
+	return s;
 
 }
 void Control::edit_set_state(const Variant& p_state) {
 
-	Rect2 state=p_state;
+	Dictionary s=p_state;
+
+	Rect2 state=s["rect"];
 	set_pos(state.pos);
 	set_size(state.size);
+	set_rotation(s["rot"]);
+	set_scale(s["scale"]);
 }
 
 void Control::set_custom_minimum_size(const Size2& p_custom) {
@@ -749,6 +757,11 @@ bool Control::is_window_modal_on_top() const {
 		return false;
 
 	return get_viewport()->_gui_is_modal_on_top(this);
+}
+
+uint64_t Control::get_modal_frame() const {
+
+	return data.modal_frame;
 }
 
 
@@ -1841,6 +1854,7 @@ void Control::show_modal(bool p_exclusive) {
 	raise();
 	data.modal_exclusive=p_exclusive;
 	data.MI=get_viewport()->_gui_show_modal(this);
+	data.modal_frame=OS::get_singleton()->get_frames_drawn();
 
 }
 
@@ -2612,6 +2626,7 @@ Control::Control() {
 	data.parent_canvas_item=NULL;
 	data.scale=Vector2(1,1);
 	data.drag_owner=0;
+	data.modal_frame=0;
 	data.pivot = Vector2(0.0, 0.0);
 	data.scale_rotate_pivot_changed=true;
 
