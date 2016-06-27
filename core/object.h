@@ -584,8 +584,6 @@ public:
 	void set_script(const RefPtr& p_script);
 	RefPtr get_script() const;
 
-	void refresh_script_instance();
-
 	/* SCRIPT */
 
 	bool has_meta(const String& p_name) const;

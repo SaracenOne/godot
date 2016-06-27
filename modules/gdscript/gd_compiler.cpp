@@ -1430,7 +1430,6 @@ Error GDCompiler::_parse_class(GDScript *p_script, GDScript *p_owner, const GDPa
 	for (Map<StringName,GDFunction*>::Element *E=p_script->member_functions.front();E;E=E->next()) {
 		memdelete(E->get());
 	}
-	p_script->_signals.clear();
 	p_script->member_functions.clear();
 	p_script->member_indices.clear();
 	p_script->member_info.clear();

@@ -481,7 +481,6 @@ void PhysicsServerSW::area_set_area_monitor_callback(RID p_area,Object *p_receiv
 	area->set_area_monitor_callback(p_receiver?p_receiver->get_instance_ID():0,p_method);
 }
 
-
 /* BODY API */
 
 RID PhysicsServerSW::body_create(BodyMode p_mode,bool p_init_sleeping) {

@@ -1562,7 +1562,7 @@ static void _find_type_arguments(const GDParser::Node*p_node,int p_line,const St
 							}
 
 							if (scr->get_base().is_valid())
-								scr=static_cast<GDScript *>(scr->get_base().ptr());
+								scr=scr->get_base().ptr();
 							else
 								scr=NULL;
 						}
@@ -1712,7 +1712,7 @@ static void _find_type_arguments(const GDParser::Node*p_node,int p_line,const St
 						}
 
 						if (scr->get_base().is_valid())
-							scr=static_cast<GDScript *>(scr->get_base().ptr());
+							scr=scr->get_base().ptr();
 						else
 							scr=NULL;
 					}
@@ -2178,7 +2178,7 @@ Error GDScriptLanguage::complete_code(const String& p_code, const String& p_base
 									}
 
 									if (scr->get_base().is_valid())
-										scr=static_cast<GDScript *>(scr->get_base().ptr());
+										scr=scr->get_base().ptr();
 									else
 										scr=NULL;
 								}
@@ -2274,7 +2274,7 @@ Error GDScriptLanguage::complete_code(const String& p_code, const String& p_base
 								}
 
 								if (scr->get_base().is_valid())
-									scr=static_cast<GDScript *>(scr->get_base().ptr());
+									scr=scr->get_base().ptr();
 								else
 									scr=NULL;
 							}
