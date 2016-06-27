@@ -1655,7 +1655,8 @@ void Viewport::_gui_call_input(Control *p_control,const InputEvent& p_input) {
 			if (!cant_stop_me_now && control->data.stop_mouse && (ev.type==InputEvent::MOUSE_BUTTON || ev.type==InputEvent::MOUSE_MOTION))
 				break;
 		}
-		if (gui.key_event_accepted)
+
+		if (ci->is_set_as_toplevel())
 			break;
 
 		ev=ev.xform_by(ci->get_transform()); //transform event upwards
