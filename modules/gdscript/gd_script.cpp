@@ -874,6 +874,10 @@ GDScript::~GDScript() {
 		memdelete( E->get() );
 	}
 
+	for (Map<StringName,Ref<GDScript> >::Element *E=subclasses.front();E;E=E->next()) {
+		E->get()->_owner=NULL; //bye, you are no longer owned cause I died
+	}
+
 #ifdef DEBUG_ENABLED
 	if (GDScriptLanguage::get_singleton()->lock) {
 		GDScriptLanguage::get_singleton()->lock->lock();
@@ -960,11 +964,16 @@ bool GDInstance::get(const StringName& p_name, Variant &r_ret) const {
 		}
 
 		{
-			const Map<StringName,Variant>::Element *E = script->constants.find(p_name);
-			if (E) {
-				r_ret=E->get();
-				return true; //index found
 
+			const GDScript *sl = sptr;
+			while(sl) {
+				const Map<StringName,Variant>::Element *E = sl->constants.find(p_name);
+				if (E) {
+					r_ret=E->get();
+					return true; //index found
+
+				}
+				sl=sl->_base;
 			}
 		}
 
