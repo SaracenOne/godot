@@ -658,7 +658,6 @@ void BakedLightBaker::_octree_insert(int p_octant,Triangle* p_triangle, int p_de
 					leaf_list=child_idx;
 					cell_count++;
 
-					int lz = lights.size();
 					for(int ci=0;ci<8;ci++) {
 						child->light_accum[ci][0]=0;
 						child->light_accum[ci][1]=0;
@@ -1029,8 +1028,6 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 	//ray_aabb.pos=p_begin;
 	//ray_aabb.expand_to(end);
 
-
-	const BVH *bvhptr = bvh;
 
 	bstack[0]=bvh;
 	stack[0]=TEST_AABB_BIT;
@@ -1734,7 +1731,7 @@ void BakedLightBaker::throw_rays(ThreadStack& thread_stack,int p_amount) {
 					Vector3 from = dl.pos;
 
 					double r1 = double(rand())/RAND_MAX;
-					double r2 = double(rand())/RAND_MAX;
+					//double r2 = double(rand())/RAND_MAX;
 					double r3 = double(rand())/RAND_MAX;
 
 					float d=Math::tan(Math::deg2rad(dl.spot_angle));
@@ -2042,7 +2039,6 @@ void BakedLightBaker::update_octree_images(DVector<uint8_t> &p_octree,DVector<ui
 	const double *normptr=norm_arr.ptr();
 */
 	double norm = 1.0/double(total_rays);
-	int lz=lights.size();
 	mult/=multiplier;
 	double saturation = baked_light->get_saturation();
 
@@ -2309,8 +2305,6 @@ void BakedLightBaker::_plot_pixel_to_lightmap(int x, int y, int width, int heigh
 					continue;
 				n/=len;
 
-				const BVH *bvhptr = bvh;
-
 				bstack[0]=bvh;
 				stack[0]=TEST_RAY_BIT;
 
@@ -2452,8 +2446,6 @@ Error BakedLightBaker::transfer_to_lightmaps() {
 	float gamma = baked_light->get_gamma_adjust();
 	float mult = baked_light->get_energy_multiplier();
 
-
-	const double *normptr=norm_arr.ptr();
 	for(int i=0;i<triangles.size();i++) {
 
 		if (i%200==0) {
@@ -2586,7 +2578,6 @@ Error BakedLightBaker::transfer_to_lightmaps() {
 
 			Vector<uint8_t> copy_data=bt.data;
 			uint8_t *data=bt.data.ptr();
-			uint8_t *src_data=copy_data.ptr();
 			const int max_radius=8;
 			const int shadow_radius=2;
 			const int max_dist=0x7FFFFFFF;

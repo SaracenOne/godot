@@ -4146,7 +4146,6 @@ void TextEdit::_update_completion_candidates() {
 	completion_options.clear();
 	completion_index=0;
 	completion_base=s;
-	int ci_match=0;
 	Vector<float> sim_cache;
 	for(int i=0;i<completion_strings.size();i++) {
 		if (s == completion_strings[i]) {
