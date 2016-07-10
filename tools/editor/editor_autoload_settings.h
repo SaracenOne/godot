@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  sample_library.h                                                     */
+/*  editor_autoload_settings.h                                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -26,53 +26,69 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
-#ifndef SAMPLE_LIBRARY_H
-#define SAMPLE_LIBRARY_H
 
-#include "resource.h"
-#include "scene/resources/sample.h"
-#include "map.h"
+#ifndef EDITOR_AUTOLOAD_SETTINGS_H
+#define EDITOR_AUTOLOAD_SETTINGS_H
 
-class SampleLibrary : public Resource {
+#include "scene/gui/tree.h"
 
-	OBJ_TYPE(SampleLibrary,Resource);
+#include "editor_file_dialog.h"
 
-	struct SampleData {
+class EditorAutoloadSettings : public VBoxContainer {
 
-		Ref<Sample> sample;
-		float db;
-		float pitch_scale;
+	OBJ_TYPE( EditorAutoloadSettings, VBoxContainer );
 
-		SampleData() { db=0; pitch_scale=1; }
+	enum {
+		BUTTON_MOVE_UP,
+		BUTTON_MOVE_DOWN,
+		BUTTON_DELETE
 	};
 
-	Map<StringName,SampleData > sample_map;
+	static StringName autoload_changed;
 
-	Array _get_sample_list() const;
+	struct AutoLoadInfo {
+		String name;
+		int order;
+
+		bool operator==(const AutoLoadInfo& p_info) {
+			return order == p_info.order;
+		}
+	};
+
+	List<AutoLoadInfo> autoload_cache;
+
+	bool updating_autoload;
+	int number_of_autoloads;
+	String selected_autoload;
+
+	Tree *tree;
+	EditorLineEditFileChooser *autoload_add_path;
+	LineEdit *autoload_add_name;
+
+	bool _autoload_name_is_valid(const String& p_string, String *r_error = NULL);
+
+	void _autoload_add();
+	void _autoload_selected();
+	void _autoload_edited();
+	void _autoload_button_pressed(Object *p_item, int p_column, int p_button);
+	void _autoload_file_callback(const String& p_path);
+
+	Variant get_drag_data_fw(const Point2& p_point, Control *p_from);
+	bool can_drop_data_fw(const Point2& p_point, const Variant& p_data, Control *p_from) const;
+	void drop_data_fw(const Point2& p_point, const Variant& p_data, Control *p_from);
+
 protected:
 
-	bool _set(const StringName& p_name, const Variant& p_value);
-	bool _get(const StringName& p_name,Variant &r_ret) const;
-	void _get_property_list(List<PropertyInfo> *p_list) const;
-
+	void _notification(int p_what);
 	static void _bind_methods();
 
 public:
 
+	void update_autoload();
 
+	EditorAutoloadSettings();
 
-	void add_sample(const StringName& p_name, const Ref<Sample>& p_sample);
-	bool has_sample(const StringName& p_name) const;
-	void sample_set_volume_db(const StringName& p_name, float p_db);
-	float sample_get_volume_db(const StringName& p_name) const;
-	void sample_set_pitch_scale(const StringName& p_name, float p_pitch);
-	float sample_get_pitch_scale(const StringName& p_name) const;
-	Ref<Sample> get_sample(const StringName& p_name) const;
-	void get_sample_list(List<StringName> *p_samples) const;
-	void remove_sample(const StringName& p_name);
-	StringName get_sample_idx(int p_idx) const;
-
-	SampleLibrary();
 };
 
-#endif // SAMPLE_LIBRARY_H
+#endif
+

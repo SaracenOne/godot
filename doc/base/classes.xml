@@ -6676,6 +6676,17 @@
 				Force the camera to update scroll immediately.
 			</description>
 		</method>
+		<method name="reset_smoothing">
+			<description>
+			Set the camera's position immediately to its current smoothing destination.
+			This has no effect if smoothing is disabled.
+			</description>
+		</method>
+		<method name="align">
+			<description>
+			Align the camera to the tracked node
+			</description>
+		</method>
 		<method name="get_anchor_mode" qualifiers="const">
 			<return type="int">
 			</return>
@@ -15748,6 +15759,13 @@
 				If the device has an accelerometer, this will return the movement.
 			</description>
 		</method>
+		<method name="get_connected_joysticks">
+			<return type="Array">
+			</return>
+			<description>
+			Returns an [Array] containing the device IDs of all currently connected joysticks.
+			</description>
+		</method>
 		<method name="get_joy_axis">
 			<return type="float">
 			</return>
@@ -21693,6 +21711,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="is_displayed_folded" qualifiers="const">
+			<return type="bool">
+			</return>
+			<description>
+			</description>
+		</method>
 		<method name="is_fixed_processing" qualifiers="const">
 			<return type="bool">
 			</return>
@@ -21810,6 +21834,12 @@
 			</argument>
 			<description>
 				Replace a node in a scene by a given one. Subscriptions that pass through this node will be lost.
+			</description>
+		</method>
+		<method name="set_display_folded">
+			<argument index="0" name="fold" type="bool">
+			</argument>
+			<description>
 			</description>
 		</method>
 		<method name="set_display_folded">
@@ -31565,6 +31595,13 @@
 			<return type="int">
 			</return>
 			<description>
+			</description>
+		</method>
+		<method name="get_text">
+			<return type="String">
+			</return>
+			<description>
+			Returns the raw text, stripping out the formatting information.
 			</description>
 		</method>
 		<method name="get_total_character_count" qualifiers="const">
