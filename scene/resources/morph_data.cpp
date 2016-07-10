@@ -34,6 +34,7 @@ void MorphData::clear() {
 	for (int i = 0; i < surfaceMorphs.size(); i++)
 	{
 		surfaceMorphs.get(i)->vertices.clear();
+		surfaceMorphs.get(i)->normals.clear();
 		surfaceMorphs.get(i)->indexes.clear();
 	}
 
@@ -44,6 +45,7 @@ void MorphData::resize(int p_surface, int p_size) {
 
 	ERR_FAIL_INDEX(p_surface, surfaceMorphs.size());
 	surfaceMorphs[p_surface]->vertices.resize(p_size);
+	surfaceMorphs[p_surface]->normals.resize(p_size);
 	surfaceMorphs[p_surface]->indexes.resize(p_size);
 }
 
