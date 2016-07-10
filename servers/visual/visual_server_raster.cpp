@@ -5310,8 +5310,6 @@ void VisualServerRaster::_light_instance_update_lispsm_shadow(Instance *p_light,
 
 	Vector3 light_vec = -p_light->data.transform.basis.get_axis(2);
 	Vector3 view_vec = -p_camera->transform.basis.get_axis(2);
-	float viewdot = light_vec.normalized().dot(view_vec.normalized());
-
 
 	float near_dist=1;
 
@@ -6569,7 +6567,6 @@ void VisualServerRaster::_render_no_camera(Viewport *p_viewport,Camera *p_camera
 void VisualServerRaster::_render_camera(Viewport *p_viewport,Camera *p_camera, Scenario *p_scenario) {
 
 
-	uint64_t t = OS::get_singleton()->get_ticks_usec();
 	render_pass++;
 	uint32_t camera_layer_mask=p_camera->visible_layers;
 

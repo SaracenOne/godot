@@ -382,9 +382,6 @@ RID HingeJoint::_configure_joint(PhysicsBody *body_a,PhysicsBody *body_b) {
 
 
 	Transform gt = get_global_transform();
-	Vector3 hingepos = gt.origin;
-	Vector3 hingedir = gt.basis.get_axis(2);
-
 	Transform ainv = body_a->get_global_transform().translated(body_a->get_center_of_mass());
 	ainv.basis.invert();
 	ainv.basis.scale(body_a->get_global_transform().basis.get_scale());
@@ -552,9 +549,6 @@ RID SliderJoint::_configure_joint(PhysicsBody *body_a,PhysicsBody *body_b) {
 
 
 	Transform gt = get_global_transform();
-	Vector3 sliderpos = gt.origin;
-	Vector3 sliderdir = gt.basis.get_axis(2);
-
 	Transform ainv = body_a->get_global_transform().translated(body_a->get_center_of_mass());
 	ainv.basis.invert();
 	ainv.basis.scale(body_a->get_global_transform().basis.get_scale());
