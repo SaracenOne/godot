@@ -1686,7 +1686,7 @@ void CanvasItemEditor::_viewport_input_event(const InputEvent& p_event) {
 
 					incend(begin.x,end.x,drag_vector.x,minsize.x,symmetric);
 					incend(begin.y,end.y,drag_vector.y,minsize.y,symmetric);
-				} break;				
+				} break;
 				case DRAG_TOP_LEFT: {
 
 					incbeg(begin.x,end.x,drag_vector.x,minsize.x,symmetric);
