@@ -274,7 +274,7 @@ void AnimationPlayer::_generate_node_caches(AnimationData* p_anim) {
 					if (!child->is_connected("mesh_changed", this, "_mesh_changed"))
 						child->connect("mesh_changed", this, "_mesh_changed", make_binds(child), CONNECT_ONESHOT);
 
-					String morph_name = track_property.operator String().get_slicec('/', 1);
+					StringName morph_name = track_property.operator String().get_slicec('/', 1);
 					idx = child->cast_to<MeshInstance>()->get_morph_track_index(morph_name);
 					if (idx == -1) {
 
@@ -360,7 +360,7 @@ void AnimationPlayer::_generate_node_caches(AnimationData* p_anim) {
 				else if (p_anim->node_cache[i]->mesh_instance) {
 					if (property.operator String() != "") {
 						if (property.operator String().begins_with("morph/")) {
-							String morph_name = property.operator String().get_slicec('/', 1);
+							StringName morph_name = property.operator String().get_slicec('/', 1);
 							p_anim->node_cache[i]->idx = child->cast_to<MeshInstance>()->get_morph_track_index(morph_name);
 							if (p_anim->node_cache[i]->idx<0) {
 								// broken track (nonexistent morph)

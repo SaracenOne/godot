@@ -131,7 +131,7 @@ void MeshInstance::set_mesh(const Ref<Mesh>& p_mesh) {
 
 			MorphTrack mt;
 			mt.value=0;
-			mt.name=String(mesh->get_morph_target_name(i));
+			mt.name=StringName(mesh->get_morph_target_name(i));
 			morph_tracks[i]=mt;
 		}
 
@@ -169,14 +169,14 @@ float MeshInstance::get_morph_track_value(const int p_idx) const {
 	return morph_tracks[p_idx].value;
 }
 
-String MeshInstance::get_morph_track_name(const int p_idx) const {
+StringName MeshInstance::get_morph_track_name(const int p_idx) const {
 	ERR_FAIL_COND_V(p_idx < 0, "");
 	ERR_FAIL_COND_V(p_idx >= morph_tracks.size(), "");
 
 	return morph_tracks[p_idx].name;
 }
 
-int MeshInstance::get_morph_track_index(const String &p_name) const {
+int MeshInstance::get_morph_track_index(const StringName &p_name) const {
 	for(int i=0;i<morph_tracks.size();i++) {
 		if (p_name == morph_tracks[i].name) {
 			return i;
