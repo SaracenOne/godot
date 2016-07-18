@@ -866,7 +866,6 @@ void _OS::print_all_textures_by_size() {
 
 	for(List<_OSCoreBindImg>::Element *E=imgs.front();E;E=E->next()) {
 
-		print_line(E->get().path+" - "+String::humanize_size(E->get().vram)+"  ("+E->get().size+") - total:"+String::humanize_size(total) );
 		total-=E->get().vram;
 	}
 }
@@ -900,19 +899,6 @@ void _OS::print_resources_by_type(const Vector<String>& p_types) {
 
 
 		type_count[r->get_type()]++;
-
-		print_line(r->get_type()+": "+r->get_path());
-
-		List<String> metas;
-		r->get_meta_list(&metas);
-		for (List<String>::Element* me = metas.front(); me; me = me->next()) {
-			print_line(" "+String(me->get()) + ": " + r->get_meta(me->get()));
-		};
-	}
-
-	for(Map<String,int>::Element *E=type_count.front();E;E=E->next()) {
-
-		print_line(E->key()+" count: "+itos(E->get()));
 	}
 
 };
@@ -1034,6 +1020,11 @@ int _OS::find_scancode_from_string(const String& p_code) const {
 void _OS::alert(const String& p_alert,const String& p_title) {
 
 	OS::get_singleton()->alert(p_alert,p_title);
+}
+
+Dictionary _OS::get_engine_version() const {
+
+	return OS::get_singleton()->get_engine_version();
 }
 
 _OS *_OS::singleton=NULL;
@@ -1187,6 +1178,8 @@ void _OS::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("set_use_vsync","enable"),&_OS::set_use_vsync);
 	ObjectTypeDB::bind_method(_MD("is_vsnc_enabled"),&_OS::is_vsnc_enabled);
+
+	ObjectTypeDB::bind_method(_MD("get_engine_version"),&_OS::get_engine_version);
 
 	BIND_CONSTANT( DAY_SUNDAY );
 	BIND_CONSTANT( DAY_MONDAY );

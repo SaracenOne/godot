@@ -15797,6 +15797,13 @@
 			Returns an [Array] containing the device IDs of all currently connected joysticks.
 			</description>
 		</method>
+		<method name="get_gyroscope">
+			<return type="Vector3">
+			</return>
+			<description>
+				If the device has a gyroscope, this will return the rate of rotation in rad/s around a device's x, y, and z axis.
+			</description>
+		</method>
 		<method name="get_joy_axis">
 			<return type="float">
 			</return>
@@ -39268,6 +39275,20 @@
 				Set the text editor caret blink speed. Cannot be less then or equal to 0.
 			</description>
 		</method>
+		<method name="cursor_set_block_mode">
+			<argument index="0" name="enable" type="bool">
+			</argument>
+			<description>
+				Set the text editor caret to block mode.
+			</description>
+		</method>
+		<method name="cursor_is_block_mode" qualifiers="const">
+			<return type="bool">
+			</return>
+			<description>
+				Gets whether the text editor caret is in block mode.
+			</description>
+		</method>
 		<method name="cursor_set_column">
 			<argument index="0" name="column" type="int">
 			</argument>
@@ -39513,6 +39534,11 @@
 		</method>
 	</methods>
 	<signals>
+		<signal name="breakpoint_toggled">
+			<description>
+				Emitted when a breakpoint is placed via the breakpoint gutter.
+			</description>
+		</signal>
 		<signal name="cursor_changed">
 			<description>
 				Emitted when the cursor changes.
@@ -39557,6 +39583,8 @@
 		<theme_item name="brace_mismatch_color" type="Color">
 		</theme_item>
 		<theme_item name="breakpoint_color" type="Color">
+		</theme_item>
+		<theme_item name="caret_background_color" type="Color">
 		</theme_item>
 		<theme_item name="caret_color" type="Color">
 		</theme_item>
