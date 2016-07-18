@@ -20603,19 +20603,37 @@
 			</description>
 		</method>
 		<method name="set_morph_track_value"  >
-		  <argument index="0" name="arg0" type="String">
+		  <argument index="0" name="idx" type="int">
 		  </argument>
-		  <argument index="1" name="arg1" type="float">
+		  <argument index="1" name="value" type="float">
 		  </argument>
 		  <description>
-			Set the named morph track value on this instance.
+			Set the value for the morph track with this id.
 		  </description>
 		</method>
 		<method name="get_morph_track_value" qualifiers="const" >
-		  <return type="float">
+		  <return type="int">
 		  </return>
 		  <description>
-			Return the named morph track value on this instance.
+			Return the value for the morph track with this id.
+		  </description>
+		</method>
+		<method name="get_morph_track_name" qualifiers="const" >
+		  <argument index="0" name="idx" type="int">
+		  </argument>
+		  <return type="String">
+		  </return>
+		  <description>
+			Return the name for this morph track id.
+		  </description>
+		</method>
+		<method name="get_morph_track_index" qualifiers="const" >
+		  <argument index="0" name="name" type="String">
+		  </argument>
+		  <return type="int">
+		  </return>
+		  <description>
+			Return the id for the morph track with this name. Returns -1 if no morph track is found.
 		  </description>
 		</method>
 		<method name="set_skeleton_path">
