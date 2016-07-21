@@ -26,7 +26,7 @@
 /* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE     */
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
-#include "resource_format_text.h"
+#include "scene_format_text.h"
 
 #include "globals.h"
 #include "version.h"
@@ -404,7 +404,9 @@ Error ResourceInteractiveLoaderText::poll() {
 		}
 
 		if (next_tag.fields.has("parent")) {
-			parent=packed_scene->get_state()->add_node_path(next_tag.fields["parent"]);
+			NodePath np = next_tag.fields["parent"];
+			np.prepend_period(); //compatible to how it manages paths internally
+			parent=packed_scene->get_state()->add_node_path(np);
 		}
 
 

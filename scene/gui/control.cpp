@@ -1877,7 +1877,7 @@ void Control::_modal_stack_remove() {
 
 }
 
-void Control::_propagate_theme_changed(CanvasItem *p_at,Control *p_owner) {
+void Control::_propagate_theme_changed(CanvasItem *p_at,Control *p_owner,bool p_assign) {
 
 	Control *c = p_at->cast_to<Control>();
 
@@ -1896,14 +1896,29 @@ void Control::_propagate_theme_changed(CanvasItem *p_at,Control *p_owner) {
 
 	if (c) {
 
-		c->data.theme_owner=p_owner;
+		if (p_assign) {
+			c->data.theme_owner=p_owner;
+		}
 		c->_notification(NOTIFICATION_THEME_CHANGED);
 		c->update();
 	}
 }
 
+
+void Control::_theme_changed() {
+
+	_propagate_theme_changed(this,this,false);
+}
+
 void Control::set_theme(const Ref<Theme>& p_theme) {
 
+
+	if (data.theme==p_theme)
+		return;
+
+	if (data.theme.is_valid()) {
+		data.theme->disconnect("changed",this,"_theme_changed");
+	}
 
 	data.theme=p_theme;
 	if (!p_theme.is_null()) {
@@ -1921,6 +1936,9 @@ void Control::set_theme(const Ref<Theme>& p_theme) {
 
 	}
 
+	if (data.theme.is_valid()) {
+		data.theme->connect("changed",this,"_theme_changed");
+	}
 
 }
 
@@ -2276,6 +2294,7 @@ void Control::set_rotation(float p_radians) {
 		_notify_transform();
 		_size_changed();
 	}
+	_change_notify("rect/rotation");
 }
 
 float Control::get_rotation() const{
@@ -2518,6 +2537,10 @@ void Control::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("warp_mouse","to_pos"),&Control::warp_mouse);
 
 	ObjectTypeDB::bind_method(_MD("minimum_size_changed"), &Control::minimum_size_changed);
+
+	ObjectTypeDB::bind_method(_MD("_theme_changed"), &Control::_theme_changed);
+
+
 
 	ObjectTypeDB::bind_method(_MD("_font_changed"), &Control::_font_changed);
 

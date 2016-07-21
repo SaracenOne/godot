@@ -819,7 +819,7 @@ void ScriptEditor::_close_tab(int p_idx) {
 
 
 	_update_script_names();
-	EditorNode::get_singleton()->save_layout();
+	_save_layout();
 }
 
 void ScriptEditor::_close_current_tab() {
@@ -827,6 +827,22 @@ void ScriptEditor::_close_current_tab() {
 	_close_tab(tab_container->get_current_tab());
 
 }
+
+void ScriptEditor::_close_docs_tab() {
+
+	int child_count = tab_container->get_child_count();
+	for (int i = child_count-1; i>=0; i--) {
+
+		EditorHelp *ste = tab_container->get_child(i)->cast_to<EditorHelp>();
+
+		if (ste) {
+			_close_tab(i);
+		}
+
+	}
+
+}
+
 
 
 void ScriptEditor::_resave_scripts(const String& p_str) {
@@ -1481,7 +1497,9 @@ void ScriptEditor::_menu_option(int p_option) {
 				if (scr.is_null())
 					return;
 				scr->set_source_code(te->get_text());
-				scr->get_language()->reload_tool_script(scr,p_option==FILE_TOOL_RELOAD_SOFT);
+				bool soft = p_option==FILE_TOOL_RELOAD_SOFT || scr->get_instance_base_type()=="EditorPlugin"; //always soft-reload editor plugins
+
+				scr->get_language()->reload_tool_script(scr,soft);
 			} break;
 			case EDIT_TRIM_TRAILING_WHITESAPCE: {
 				_trim_trailing_whitespace(current->get_text_edit());
@@ -1611,6 +1629,9 @@ void ScriptEditor::_menu_option(int p_option) {
 					_close_current_tab();
 				}
 			} break;
+			case CLOSE_DOCS: {
+				_close_docs_tab();
+			} break;
 			case WINDOW_MOVE_LEFT: {
 
 				if (tab_container->get_current_tab()>0) {
@@ -1657,6 +1678,9 @@ void ScriptEditor::_menu_option(int p_option) {
 			} break;
 			case FILE_CLOSE: {
 				_close_current_tab();
+			} break;
+			case CLOSE_DOCS: {
+				_close_docs_tab();
 			} break;
 
 
@@ -2057,6 +2081,9 @@ void ScriptEditor::_update_script_colors() {
 
 void ScriptEditor::_update_script_names() {
 
+	if (restoring_layout)
+		return;
+
 	waiting_update_names=false;
 	Set<Ref<Script> > used;
 	Node* edited = EditorNode::get_singleton()->get_edited_scene();
@@ -2220,10 +2247,8 @@ void ScriptEditor::edit(const Ref<Script>& p_script) {
 
 
 	_update_script_names();
+	_save_layout();
 	ste->connect("name_changed",this,"_update_script_names");
-	if (!restoring_layout) {
-		EditorNode::get_singleton()->save_layout();
-	}
 
 	//test for modification, maybe the script was not edited but was loaded
 
@@ -2343,6 +2368,15 @@ void ScriptEditor::_add_callback(Object *p_obj, const String& p_function, const 
 
 }
 
+void ScriptEditor::_save_layout() {
+
+	if (restoring_layout) {
+		return;
+	}
+
+	editor->save_layout();
+}
+
 void ScriptEditor::_editor_settings_changed() {
 
 	trim_trailing_whitespace_on_save = EditorSettings::get_singleton()->get("text_editor/trim_trailing_whitespace_on_save");
@@ -2400,7 +2434,7 @@ void ScriptEditor::_tree_changed() {
 
 void ScriptEditor::_script_split_dragged(float) {
 
-	EditorNode::get_singleton()->save_layout();
+	_save_layout();
 }
 
 void ScriptEditor::_unhandled_input(const InputEvent& p_event) {
@@ -2446,7 +2480,6 @@ void ScriptEditor::set_window_layout(Ref<ConfigFile> p_layout) {
 		}
 	}
 
-
 	for(int i=0;i<helps.size();i++) {
 
 		String path = helps[i];
@@ -2462,9 +2495,9 @@ void ScriptEditor::set_window_layout(Ref<ConfigFile> p_layout) {
 		script_split->set_split_offset(p_layout->get_value("ScriptEditor","split_offset"));
 	}
 
-
 	restoring_layout=false;
 
+	_update_script_names();
 }
 
 void ScriptEditor::get_window_layout(Ref<ConfigFile> p_layout) {
@@ -2524,7 +2557,7 @@ void ScriptEditor::_help_class_open(const String& p_class) {
 	eh->go_to_class(p_class,0);
 	eh->connect("go_to_help",this,"_help_class_goto");
 	_update_script_names();
-
+	_save_layout();
 }
 
 void ScriptEditor::_help_class_goto(const String& p_desc) {
@@ -2553,7 +2586,7 @@ void ScriptEditor::_help_class_goto(const String& p_desc) {
 	eh->go_to_help(p_desc);
 	eh->connect("go_to_help",this,"_help_class_goto");
 	_update_script_names();
-
+	_save_layout();
 }
 
 void ScriptEditor::_update_history_pos(int p_new_pos) {
@@ -2678,6 +2711,7 @@ void ScriptEditor::_bind_methods() {
 	ObjectTypeDB::bind_method("_tab_changed",&ScriptEditor::_tab_changed);
 	ObjectTypeDB::bind_method("_menu_option",&ScriptEditor::_menu_option);
 	ObjectTypeDB::bind_method("_close_current_tab",&ScriptEditor::_close_current_tab);
+	ObjectTypeDB::bind_method("_close_docs_tab", &ScriptEditor::_close_docs_tab);
 	ObjectTypeDB::bind_method("_editor_play",&ScriptEditor::_editor_play);
 	ObjectTypeDB::bind_method("_editor_pause",&ScriptEditor::_editor_pause);
 	ObjectTypeDB::bind_method("_editor_stop",&ScriptEditor::_editor_stop);
@@ -2760,7 +2794,8 @@ ScriptEditor::ScriptEditor(EditorNode *p_editor) {
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/save_theme", TTR("Save Theme")), FILE_SAVE_THEME);
 	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/save_theme_as", TTR("Save Theme As")), FILE_SAVE_THEME_AS);
 	file_menu->get_popup()->add_separator();
-	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/close_file", TTR("Close"), KEY_MASK_CMD|KEY_W), FILE_CLOSE);
+	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/close_docs", TTR("Close Docs")), CLOSE_DOCS);
+	file_menu->get_popup()->add_shortcut(ED_SHORTCUT("script_editor/close_file", TTR("Close"), KEY_MASK_CMD | KEY_W), FILE_CLOSE);
 	file_menu->get_popup()->connect("item_pressed", this,"_menu_option");
 
 	edit_menu = memnew( MenuButton );

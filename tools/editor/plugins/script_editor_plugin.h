@@ -127,6 +127,7 @@ class ScriptEditor : public VBoxContainer {
 		FILE_SAVE_THEME,
 		FILE_SAVE_THEME_AS,
 		FILE_CLOSE,
+		CLOSE_DOCS,
 		EDIT_UNDO,
 		EDIT_REDO,
 		EDIT_CUT,
@@ -237,6 +238,7 @@ class ScriptEditor : public VBoxContainer {
 	void _close_tab(int p_idx);
 
 	void _close_current_tab();
+	void _close_docs_tab();
 
 	bool grab_focus_block;
 
@@ -268,6 +270,7 @@ class ScriptEditor : public VBoxContainer {
 	void _update_window_menu();
 	void _script_created(Ref<Script> p_script);
 
+	void _save_layout();
 	void _editor_settings_changed();
 	void _autosave_scripts();
 

@@ -577,11 +577,14 @@ LRESULT OS_Windows::WndProc(HWND hWnd,UINT uMsg, WPARAM	wParam,	LPARAM	lParam) {
 				}
 			} else if (mouse_mode!=MOUSE_MODE_CAPTURED) {
 				// for reasons unknown to mankind, wheel comes in screen cordinates
-				RECT rect;
-				GetWindowRect(hWnd,&rect);
-				mb.x-=rect.left;
-				mb.y-=rect.top;
+				POINT coords;
+				coords.x = mb.x;
+				coords.y = mb.y;
 
+				ScreenToClient(hWnd, &coords);
+
+				mb.x = coords.x;
+				mb.y = coords.y;
 			}
 
 			if (main_loop) {
@@ -1697,6 +1700,17 @@ void OS_Windows::set_borderless_window(int p_borderless) {
 
 bool OS_Windows::get_borderless_window() {
 	return video_mode.borderless_window;
+}
+
+void OS_Windows::request_attention() {
+
+	FLASHWINFO info;
+	info.cbSize = sizeof(FLASHWINFO);
+	info.hwnd = hWnd;
+	info.dwFlags = FLASHW_TRAY;
+	info.dwTimeout = 0;
+	info.uCount = 2;
+	FlashWindowEx(&info);
 }
 
 void OS_Windows::set_multisamples(int p_multisamples) {
