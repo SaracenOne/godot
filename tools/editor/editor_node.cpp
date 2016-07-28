@@ -1213,7 +1213,7 @@ void EditorNode::_dialog_action(String p_file) {
 		case FILE_SAVE_SCENE:
 		case FILE_SAVE_AS_SCENE: {
 
-			if (file->get_mode()==FileDialog::MODE_SAVE_FILE) {
+			if (file->get_mode()==EditorFileDialog::MODE_SAVE_FILE) {
 
 				//_save_scene(p_file);
 				_save_scene_with_preview(p_file);
@@ -1223,7 +1223,7 @@ void EditorNode::_dialog_action(String p_file) {
 		} break;
 
 		case FILE_SAVE_AND_RUN: {
-			if (file->get_mode()==FileDialog::MODE_SAVE_FILE) {
+			if (file->get_mode()==EditorFileDialog::MODE_SAVE_FILE) {
 
 				//_save_scene(p_file);
 				_save_scene_with_preview(p_file);
@@ -1448,7 +1448,7 @@ void EditorNode::_dialog_action(String p_file) {
 		} break;
 		default: { //save scene?
 
-			if (file->get_mode()==FileDialog::MODE_SAVE_FILE) {
+			if (file->get_mode()==EditorFileDialog::MODE_SAVE_FILE) {
 
 				//_save_scene(p_file);
 				_save_scene_with_preview(p_file);
@@ -2842,7 +2842,7 @@ void EditorNode::_menu_option_confirm(int p_option,bool p_confirmed) {
 		} break;
 		case SETTINGS_ABOUT: {
 
-			about->popup_centered(Size2(500,130)*EDSCALE);
+			about->popup_centered_minsize(Size2(500,130)*EDSCALE);
 		} break;
 		case SOURCES_REIMPORT: {
 
