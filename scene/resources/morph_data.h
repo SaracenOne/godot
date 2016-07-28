@@ -36,6 +36,8 @@ class MorphDataSurface;
 class MorphData : public Reference  {
 
 	OBJ_TYPE(MorphData,Reference);
+	RES_BASE_EXTENSION("mor");
+	OBJ_SAVE_TYPE(MoprhData);
 
 public:
 	enum MorphType
@@ -77,6 +79,8 @@ public:
 
 	int get_index(int p_surface,int p_idx) const;
 	void set_index(int p_surface,int p_idx, const int& p_index);
+
+	int get_surface_count() const;
 
 	MorphData();
 	~MorphData();

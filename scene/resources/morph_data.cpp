@@ -122,6 +122,11 @@ int MorphData::get_index(int p_surface, int p_idx) const {
 	return surfaceMorphs[p_surface]->indexes[p_idx];
 }
 
+int MorphData::get_surface_count() const {
+
+	return surfaceMorphs.size();
+}
+
 void MorphData::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("clear"), &MorphData::clear);
@@ -138,6 +143,8 @@ void MorphData::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("set_index","surface","idx","index"), &MorphData::set_index);
 	ObjectTypeDB::bind_method(_MD("get_index","surface","idx"), &MorphData::get_index);
+
+	ObjectTypeDB::bind_method(_MD("get_surface_count"), &Mesh::get_surface_count);
 }
 
 MorphData::MorphData(){
