@@ -861,7 +861,6 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	mode_replace_table[ShaderLanguage::SHADER_MATERIAL_LIGHT]["SPECULAR_EXP"]="specular_exp";
 	mode_replace_table[ShaderLanguage::SHADER_MATERIAL_LIGHT]["SHADE_PARAM"]="shade_param";
 	mode_replace_table[ShaderLanguage::SHADER_MATERIAL_LIGHT]["LIGHT"]="light";
-	mode_replace_table[ShaderLanguage::SHADER_MATERIAL_LIGHT]["SHADOW"]="shadow_color";
 	mode_replace_table[ShaderLanguage::SHADER_MATERIAL_LIGHT]["POINT_COORD"]="gl_PointCoord";
 	mode_replace_table[ShaderLanguage::SHADER_MATERIAL_LIGHT]["TIME"]="time";
 	mode_replace_table[ShaderLanguage::SHADER_MATERIAL_LIGHT]["SHADOW"]="shadow_color";
