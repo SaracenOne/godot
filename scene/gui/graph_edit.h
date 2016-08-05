@@ -33,6 +33,7 @@
 #include "scene/gui/scroll_bar.h"
 #include "scene/gui/slider.h"
 #include "scene/gui/tool_button.h"
+#include "scene/gui/spin_box.h"
 #include "texture_frame.h"
 
 class GraphEdit;
@@ -69,6 +70,9 @@ private:
 	ToolButton *zoom_minus;
 	ToolButton *zoom_reset;
 	ToolButton *zoom_plus;
+
+	ToolButton *snap_button;
+	SpinBox *snap_amount;
 
 	void _zoom_minus();
 	void _zoom_reset();
@@ -107,7 +111,7 @@ private:
 	bool updating;
 	List<Connection> connections;
 
-	void _draw_cos_line(const Vector2& p_from, const Vector2& p_to,const Color& p_color);
+	void _draw_cos_line(const Vector2& p_from, const Vector2& p_to, const Color& p_color, const Color &p_to_color);
 
 	void _graph_node_raised(Node* p_gn);
 	void _graph_node_moved(Node *p_gn);
@@ -123,8 +127,34 @@ private:
 
 	Array _get_connection_list() const;
 
+	struct ConnType {
+
+		union {
+			struct {
+				uint32_t type_a;
+				uint32_t type_b;
+			};
+			uint64_t key;
+		};
+
+		bool operator<(const ConnType& p_type) const {
+			return key<p_type.key;
+		}
+
+		ConnType(uint32_t a=0, uint32_t b=0) {
+			type_a=a;
+			type_b=b;
+		}
+	};
+
+	Set<ConnType> valid_connection_types;
+	Set<int> valid_left_disconnect_types;
+	Set<int> valid_right_disconnect_types;
+
 	friend class GraphEditFilter;
 	bool _filter_input(const Point2& p_point);
+	void _snap_toggled();
+	void _snap_value_changed(double);
 protected:
 
 	static void _bind_methods();
@@ -139,6 +169,10 @@ public:
 	void disconnect_node(const StringName& p_from, int p_from_port,const StringName& p_to,int p_to_port);
 	void clear_connections();
 
+	void add_valid_connection_type(int p_type,int p_with_type);
+	void remove_valid_connection_type(int p_type,int p_with_type);
+	bool is_valid_connection_type(int p_type,int p_with_type) const;
+
 	void set_zoom(float p_zoom);
 	float get_zoom() const;
 
@@ -148,8 +182,21 @@ public:
 	void set_right_disconnects(bool p_enable);
 	bool is_right_disconnects_enabled() const;
 
+	void add_valid_right_disconnect_type(int p_type);
+	void remove_valid_right_disconnect_type(int p_type);
+
+	void add_valid_left_disconnect_type(int p_type);
+	void remove_valid_left_disconnect_type(int p_type);
+
 	Vector2 get_scroll_ofs() const;
 
+	void set_selected(Node* p_child);
+
+	void set_use_snap(bool p_enable);
+	bool is_using_snap() const;
+
+	int get_snap() const;
+	void set_snap(int p_snap);
 
 	GraphEdit();
 };

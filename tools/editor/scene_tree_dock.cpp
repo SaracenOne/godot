@@ -42,16 +42,30 @@
 #include "scene/main/viewport.h"
 
 
+void SceneTreeDock::_nodes_drag_begin() {
+
+
+	if (restore_script_editor_on_drag) {
+		EditorNode::get_singleton()->set_visible_editor(EditorNode::EDITOR_SCRIPT);
+		restore_script_editor_on_drag=false;
+	}
+
+}
+
+void SceneTreeDock::_input(InputEvent p_event) {
+
+	if (p_event.type==InputEvent::MOUSE_BUTTON && !p_event.mouse_button.pressed && p_event.mouse_button.button_index==BUTTON_LEFT)	 {
+		restore_script_editor_on_drag=false; //lost chance
+	}
+}
 
 void SceneTreeDock::_unhandled_key_input(InputEvent p_event) {
 
 	if (get_viewport()->get_modal_stack_top())
 		return; //ignore because of modal window
 
-	uint32_t sc = p_event.key.get_scancode_with_modifiers();
 	if (!p_event.key.pressed || p_event.key.echo)
 		return;
-
 
 	if (ED_IS_SHORTCUT("scene_tree/add_child_node", p_event)) {
 		_tool_selected(TOOL_NEW);
@@ -83,9 +97,11 @@ void SceneTreeDock::_unhandled_key_input(InputEvent p_event) {
 	else if (ED_IS_SHORTCUT("scene_tree/save_branch_as_scene", p_event)) {
 		_tool_selected(TOOL_NEW_SCENE_FROM);
 	}
-	switch(sc) {
-		case KEY_MASK_SHIFT|KEY_DELETE: { _tool_selected(TOOL_ERASE, true); } break;
-		case KEY_DELETE: { _tool_selected(TOOL_ERASE); } break;
+	else if (ED_IS_SHORTCUT("scene_tree/delete_no_confirm", p_event)) {
+		_tool_selected(TOOL_ERASE, true);
+	}
+	else if (ED_IS_SHORTCUT("scene_tree/delete", p_event)) {
+		_tool_selected(TOOL_ERASE);
 	}
 }
 
@@ -698,7 +714,13 @@ void SceneTreeDock::_node_selected() {
 		return;
 	}
 
+	if (ScriptEditor::get_singleton()->is_visible()) {
+		restore_script_editor_on_drag=true;
+	}
+
 	editor->push_item(node);
+
+
 }
 
 void SceneTreeDock::_node_renamed() {
@@ -1769,7 +1791,7 @@ void SceneTreeDock::_tree_rmb(const Vector2& p_menu_pos) {
 	}
 	menu->add_separator();
 
-	menu->add_icon_item(get_icon("Remove","EditorIcons"),TTR("Delete Node(s)"), TOOL_ERASE, KEY_DELETE);
+	menu->add_icon_shortcut(get_icon("Remove","EditorIcons"), ED_SHORTCUT("scene_tree/delete", TTR("Delete Node(s)"), KEY_DELETE), TOOL_ERASE);
 
 	menu->set_size(Size2(1,1));
 	menu->set_pos(p_menu_pos);
@@ -1807,6 +1829,8 @@ void SceneTreeDock::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("_load_request"),&SceneTreeDock::_load_request);
 	ObjectTypeDB::bind_method(_MD("_script_open_request"),&SceneTreeDock::_script_open_request);
 	ObjectTypeDB::bind_method(_MD("_unhandled_key_input"),&SceneTreeDock::_unhandled_key_input);
+	ObjectTypeDB::bind_method(_MD("_input"),&SceneTreeDock::_input);
+	ObjectTypeDB::bind_method(_MD("_nodes_drag_begin"),&SceneTreeDock::_nodes_drag_begin);
 	ObjectTypeDB::bind_method(_MD("_delete_confirm"),&SceneTreeDock::_delete_confirm);
 	ObjectTypeDB::bind_method(_MD("_node_prerenamed"),&SceneTreeDock::_node_prerenamed);
 	ObjectTypeDB::bind_method(_MD("_import_subscene"),&SceneTreeDock::_import_subscene);
@@ -1846,6 +1870,8 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor,Node *p_scene_root,EditorSelec
 	ED_SHORTCUT("scene_tree/reparent", TTR("Reparent"));
 	ED_SHORTCUT("scene_tree/merge_from_scene", TTR("Merge From Scene"));
 	ED_SHORTCUT("scene_tree/save_branch_as_scene", TTR("Save Branch as Scene"));
+	ED_SHORTCUT("scene_tree/delete_no_confirm", TTR("Delete (No Confirm)"), KEY_MASK_SHIFT|KEY_DELETE);
+	ED_SHORTCUT("scene_tree/delete", TTR("Delete"), KEY_DELETE);
 
 	tb = memnew( ToolButton );
 	tb->connect("pressed",this,"_tool_selected",make_binds(TOOL_NEW, false));
@@ -1887,6 +1913,7 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor,Node *p_scene_root,EditorSelec
 	scene_tree->connect("open_script",this,"_script_open_request");
 	scene_tree->connect("nodes_rearranged",this,"_nodes_dragged");
 	scene_tree->connect("files_dropped",this,"_files_dropped");
+	scene_tree->connect("nodes_dragged",this,"_nodes_drag_begin");
 
 	scene_tree->set_undo_redo(&editor_data->get_undo_redo());
 	scene_tree->set_editor_selection(editor_selection);
@@ -1939,7 +1966,8 @@ SceneTreeDock::SceneTreeDock(EditorNode *p_editor,Node *p_scene_root,EditorSelec
 	add_child(menu);
 	menu->connect("item_pressed",this,"_tool_selected");
 	first_enter=true;
-
+	restore_script_editor_on_drag=false;
 
 	vbc->add_constant_override("separation",4);
+	set_process_input(true);
 }

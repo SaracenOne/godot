@@ -626,8 +626,8 @@ void fill_default_theme(Ref<Theme>& t,const Ref<Font> & default_font,const Ref<F
 
 	// GraphNode
 
-	Ref<StyleBoxTexture> graphsb = make_stylebox(graph_node_png,6,24,6,5,3,24,16,5);
-	Ref<StyleBoxTexture> graphsbselected = make_stylebox(graph_node_selected_png,6,24,6,5,3,24,16,5);
+	Ref<StyleBoxTexture> graphsb = make_stylebox(graph_node_png,6,24,6,5,16,24,16,5);
+	Ref<StyleBoxTexture> graphsbselected = make_stylebox(graph_node_selected_png,6,24,6,5,16,24,16,5);
 	Ref<StyleBoxTexture> graphsbdefault = make_stylebox(graph_node_default_png,4,4,4,4,6,4,4,4);
 	Ref<StyleBoxTexture> graphsbdeffocus = make_stylebox(graph_node_default_focus_png,4,4,4,4,6,4,4,4);
 	//graphsb->set_expand_margin_size(MARGIN_LEFT,10);
@@ -641,7 +641,7 @@ void fill_default_theme(Ref<Theme>& t,const Ref<Font> & default_font,const Ref<F
 	t->set_icon("close","GraphNode", make_icon( graph_node_close_png ) );
 	t->set_font("title_font","GraphNode", default_font );
 	t->set_color("title_color","GraphNode", Color(0,0,0,1));
-	t->set_constant("title_offset","GraphNode", 18 *scale);
+	t->set_constant("title_offset","GraphNode", 20 *scale);
 	t->set_constant("close_offset","GraphNode", 18 *scale);
 	t->set_constant("port_offset","GraphNode", 3 *scale);
 
@@ -921,7 +921,10 @@ void fill_default_theme(Ref<Theme>& t,const Ref<Font> & default_font,const Ref<F
 	t->set_icon("minus","GraphEdit", make_icon(icon_zoom_less_png) );
 	t->set_icon("reset","GraphEdit", make_icon(icon_zoom_reset_png) );
 	t->set_icon("more","GraphEdit", make_icon(icon_zoom_more_png) );
+	t->set_icon("snap","GraphEdit", make_icon(icon_snap_png) );
 	t->set_stylebox("bg","GraphEdit", make_stylebox( tree_bg_png,4,4,4,5) );
+	t->set_color("grid_minor","GraphEdit", Color(1,1,1,0.05) );
+	t->set_color("grid_major","GraphEdit", Color(1,1,1,0.2) );
 
 
 
