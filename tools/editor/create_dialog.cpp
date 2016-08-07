@@ -292,9 +292,12 @@ String CreateDialog::get_selected_type() {
 Object *CreateDialog::instance_selected() {
 
 	TreeItem *selected = search_options->get_selected();
+
 	if (selected) {
 
 		String custom = selected->get_metadata(0);
+
+
 		if (custom!=String()) {
 			if (EditorNode::get_editor_data().get_custom_types().has(custom)) {
 
@@ -322,6 +325,7 @@ Object *CreateDialog::instance_selected() {
 			return ObjectTypeDB::instance(selected->get_text(0));
 		}
 	}
+
 
 	return NULL;
 }

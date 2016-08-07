@@ -335,7 +335,7 @@ String GDScriptLanguage::make_function(const String& p_class,const String& p_nam
 		for(int i=0;i<p_args.size();i++) {
 			if (i>0)
 				s+=", ";
-			s+=p_args[i];
+			s+=p_args[i].get_slice(":",0);
 		}
 		s+=" ";
 	}
@@ -2389,7 +2389,24 @@ Error GDScriptLanguage::complete_code(const String& p_code, const String& p_base
 				}
 			}
 		} break;
+		case GDParser::COMPLETION_YIELD: {
 
+			const GDParser::Node *node = p.get_completion_node();
+
+			GDCompletionIdentifier t;
+			if (!_guess_expression_type(context,node,p.get_completion_line(),t))
+				break;
+
+			if (t.type==Variant::OBJECT && t.obj_type!=StringName()) {
+
+				List<MethodInfo> sigs;
+				ObjectTypeDB::get_signal_list(t.obj_type,&sigs);
+				for (List<MethodInfo>::Element *E=sigs.front();E;E=E->next()) {
+					options.insert("\""+E->get().name+"\"");
+				}
+			}
+
+		} break;
 
 	}
 
