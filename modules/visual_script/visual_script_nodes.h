@@ -18,6 +18,7 @@ class VisualScriptFunction : public VisualScriptNode {
 	bool stack_less;
 	int stack_size;
 
+
 protected:
 
 	bool _set(const StringName& p_name, const Variant& p_value);
@@ -552,12 +553,96 @@ public:
 	virtual String get_text() const;
 	virtual String get_category() const { return "data"; }
 
-	void set_resource_path(const String &p_path);
-	String get_resource_path();
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
 
 	VisualScriptSelf();
+};
+
+
+class VisualScriptCustomNode: public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptCustomNode,VisualScriptNode)
+
+
+protected:
+
+	virtual bool _use_builtin_script() const { return true; }
+
+	static void _bind_methods();
+public:
+
+	enum StartMode { //replicated for step
+		START_MODE_BEGIN_SEQUENCE,
+		START_MODE_CONTINUE_SEQUENCE,
+		START_MODE_RESUME_YIELD
+	};
+
+	enum { //replicated for step
+		STEP_SHIFT=1<<24,
+		STEP_MASK=STEP_SHIFT-1,
+		STEP_PUSH_STACK_BIT=STEP_SHIFT, //push bit to stack
+		STEP_GO_BACK_BIT=STEP_SHIFT<<1, //go back to previous node
+		STEP_NO_ADVANCE_BIT=STEP_SHIFT<<2, //do not advance past this node
+		STEP_EXIT_FUNCTION_BIT=STEP_SHIFT<<3, //return from function
+		STEP_YIELD_BIT=STEP_SHIFT<<4, //yield (will find VisualScriptFunctionState state in first working memory)
+	};
+
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptCustomNode();
+};
+
+class VisualScriptSubCall: public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptSubCall,VisualScriptNode)
+
+
+protected:
+
+	virtual bool _use_builtin_script() const { return true; }
+
+	static void _bind_methods();
+public:
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptSubCall();
 };
 
 

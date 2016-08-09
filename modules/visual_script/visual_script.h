@@ -22,6 +22,8 @@ friend class VisualScript;
 	Array _get_default_input_values() const;
 protected:
 
+	virtual bool _use_builtin_script() const { return false; }
+
 	void _notification(int p_what);
 	void ports_changed_notify();
 	static void _bind_methods();
@@ -85,12 +87,20 @@ friend class VisualScriptLanguage; //for debugger
 
 public:
 
+	enum StartMode {
+		START_MODE_BEGIN_SEQUENCE,
+		START_MODE_CONTINUE_SEQUENCE,
+		START_MODE_RESUME_YIELD
+	};
+
 	enum {
 		STEP_SHIFT=1<<24,
 		STEP_MASK=STEP_SHIFT-1,
 		STEP_FLAG_PUSH_STACK_BIT=STEP_SHIFT, //push bit to stack
 		STEP_FLAG_GO_BACK_BIT=STEP_SHIFT<<1, //go back to previous node
-		STEP_EXIT_FUNCTION_BIT=STEP_SHIFT<<2, //return from function
+		STEP_NO_ADVANCE_BIT=STEP_SHIFT<<2, //do not advance past this node
+		STEP_EXIT_FUNCTION_BIT=STEP_SHIFT<<3, //return from function
+		STEP_YIELD_BIT=STEP_SHIFT<<4, //yield (will find VisualScriptFunctionState state in first working memory)
 
 		FLOW_STACK_PUSHED_BIT=1<<30, //in flow stack, means bit was pushed (must go back here if end of sequence)
 		FLOW_STACK_MASK=FLOW_STACK_PUSHED_BIT-1
@@ -109,7 +119,7 @@ public:
 	virtual bool is_output_port_unsequenced(int p_idx) const { return false; }
 	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return true; }
 
-	virtual int step(const Variant** p_inputs,Variant** p_outputs,bool p_start_sequence,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str)=0; //do a step, return which sequence port to go out
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str)=0; //do a step, return which sequence port to go out
 
 	Ref<VisualScriptNode> get_base_node() { return Ref<VisualScriptNode>( base ); }
 
@@ -312,6 +322,10 @@ public:
 	virtual bool get_property_default_value(const StringName& p_property,Variant& r_value) const;
 	virtual void get_method_list(List<MethodInfo> *p_list) const;
 
+	virtual bool has_method(const StringName& p_method) const;
+	virtual MethodInfo get_method_info(const StringName& p_method) const;
+
+
 
 	VisualScript();
 	~VisualScript();
@@ -352,7 +366,11 @@ class VisualScriptInstance : public ScriptInstance {
 
 	StringName source;
 
+	Variant _call_internal(const StringName& p_method, void* p_stack,int p_stack_size, VisualScriptNodeInstance* p_node, int p_flow_stack_pos, bool p_resuming_yield,Variant::CallError &r_error);
+
+
 	//Map<StringName,Function> functions;
+friend class VisualScriptFunctionState; //for yield
 friend class VisualScriptLanguage; //for debugger
 public:
 	virtual bool set(const StringName& p_name, const Variant& p_value);
@@ -400,6 +418,33 @@ public:
 };
 
 
+class VisualScriptFunctionState : public Reference {
+
+	OBJ_TYPE(VisualScriptFunctionState,Reference);
+friend class VisualScriptInstance;
+
+	ObjectID instance_id;
+	ObjectID script_id;
+	VisualScriptInstance *instance;
+	StringName function;
+	Vector<uint8_t> stack;
+	int working_mem_index;
+	int variant_stack_size;
+	VisualScriptNodeInstance *node;
+	int flow_stack_pos;
+
+	Variant _signal_callback(const Variant** p_args, int p_argcount, Variant::CallError& r_error);
+protected:
+	static void _bind_methods();
+public:
+
+	void connect_to_signal(Object* p_obj,const String& p_signal,Array p_binds);
+	bool is_valid() const;
+	Variant resume(Array p_args);
+	VisualScriptFunctionState();
+	~VisualScriptFunctionState();
+};
+
 
 typedef Ref<VisualScriptNode> (*VisualScriptNodeRegisterFunc)(const String& p_type);
 
@@ -427,6 +472,9 @@ class VisualScriptLanguage : public ScriptLanguage {
 
 public:
 	StringName notification;
+	StringName _get_output_port_unsequenced;
+	StringName _step;
+	StringName _subcall;
 
 	static VisualScriptLanguage* singleton;
 
