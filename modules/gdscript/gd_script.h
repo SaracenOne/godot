@@ -162,6 +162,8 @@ public:
 	Variant _new(const Variant** p_args,int p_argcount,Variant::CallError& r_error);
 	virtual bool can_instance() const;
 
+	virtual Ref<Script> get_base_script() const;
+
 	virtual StringName get_instance_base_type() const; // this may not work in all scripts, will return empty if so
 	virtual ScriptInstance* instance_create(Object *p_this);
 	virtual bool instance_has(const Object *p_this) const;
@@ -185,6 +187,9 @@ public:
 	virtual void get_script_method_list(List<MethodInfo> *p_list) const;
 	virtual bool has_method(const StringName& p_method) const;
 	virtual MethodInfo get_method_info(const StringName& p_method) const;
+
+	virtual void get_script_property_list(List<PropertyInfo> *p_list) const;
+
 
 	virtual ScriptLanguage *get_language() const;
 

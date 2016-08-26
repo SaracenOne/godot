@@ -132,6 +132,8 @@ private:
 		bool ignore_mouse;
 		bool stop_mouse;
 
+		bool block_minimum_size_adjust;
+
 		Control *parent;
 		ObjectID drag_owner;
 		bool modal;
@@ -403,6 +405,10 @@ public:
 	virtual bool is_text_field() const;
 
 	Control *get_root_parent_control() const;
+
+
+	void set_block_minimum_size_adjust(bool p_block);
+	bool is_minimum_size_adjust_blocked() const;
 
 	Control();
 	~Control();

@@ -38,6 +38,8 @@
 
 class ScriptLanguage;
 
+typedef void (*ScriptEditRequestFunction)(const String& p_path);
+
 class ScriptServer {
 	enum {
 
@@ -49,6 +51,8 @@ class ScriptServer {
 	static bool scripting_enabled;
 	static bool reload_scripts_on_save;
 public:
+
+	static ScriptEditRequestFunction edit_request_func;
 
 	static void set_scripting_enabled(bool p_enabled);
 	static bool is_scripting_enabled();
@@ -88,6 +92,8 @@ public:
 
 	virtual bool can_instance() const=0;
 
+	virtual Ref<Script> get_base_script() const=0; //for script inheritance
+
 	virtual StringName get_instance_base_type() const=0; // this may not work in all scripts, will return empty if so
 	virtual ScriptInstance* instance_create(Object *p_this)=0;
 	virtual bool instance_has(const Object *p_this) const=0;
@@ -114,6 +120,7 @@ public:
 
 	virtual void update_exports() {} //editor tool
 	virtual void get_script_method_list(List<MethodInfo> *p_list) const=0;
+	virtual void get_script_property_list(List<PropertyInfo> *p_list) const=0;
 
 
 	Script() {}

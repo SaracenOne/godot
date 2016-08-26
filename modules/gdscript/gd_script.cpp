@@ -179,6 +179,15 @@ bool GDScript::can_instance() const {
 
 }
 
+Ref<Script> GDScript::get_base_script() const {
+
+	if (_base) {
+		return Ref<GDScript>( _base );
+	} else {
+		return Ref<Script>();
+	}
+}
+
 StringName GDScript::get_instance_base_type() const {
 
 	if (native.is_valid())
@@ -265,6 +274,41 @@ void GDScript::get_script_method_list(List<MethodInfo> *p_list) const {
 		mi.return_val.name="Variant";
 		p_list->push_back(mi);
 	}
+}
+
+void GDScript::get_script_property_list(List<PropertyInfo> *p_list) const {
+
+	const GDScript *sptr=this;
+	List<PropertyInfo> props;
+
+	while(sptr) {
+
+		Vector<_GDScriptMemberSort> msort;
+		for(Map<StringName,PropertyInfo>::Element *E=sptr->member_info.front();E;E=E->next()) {
+
+			_GDScriptMemberSort ms;
+			ERR_CONTINUE(!sptr->member_indices.has(E->key()));
+			ms.index=sptr->member_indices[E->key()].index;
+			ms.name=E->key();
+			msort.push_back(ms);
+
+		}
+
+		msort.sort();
+		msort.invert();
+		for(int i=0;i<msort.size();i++) {
+
+			props.push_front(sptr->member_info[msort[i].name]);
+
+		}
+
+		sptr = sptr->_base;
+	}
+
+	for (List<PropertyInfo>::Element *E=props.front();E;E=E->next()) {
+		p_list->push_back(E->get());
+	}
+
 }
 
 bool GDScript::has_method(const StringName& p_method) const {

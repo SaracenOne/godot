@@ -2242,7 +2242,7 @@ void Control::grab_click_focus() {
 
 void Control::minimum_size_changed() {
 
-	if (!is_inside_tree())
+	if (!is_inside_tree() || data.block_minimum_size_adjust)
 		return;
 
 	if (data.pending_min_size_update)
@@ -2408,6 +2408,16 @@ Control *Control::get_root_parent_control() const {
 	}
 
 	return const_cast<Control*>(root);
+}
+
+
+void Control::set_block_minimum_size_adjust(bool p_block) {
+	data.block_minimum_size_adjust=p_block;
+}
+
+bool Control::is_minimum_size_adjust_blocked() const {
+
+	return data.block_minimum_size_adjust;
 }
 
 void Control::set_pivot(const Size2& p_pivot)
@@ -2676,6 +2686,7 @@ Control::Control() {
 	data.scale=Vector2(1,1);
 	data.drag_owner=0;
 	data.modal_frame=0;
+	data.block_minimum_size_adjust=false;
 	data.pivot = Vector2(0.0, 0.0);
 	data.scale_rotate_pivot_changed=true;
 
