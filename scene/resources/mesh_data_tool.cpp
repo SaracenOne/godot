@@ -34,29 +34,79 @@ void MeshDataTool::clear() {
 	vertices.clear();
 	edges.clear();
 	faces.clear();
+	morphs.clear();
 	material = Ref<Material>();
 	format=0;
 }
 
-
-Error MeshDataTool::create_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
-
-	ERR_FAIL_COND_V(p_mesh.is_null(),ERR_INVALID_PARAMETER);
+Error MeshDataTool::append_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
 
 	ERR_FAIL_COND_V(p_mesh.is_null(),ERR_INVALID_PARAMETER);
+
 	ERR_FAIL_COND_V(p_mesh->surface_get_primitive_type(p_surface)!=Mesh::PRIMITIVE_TRIANGLES,ERR_INVALID_PARAMETER);
 
+	ERR_FAIL_COND_V(format!=0&&p_mesh->surface_get_format(p_surface) != format, ERR_INVALID_PARAMETER);
+	ERR_FAIL_COND_V(material.is_null()==false&&p_mesh->surface_get_material(p_surface) != material, ERR_INVALID_PARAMETER);
 
+	uint32_t previous_vcount = vertices.size();
+	uint32_t previous_index = faces.size() * 3;
 
 	Array arrays = p_mesh->surface_get_arrays(p_surface);
 	ERR_FAIL_COND_V( arrays.empty(), ERR_INVALID_PARAMETER );
+
+	// Extract Morph data
+	Array morph_arrays = p_mesh->surface_get_morph_arrays(p_surface);
+	ERR_FAIL_COND_V(morph_arrays.size() != p_mesh->get_morph_target_count(), ERR_INVALID_PARAMETER);
+	for (int i = 0;i<p_mesh->get_morph_target_count();i++) {
+		Array morph_array = morph_arrays[i];
+		uint32_t index_size = 0;
+		uint32_t bsformat = 0;
+		for (int j = 0;j<morph_array.size();j++) {
+			if (morph_array[j].get_type() != Variant::NIL)
+				bsformat |= (1 << j);
+
+			if (j == VS::MORPH_ARRAY_INDEX) {
+				index_size=IntArray(morph_array[j]).size();
+			}
+		}
+
+		StringName morph_target_name = p_mesh->get_morph_target_name(i);
+		if (!morphs.has(morph_target_name)) {
+			morphs[morph_target_name]=Morph();
+			morphs[morph_target_name].format=bsformat;
+		}
+		else {
+			ERR_FAIL_COND_V(morphs[morph_target_name].format!=bsformat, ERR_INVALID_PARAMETER);
+		}
+
+		Morph *current_morph = &morphs[morph_target_name];
+
+		for (int j = 0;j<morph_array.size(); j++) {
+			switch (j) {
+				case VS::MORPH_ARRAY_VERTEX: {
+					ERR_FAIL_COND_V(morph_array[j].get_type() != Variant::VECTOR3_ARRAY, ERR_INVALID_PARAMETER);
+
+					DVector<Vector3> array = morph_array[j];
+					current_morph->vertices.append_array(array);
+				} break;
+				case VS::MORPH_ARRAY_INDEX: {
+					ERR_FAIL_COND_V(morph_array[j].get_type() != Variant::INT_ARRAY, ERR_INVALID_PARAMETER);
+
+					DVector<int> indices = morph_array[j];
+					for (int k = 0; k < indices.size(); k++) {
+						current_morph->indexes.append(previous_vcount+indices[k]);
+					}
+				} break;
+					
+			}
+		}
+	}
 
 	DVector<Vector3> varray = arrays[Mesh::ARRAY_VERTEX];
 
 	int vcount = varray.size();
 	ERR_FAIL_COND_V( vcount == 0, ERR_INVALID_PARAMETER);
 
-	clear();
 	format = p_mesh->surface_get_format(p_surface);
 	material=p_mesh->surface_get_material(p_surface);
 
@@ -90,8 +140,8 @@ Error MeshDataTool::create_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
 		we = arrays[Mesh::ARRAY_WEIGHTS].operator DVector<real_t>().read();
 
 
-	vertices.resize(vcount);
-
+	vertices.resize(previous_vcount+vcount);
+	
 	for(int i=0;i<vcount;i++) {
 
 		Vertex v;
@@ -123,7 +173,7 @@ Error MeshDataTool::create_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
 			v.bones.push_back(bo[i*4+3]);
 		}
 
-		vertices[i]=v;
+		vertices[previous_vcount+i]=v;
 
 
 	}
@@ -134,12 +184,17 @@ Error MeshDataTool::create_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
 	if (arrays[Mesh::ARRAY_INDEX].get_type()!=Variant::NIL) {
 
 		indices = arrays[Mesh::ARRAY_INDEX];
+		DVector<int>::Write iw = indices.write();
+		DVector<int>::Read ir = indices.read();
+		for(int i=0;i<indices.size();i++) {
+			iw[i]=ir[i]+previous_vcount;
+		}
 	} else {
 		//make code simpler
 		indices.resize(vcount);
 		DVector<int>::Write iw=indices.write();
 		for(int i=0;i<vcount;i++)
-			iw[i]=i;
+			iw[i]=i+previous_vcount;
 	}
 
 
@@ -190,12 +245,40 @@ Error MeshDataTool::create_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
 	return OK;
 }
 
+
+Error MeshDataTool::create_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
+
+	ERR_FAIL_COND_V(p_mesh.is_null(),ERR_INVALID_PARAMETER);
+
+	ERR_FAIL_COND_V(p_mesh->surface_get_primitive_type(p_surface)!=Mesh::PRIMITIVE_TRIANGLES,ERR_INVALID_PARAMETER);
+
+	Array arrays = p_mesh->surface_get_arrays(p_surface);
+	ERR_FAIL_COND_V( arrays.empty(), ERR_INVALID_PARAMETER );
+
+	DVector<Vector3> varray = arrays[Mesh::ARRAY_VERTEX];
+
+	int vcount = varray.size();
+	ERR_FAIL_COND_V( vcount == 0, ERR_INVALID_PARAMETER);
+
+	clear();
+
+	return append_from_surface(p_mesh, p_surface);
+}
+
 Error MeshDataTool::commit_to_surface(const Ref<Mesh>& p_mesh) {
 
 	ERR_FAIL_COND_V(p_mesh.is_null(),ERR_INVALID_PARAMETER);
 	Array arr;
+	Array mr;
 	arr.resize(Mesh::ARRAY_MAX);
 
+	Ref<Mesh> ncmesh = p_mesh;
+	int sc = ncmesh->get_surface_count();
+	if (sc == 0) {
+		for (Map<StringName, Morph>::Element *E = morphs.front(); E; E = E->next()) {
+			ncmesh->add_morph_target(E->key());
+		}
+	}
 
 	int vcount=vertices.size();
 
@@ -326,10 +409,21 @@ Error MeshDataTool::commit_to_surface(const Ref<Mesh>& p_mesh) {
 	if (w.size())
 		arr[Mesh::ARRAY_WEIGHTS]=w;
 
-	Ref<Mesh> ncmesh=p_mesh;
-	int sc = ncmesh->get_surface_count();
-	ncmesh->add_surface(Mesh::PRIMITIVE_TRIANGLES,arr);
+	for (int i=0;i<ncmesh->get_morph_target_count();i++) {
+		Array a;
+		a.resize(VS::MORPH_ARRAY_MAX);
+
+		a[VS::MORPH_ARRAY_VERTEX] = morphs[ncmesh->get_morph_target_name(i)].vertices;
+		a[VS::MORPH_ARRAY_INDEX] = morphs[ncmesh->get_morph_target_name(i)].indexes;
+
+		mr.push_back(a);
+	}
+
+	ncmesh->add_surface(Mesh::PRIMITIVE_TRIANGLES,arr,mr);
 	ncmesh->surface_set_material(sc,material);
+
+	// Signal update to the visual server
+	ncmesh->set_morph_target_mode(ncmesh->get_morph_target_mode());
 
 	return OK;
 }
@@ -566,6 +660,7 @@ void MeshDataTool::set_material(const Ref<Material> &p_material) {
 void MeshDataTool::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("clear"),&MeshDataTool::clear);
+	ObjectTypeDB::bind_method(_MD("append_from_surface","mesh","surface"),&MeshDataTool::append_from_surface);
 	ObjectTypeDB::bind_method(_MD("create_from_surface","mesh","surface"),&MeshDataTool::create_from_surface);
 	ObjectTypeDB::bind_method(_MD("commit_to_surface","mesh"),&MeshDataTool::commit_to_surface);
 
