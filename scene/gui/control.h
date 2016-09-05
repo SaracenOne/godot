@@ -133,6 +133,7 @@ private:
 		bool stop_mouse;
 
 		bool block_minimum_size_adjust;
+		bool disable_visibility_clip;
 
 		Control *parent;
 		ObjectID drag_owner;
@@ -201,6 +202,7 @@ private:
 	void _unref_font( Ref<Font> p_sc);
 	void _font_changed();
 
+	void _update_canvas_item_transform();
 
 
 friend class Viewport;
@@ -409,6 +411,9 @@ public:
 
 	void set_block_minimum_size_adjust(bool p_block);
 	bool is_minimum_size_adjust_blocked() const;
+
+	void set_disable_visibility_clip(bool p_ignore);
+	bool is_visibility_clip_disabled() const;
 
 	Control();
 	~Control();

@@ -4,6 +4,7 @@
 #include "scene/main/scene_main_loop.h"
 #include "os/os.h"
 #include "scene/main/node.h"
+#include "os/input.h"
 
 //////////////////////////////////////////
 ////////////////FUNCTION//////////////////
@@ -116,7 +117,7 @@ void  VisualScriptFunction::_get_property_list( List<PropertyInfo> *p_list) cons
 
 
 	p_list->push_back(PropertyInfo(Variant::INT,"argument_count",PROPERTY_HINT_RANGE,"0,256"));
-	String argt="Variant";
+	String argt="Any";
 	for(int i=1;i<Variant::VARIANT_MAX;i++) {
 		argt+=","+Variant::get_type_name(Variant::Type(i));
 	}
@@ -253,8 +254,6 @@ public:
 	VisualScriptInstance *instance;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	//virtual bool is_output_port_unsequenced(int p_idx) const { return false; }
-	//virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return true; }
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
@@ -325,12 +324,12 @@ int VisualScriptFunction::get_stack_size() const {
 
 int VisualScriptOperator::get_output_sequence_port_count() const {
 
-	return 1;
+	return 0;
 }
 
 bool VisualScriptOperator::has_input_sequence_port() const{
 
-	return true;
+	return false;
 }
 
 int VisualScriptOperator::get_input_value_port_count() const{
@@ -385,6 +384,8 @@ PropertyInfo VisualScriptOperator::get_input_value_port_info(int p_idx) const{
 	PropertyInfo pinfo;
 	pinfo.name=p_idx==0?"A":"B";
 	pinfo.type=port_types[op][p_idx];
+	if (pinfo.type==Variant::NIL)
+		pinfo.type=typed;
 	return pinfo;
 }
 PropertyInfo VisualScriptOperator::get_output_value_port_info(int p_idx) const{
@@ -423,6 +424,8 @@ PropertyInfo VisualScriptOperator::get_output_value_port_info(int p_idx) const{
 	PropertyInfo pinfo;
 	pinfo.name="";
 	pinfo.type=port_types[op];
+	if (pinfo.type==Variant::NIL)
+		pinfo.type=typed;
 	return pinfo;
 
 }
@@ -515,11 +518,28 @@ Variant::Operator VisualScriptOperator::get_operator() const{
 	return op;
 }
 
+void VisualScriptOperator::set_typed(Variant::Type p_op) {
+
+	if (typed==p_op)
+		return;
+
+	typed=p_op;
+	ports_changed_notify();
+}
+
+Variant::Type VisualScriptOperator::get_typed() const {
+
+	return typed;
+}
+
 
 void VisualScriptOperator::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("set_operator","op"),&VisualScriptOperator::set_operator);
 	ObjectTypeDB::bind_method(_MD("get_operator"),&VisualScriptOperator::get_operator);
+
+	ObjectTypeDB::bind_method(_MD("set_typed","type"),&VisualScriptOperator::set_typed);
+	ObjectTypeDB::bind_method(_MD("get_typed"),&VisualScriptOperator::get_typed);
 
 	String types;
 	for(int i=0;i<Variant::OP_MAX;i++) {
@@ -527,7 +547,14 @@ void VisualScriptOperator::_bind_methods() {
 			types+=",";
 		types+=op_names[i];
 	}
+
+	String argt="Any";
+	for(int i=1;i<Variant::VARIANT_MAX;i++) {
+		argt+=","+Variant::get_type_name(Variant::Type(i));
+	}
+
 	ADD_PROPERTY(PropertyInfo(Variant::INT,"operator_value/type",PROPERTY_HINT_ENUM,types),_SCS("set_operator"),_SCS("get_operator"));
+	ADD_PROPERTY(PropertyInfo(Variant::INT,"typed_value/typed",PROPERTY_HINT_ENUM,argt),_SCS("set_typed"),_SCS("get_typed"));
 
 }
 
@@ -538,8 +565,6 @@ public:
 	Variant::Operator op;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	//virtual bool is_output_port_unsequenced(int p_idx) const { return false; }
-	//virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return true; }
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
@@ -581,6 +606,7 @@ VisualScriptNodeInstance* VisualScriptOperator::instance(VisualScriptInstance* p
 VisualScriptOperator::VisualScriptOperator() {
 
 	op=Variant::OP_ADD;
+	typed=Variant::NIL;
 }
 
 
@@ -702,20 +728,14 @@ public:
 	VisualScriptInstance *instance;
 	StringName variable;
 
-	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
-
-		 if (instance->get_variable(variable,r_value)==false) {
-			 r_error=RTR("VariableGet not found in script: ")+"'"+String(variable)+"'";
-			 return false;
-		 } else {
-			 return true;
-		 }
-	}
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
+		if (instance->get_variable(variable,p_outputs[0])==false) {
+			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
+			r_error_str=RTR("VariableGet not found in script: ")+"'"+String(variable)+"'";
+			return false;
+		}
 		return 0;
 	}
 
@@ -737,7 +757,7 @@ VisualScriptVariableGet::VisualScriptVariableGet() {
 
 
 //////////////////////////////////////////
-////////////////VARIABLE GET//////////////////
+////////////////VARIABLE SET//////////////////
 //////////////////////////////////////////
 
 int VisualScriptVariableSet::get_output_sequence_port_count() const {
@@ -845,16 +865,15 @@ public:
 	StringName variable;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return false; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return false; }
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
 		if (instance->set_variable(variable,*p_inputs[0])==false) {
-			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD			;
+
+
+			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
 			r_error_str=RTR("VariableSet not found in script: ")+"'"+String(variable)+"'";
 		}
-
 
 		return 0;
 	}
@@ -994,17 +1013,10 @@ public:
 
 	Variant constant;
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
-
-		*r_value=constant;
-
-		return true;
-
-	}
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
+		*p_outputs[0]=constant;
 		return 0;
 	}
 
@@ -1024,6 +1036,124 @@ VisualScriptConstant::VisualScriptConstant() {
 
 }
 
+//////////////////////////////////////////
+////////////////PRELOAD//////////////////
+//////////////////////////////////////////
+
+int VisualScriptPreload::get_output_sequence_port_count() const {
+
+	return 0;
+}
+
+bool VisualScriptPreload::has_input_sequence_port() const{
+
+	return false;
+}
+
+int VisualScriptPreload::get_input_value_port_count() const{
+
+	return 0;
+}
+int VisualScriptPreload::get_output_value_port_count() const{
+
+	return 1;
+}
+
+String VisualScriptPreload::get_output_sequence_port_text(int p_port) const {
+
+	return String();
+}
+
+PropertyInfo VisualScriptPreload::get_input_value_port_info(int p_idx) const{
+
+	return PropertyInfo();
+}
+
+PropertyInfo VisualScriptPreload::get_output_value_port_info(int p_idx) const{
+
+	PropertyInfo pinfo=PropertyInfo(Variant::OBJECT,"res");
+	if (preload.is_valid()) {
+		pinfo.hint=PROPERTY_HINT_RESOURCE_TYPE;
+		pinfo.hint_string=preload->get_type();
+	}
+
+	return pinfo;
+}
+
+
+String VisualScriptPreload::get_caption() const {
+
+	return "Preload";
+}
+
+String VisualScriptPreload::get_text() const {
+
+	if (preload.is_valid()) {
+		if (preload->get_path().is_resource_file()) {
+			return preload->get_path();
+		} else if (preload->get_name()!=String()) {
+			return preload->get_name();
+		} else {
+			return preload->get_type();
+		}
+	} else {
+		return "<empty>";
+	}
+}
+
+
+void VisualScriptPreload::set_preload(const Ref<Resource>& p_preload){
+
+	if (preload==p_preload)
+		return;
+
+	preload=p_preload;
+	ports_changed_notify();
+}
+Ref<Resource> VisualScriptPreload::get_preload() const{
+
+	return preload;
+}
+
+
+void VisualScriptPreload::_bind_methods() {
+
+
+	ObjectTypeDB::bind_method(_MD("set_preload","resource"),&VisualScriptPreload::set_preload);
+	ObjectTypeDB::bind_method(_MD("get_preload"),&VisualScriptPreload::get_preload);
+
+
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT,"resource",PROPERTY_HINT_RESOURCE_TYPE,"Resource"),_SCS("set_preload"),_SCS("get_preload"));
+
+}
+
+class VisualScriptNodeInstancePreload : public VisualScriptNodeInstance {
+public:
+
+	Ref<Resource> preload;
+	//virtual int get_working_memory_size() const { return 0; }
+
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+
+		*p_outputs[0]=preload;
+		return 0;
+	}
+
+
+};
+
+VisualScriptNodeInstance* VisualScriptPreload::instance(VisualScriptInstance* p_instance) {
+
+	VisualScriptNodeInstancePreload * instance = memnew(VisualScriptNodeInstancePreload );
+	instance->preload=preload;
+	return instance;
+}
+
+VisualScriptPreload::VisualScriptPreload() {
+
+}
+
+
 
 
 //////////////////////////////////////////
@@ -1032,12 +1162,12 @@ VisualScriptConstant::VisualScriptConstant() {
 
 int VisualScriptIndexGet::get_output_sequence_port_count() const {
 
-	return 1;
+	return 0;
 }
 
 bool VisualScriptIndexGet::has_input_sequence_port() const{
 
-	return true;
+	return false;
 }
 
 int VisualScriptIndexGet::get_input_value_port_count() const{
@@ -1086,8 +1216,6 @@ public:
 
 
 	//virtual int get_working_memory_size() const { return 0; }
-	//virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	//virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return false; }
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
@@ -1178,8 +1306,6 @@ public:
 
 
 	//virtual int get_working_memory_size() const { return 0; }
-	//virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	//virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return false; }
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
@@ -1275,17 +1401,11 @@ public:
 
 	int index;
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
-
-		*r_value = GlobalConstants::get_global_constant_value(index);
-		return true;
-
-	}
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
 
+		*p_outputs[0] = GlobalConstants::get_global_constant_value(index);
 		return 0;
 	}
 
@@ -1318,6 +1438,286 @@ void VisualScriptGlobalConstant::_bind_methods() {
 VisualScriptGlobalConstant::VisualScriptGlobalConstant() {
 
 	index=0;
+}
+
+//////////////////////////////////////////
+////////////////CLASSCONSTANT///////////
+//////////////////////////////////////////
+
+int VisualScriptClassConstant::get_output_sequence_port_count() const {
+
+	return 0;
+}
+
+bool VisualScriptClassConstant::has_input_sequence_port() const{
+
+	return false;
+}
+
+int VisualScriptClassConstant::get_input_value_port_count() const{
+
+	return 0;
+}
+int VisualScriptClassConstant::get_output_value_port_count() const{
+
+	return 1;
+}
+
+String VisualScriptClassConstant::get_output_sequence_port_text(int p_port) const {
+
+	return String();
+}
+
+PropertyInfo VisualScriptClassConstant::get_input_value_port_info(int p_idx) const{
+
+	return PropertyInfo();
+}
+
+PropertyInfo VisualScriptClassConstant::get_output_value_port_info(int p_idx) const{
+
+	return PropertyInfo(Variant::INT,"value");
+}
+
+
+String VisualScriptClassConstant::get_caption() const {
+
+	return "ClassConst";
+}
+
+String VisualScriptClassConstant::get_text() const {
+
+	return String(base_type)+"."+String(name);
+}
+
+void VisualScriptClassConstant::set_class_constant(const StringName& p_which) {
+
+	name=p_which;
+	_change_notify();
+	ports_changed_notify();
+}
+
+StringName VisualScriptClassConstant::get_class_constant() {
+	return name;
+}
+
+
+void VisualScriptClassConstant::set_base_type(const StringName& p_which) {
+
+	base_type=p_which;
+	_change_notify();
+	ports_changed_notify();
+}
+
+StringName VisualScriptClassConstant::get_base_type() {
+	return base_type;
+}
+
+class VisualScriptNodeInstanceClassConstant : public VisualScriptNodeInstance {
+public:
+
+	int value;
+	bool valid;
+	//virtual int get_working_memory_size() const { return 0; }
+
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+
+		if (!valid) {
+			r_error_str="Invalid constant name, pick a valid class constant.";
+			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
+		}
+
+		*p_outputs[0] = value;
+		return 0;
+	}
+
+
+};
+
+VisualScriptNodeInstance* VisualScriptClassConstant::instance(VisualScriptInstance* p_instance) {
+
+	VisualScriptNodeInstanceClassConstant * instance = memnew(VisualScriptNodeInstanceClassConstant );
+	instance->value=ObjectTypeDB::get_integer_constant(base_type,name,&instance->valid);
+	return instance;
+}
+
+void VisualScriptClassConstant::_validate_property(PropertyInfo& property) const {
+
+	if (property.name=="constant") {
+
+		List<String> constants;
+		ObjectTypeDB::get_integer_constant_list(base_type,&constants,true);
+
+		property.hint_string="";
+		for(List<String>::Element *E=constants.front();E;E=E->next()) {
+			if (property.hint_string!=String()) {
+				property.hint_string+=",";
+			}
+			property.hint_string+=E->get();
+		}
+	}
+}
+
+void VisualScriptClassConstant::_bind_methods() {
+
+	ObjectTypeDB::bind_method(_MD("set_class_constant","name"),&VisualScriptClassConstant::set_class_constant);
+	ObjectTypeDB::bind_method(_MD("get_class_constant"),&VisualScriptClassConstant::get_class_constant);
+
+	ObjectTypeDB::bind_method(_MD("set_base_type","name"),&VisualScriptClassConstant::set_base_type);
+	ObjectTypeDB::bind_method(_MD("get_base_type"),&VisualScriptClassConstant::get_base_type);
+
+	ADD_PROPERTY(PropertyInfo(Variant::STRING,"base_type",PROPERTY_HINT_TYPE_STRING,"Object"),_SCS("set_base_type"),_SCS("get_base_type"));
+	ADD_PROPERTY(PropertyInfo(Variant::STRING,"constant",PROPERTY_HINT_ENUM,""),_SCS("set_class_constant"),_SCS("get_class_constant"));
+}
+
+VisualScriptClassConstant::VisualScriptClassConstant() {
+
+	base_type="Object";
+}
+
+
+//////////////////////////////////////////
+////////////////BASICTYPECONSTANT///////////
+//////////////////////////////////////////
+
+int VisualScriptBasicTypeConstant::get_output_sequence_port_count() const {
+
+	return 0;
+}
+
+bool VisualScriptBasicTypeConstant::has_input_sequence_port() const{
+
+	return false;
+}
+
+int VisualScriptBasicTypeConstant::get_input_value_port_count() const{
+
+	return 0;
+}
+int VisualScriptBasicTypeConstant::get_output_value_port_count() const{
+
+	return 1;
+}
+
+String VisualScriptBasicTypeConstant::get_output_sequence_port_text(int p_port) const {
+
+	return String();
+}
+
+PropertyInfo VisualScriptBasicTypeConstant::get_input_value_port_info(int p_idx) const{
+
+	return PropertyInfo();
+}
+
+PropertyInfo VisualScriptBasicTypeConstant::get_output_value_port_info(int p_idx) const{
+
+	return PropertyInfo(Variant::INT,"value");
+}
+
+
+String VisualScriptBasicTypeConstant::get_caption() const {
+
+	return "BasicConst";
+}
+
+String VisualScriptBasicTypeConstant::get_text() const {
+
+	return Variant::get_type_name(type)+"."+String(name);
+}
+
+void VisualScriptBasicTypeConstant::set_basic_type_constant(const StringName& p_which) {
+
+	name=p_which;
+	_change_notify();
+	ports_changed_notify();
+}
+
+StringName VisualScriptBasicTypeConstant::get_basic_type_constant() const {
+	return name;
+}
+
+
+void VisualScriptBasicTypeConstant::set_basic_type(Variant::Type p_which) {
+
+	type=p_which;
+	_change_notify();
+	ports_changed_notify();
+}
+
+Variant::Type VisualScriptBasicTypeConstant::get_basic_type() const {
+	return type;
+}
+
+class VisualScriptNodeInstanceBasicTypeConstant : public VisualScriptNodeInstance {
+public:
+
+	int value;
+	bool valid;
+	//virtual int get_working_memory_size() const { return 0; }
+
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+
+		if (!valid) {
+			r_error_str="Invalid constant name, pick a valid basic type constant.";
+			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
+		}
+
+		*p_outputs[0] = value;
+		return 0;
+	}
+
+
+};
+
+VisualScriptNodeInstance* VisualScriptBasicTypeConstant::instance(VisualScriptInstance* p_instance) {
+
+	VisualScriptNodeInstanceBasicTypeConstant * instance = memnew(VisualScriptNodeInstanceBasicTypeConstant );
+	instance->value=Variant::get_numeric_constant_value(type,name,&instance->valid);
+	return instance;
+}
+
+void VisualScriptBasicTypeConstant::_validate_property(PropertyInfo& property) const {
+
+	if (property.name=="constant") {
+
+		List<StringName> constants;
+		Variant::get_numeric_constants_for_type(type,&constants);
+
+		if (constants.size()==0) {
+			property.usage=0;
+			return;
+		}
+		property.hint_string="";
+		for(List<StringName>::Element *E=constants.front();E;E=E->next()) {
+			if (property.hint_string!=String()) {
+				property.hint_string+=",";
+			}
+			property.hint_string+=String(E->get());
+		}
+
+	}
+}
+
+void VisualScriptBasicTypeConstant::_bind_methods() {
+
+	ObjectTypeDB::bind_method(_MD("set_basic_type","name"),&VisualScriptBasicTypeConstant::set_basic_type);
+	ObjectTypeDB::bind_method(_MD("get_basic_type"),&VisualScriptBasicTypeConstant::get_basic_type);
+
+	ObjectTypeDB::bind_method(_MD("set_basic_type_constant","name"),&VisualScriptBasicTypeConstant::set_basic_type_constant);
+	ObjectTypeDB::bind_method(_MD("get_basic_type_constant"),&VisualScriptBasicTypeConstant::get_basic_type_constant);
+
+
+	String argt="Null";
+	for(int i=1;i<Variant::VARIANT_MAX;i++) {
+		argt+=","+Variant::get_type_name(Variant::Type(i));
+	}
+
+	ADD_PROPERTY(PropertyInfo(Variant::INT,"basic_type",PROPERTY_HINT_ENUM,argt),_SCS("set_basic_type"),_SCS("get_basic_type"));
+	ADD_PROPERTY(PropertyInfo(Variant::STRING,"constant",PROPERTY_HINT_ENUM,""),_SCS("set_basic_type_constant"),_SCS("get_basic_type_constant"));
+}
+
+VisualScriptBasicTypeConstant::VisualScriptBasicTypeConstant() {
+
+	type=Variant::NIL;
 }
 
 
@@ -1407,17 +1807,10 @@ public:
 
 	float value;
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
-
-		*r_value = value;
-		return true;
-
-	}
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
-
+		*p_outputs[0]=value;
 		return 0;
 	}
 
@@ -1524,16 +1917,10 @@ public:
 	Object* singleton;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
-
-		*r_value=singleton;
-		return true;
-	}
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
-
+		*p_outputs[0]=singleton;
 		return 0;
 	}
 
@@ -1544,6 +1931,19 @@ VisualScriptNodeInstance* VisualScriptEngineSingleton::instance(VisualScriptInst
 	VisualScriptNodeInstanceEngineSingleton * instance = memnew(VisualScriptNodeInstanceEngineSingleton );
 	instance->singleton=Globals::get_singleton()->get_singleton_object(singleton);
 	return instance;
+}
+
+VisualScriptEngineSingleton::TypeGuess VisualScriptEngineSingleton::guess_output_type(TypeGuess* p_inputs, int p_output) const {
+
+	Object *obj=Globals::get_singleton()->get_singleton_object(singleton);
+	TypeGuess tg;
+	tg.type=Variant::OBJECT;
+	if (obj) {
+		tg.obj_type=obj->get_type();
+		tg.script=obj->get_script();
+	}
+
+	return tg;
 }
 
 
@@ -1646,28 +2046,26 @@ public:
 	NodePath path;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
+
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
 		Node* node = instance->get_owner_ptr()->cast_to<Node>();
 		if (!node) {
-			r_error="Base object is not a Node!";
-			return false;
+			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
+			r_error_str="Base object is not a Node!";
+			return 0;
 		}
 
 
 
 		Node* another = node->get_node(path);
 		if (!node) {
-			r_error="Path does not lead Node!";
-			return false;
+			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
+			r_error_str="Path does not lead Node!";
+			return 0;
 		}
 
-		*r_value=another;
-		return true;
-	}
-
-	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+		*p_outputs[0]=another;
 
 		return 0;
 	}
@@ -1683,6 +2081,8 @@ VisualScriptNodeInstance* VisualScriptSceneNode::instance(VisualScriptInstance* 
 	instance->path=path;
 	return instance;
 }
+
+
 
 
 #ifdef TOOLS_ENABLED
@@ -1707,6 +2107,49 @@ static Node* _find_script_node(Node* p_edited_scene,Node* p_current_node,const R
 }
 
 #endif
+
+VisualScriptSceneNode::TypeGuess VisualScriptSceneNode::guess_output_type(TypeGuess* p_inputs, int p_output) const {
+
+
+	VisualScriptSceneNode::TypeGuess tg;
+	tg.type=Variant::OBJECT;
+	tg.obj_type="Node";
+
+#ifdef TOOLS_ENABLED
+	Ref<Script> script = get_visual_script();
+	if (!script.is_valid())
+		return tg;
+
+	MainLoop * main_loop = OS::get_singleton()->get_main_loop();
+	if (!main_loop)
+		return tg;
+
+	SceneTree *scene_tree = main_loop->cast_to<SceneTree>();
+
+	if (!scene_tree)
+		return tg;
+
+	Node *edited_scene = scene_tree->get_edited_scene_root();
+
+	if (!edited_scene)
+		return tg;
+
+	Node* script_node = _find_script_node(edited_scene,edited_scene,script);
+
+	if (!script_node)
+		return tg;
+
+	Node* another = script_node->get_node(path);
+
+	if (another) {
+		tg.obj_type=another->get_type();
+		tg.script=another->get_script();
+	}
+#endif
+	return tg;
+
+}
+
 
 void VisualScriptSceneNode::_validate_property(PropertyInfo& property) const {
 
@@ -1812,28 +2255,24 @@ public:
 	VisualScriptInstance *instance;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
+
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
 		Node* node = instance->get_owner_ptr()->cast_to<Node>();
 		if (!node) {
-			r_error="Base object is not a Node!";
-			return false;
+			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
+			r_error_str="Base object is not a Node!";
+			return 0;
 		}
 
 		SceneTree* tree = node->get_tree();
 		if (!tree) {
-			r_error="Attempt to get SceneTree while node is not in the active tree.";
-			return false;
+			r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
+			r_error_str="Attempt to get SceneTree while node is not in the active tree.";
+			return 0;
 		}
 
-		*r_value=tree;
-		return true;
-
-	}
-
-	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
-
+		*p_outputs[0]=tree;
 
 		return 0;
 	}
@@ -1849,6 +2288,13 @@ VisualScriptNodeInstance* VisualScriptSceneTree::instance(VisualScriptInstance* 
 	return instance;
 }
 
+VisualScriptSceneTree::TypeGuess VisualScriptSceneTree::guess_output_type(TypeGuess* p_inputs, int p_output) const {
+
+	TypeGuess tg;
+	tg.type=Variant::OBJECT;
+	tg.obj_type="SceneTree";
+	return tg;
+}
 
 void VisualScriptSceneTree::_validate_property(PropertyInfo& property) const {
 
@@ -1930,14 +2376,10 @@ public:
 	String path;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
-		*r_value = path;
-		return true;
-	}
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
+		*p_outputs[0] = path;
 		return 0;
 	}
 
@@ -2027,15 +2469,10 @@ public:
 	VisualScriptInstance* instance;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return true; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
-
-		*r_value = instance->get_owner_ptr();
-		return true;
-	}
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
+		*p_outputs[0] = instance->get_owner_ptr();
 		return 0;
 	}
 
@@ -2049,6 +2486,23 @@ VisualScriptNodeInstance* VisualScriptSelf::instance(VisualScriptInstance* p_ins
 	return instance;
 }
 
+VisualScriptSelf::TypeGuess VisualScriptSelf::guess_output_type(TypeGuess* p_inputs, int p_output) const {
+
+	VisualScriptSceneNode::TypeGuess tg;
+	tg.type=Variant::OBJECT;
+	tg.obj_type="Object";
+
+	Ref<Script> script = get_visual_script();
+	if (!script.is_valid())
+		return tg;
+
+	tg.obj_type=script->get_instance_base_type();
+	tg.script=script;
+
+	return tg;
+
+
+}
 
 
 void VisualScriptSelf::_bind_methods() {
@@ -2161,35 +2615,8 @@ public:
 	int in_count;
 	int out_count;
 	int work_mem_size;
-	Vector<bool> out_unsequenced;
 
 	virtual int get_working_memory_size() const { return work_mem_size; }
-	virtual bool is_output_port_unsequenced(int p_idx) const { return out_unsequenced[p_idx]; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const {
-
-		if (!node->get_script_instance() || !node->get_script_instance()->has_method(VisualScriptLanguage::singleton->_get_output_port_unsequenced)) {
-#ifdef DEBUG_ENABLED
-			r_error=RTR("Custom node has no _get_output_port_unsequenced(idx,wmem), but unsequenced ports were specified.");
-			return false;
-		}
-#endif
-
-		Array work_mem(true);
-		work_mem.resize(work_mem_size);
-
-		*r_value = node->get_script_instance()->call(VisualScriptLanguage::singleton->_get_output_port_unsequenced,p_idx,work_mem);
-
-
-		for(int i=0;i<work_mem_size;i++) {
-			if (i<work_mem.size()) {
-				p_working_mem[i]=work_mem[i];
-			}
-		}
-
-		return true;
-
-	}
-
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
 		if (node->get_script_instance()) {
@@ -2262,10 +2689,6 @@ VisualScriptNodeInstance* VisualScriptCustomNode::instance(VisualScriptInstance*
 	instance->in_count=get_input_value_port_count();
 	instance->out_count=get_output_value_port_count();
 
-	for(int i=0;i<instance->out_count;i++) {
-		bool unseq = get_script_instance() && get_script_instance()->has_method("_is_output_port_unsequenced") && bool(get_script_instance()->call("_is_output_port_unsequenced",i));
-		instance->out_unsequenced.push_back(unseq);
-	}
 
 	if (get_script_instance() && get_script_instance()->has_method("_get_working_memory_size")) {
 		instance->work_mem_size = get_script_instance()->call("_get_working_memory_size");
@@ -2298,8 +2721,6 @@ void VisualScriptCustomNode::_bind_methods() {
 	BIND_VMETHOD( MethodInfo(Variant::STRING,"_get_category") );
 
 	BIND_VMETHOD( MethodInfo(Variant::INT,"_get_working_memory_size") );
-	BIND_VMETHOD( MethodInfo(Variant::INT,"_is_output_port_unsequenced",PropertyInfo(Variant::INT,"idx")) );
-	BIND_VMETHOD( MethodInfo(Variant::INT,"_get_output_port_unsequenced",PropertyInfo(Variant::INT,"idx"),PropertyInfo(Variant::ARRAY,"work_mem")) );
 	BIND_VMETHOD( MethodInfo(Variant::NIL,"_step:Variant",PropertyInfo(Variant::ARRAY,"inputs"),PropertyInfo(Variant::ARRAY,"outputs"),PropertyInfo(Variant::INT,"start_mode"),PropertyInfo(Variant::ARRAY,"working_mem")) );
 
 	BIND_CONSTANT( START_MODE_BEGIN_SEQUENCE );
@@ -2411,8 +2832,6 @@ public:
 	bool valid;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	//virtual bool is_output_port_unsequenced(int p_idx) const { return false; }
-	//virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return false; };
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
@@ -2556,8 +2975,6 @@ public:
 	VisualScriptInstance* instance;
 
 	//virtual int get_working_memory_size() const { return 0; }
-	//virtual bool is_output_port_unsequenced(int p_idx) const { return false; }
-	//virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return false; };
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
 
@@ -2602,23 +3019,870 @@ VisualScriptComment::VisualScriptComment() {
 }
 
 
+//////////////////////////////////////////
+////////////////Constructor///////////
+//////////////////////////////////////////
+
+int VisualScriptConstructor::get_output_sequence_port_count() const {
+
+	return 0;
+}
+
+bool VisualScriptConstructor::has_input_sequence_port() const{
+
+	return false;
+}
+
+int VisualScriptConstructor::get_input_value_port_count() const{
+	return constructor.arguments.size();
+}
+int VisualScriptConstructor::get_output_value_port_count() const{
+
+	return 1;
+}
+
+String VisualScriptConstructor::get_output_sequence_port_text(int p_port) const {
+
+	return "";
+}
+
+PropertyInfo VisualScriptConstructor::get_input_value_port_info(int p_idx) const{
+
+	return constructor.arguments[p_idx];
+}
+
+PropertyInfo VisualScriptConstructor::get_output_value_port_info(int p_idx) const{
+
+	return PropertyInfo(type,"value");
+}
+
+
+String VisualScriptConstructor::get_caption() const {
+
+	return "Construct";
+}
+
+
+String VisualScriptConstructor::get_text() const {
+
+	return "new "+Variant::get_type_name(type)+"()";
+}
+
+
+String VisualScriptConstructor::get_category() const {
+
+	return "functions";
+}
+
+void VisualScriptConstructor::set_constructor_type(Variant::Type p_type) {
+
+	if (type==p_type)
+		return;
+
+	type=p_type;
+	ports_changed_notify();
+}
+
+Variant::Type VisualScriptConstructor::get_constructor_type() const {
+
+	return type;
+}
+
+void VisualScriptConstructor::set_constructor(const Dictionary& p_info) {
+
+	constructor=MethodInfo::from_dict(p_info);
+	ports_changed_notify();
+}
+
+Dictionary VisualScriptConstructor::get_constructor() const {
+
+	return constructor;
+}
+
+
+class VisualScriptNodeInstanceConstructor : public VisualScriptNodeInstance {
+public:
+
+	VisualScriptInstance* instance;
+	Variant::Type type;
+	int argcount;
+
+	//virtual int get_working_memory_size() const { return 0; }
+
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+
+		Variant::CallError ce;
+		*p_outputs[0]=Variant::construct(type,p_inputs,argcount,ce);
+		if (ce.error!=Variant::CallError::CALL_OK) {
+			r_error_str="Invalid arguments for constructor";
+		}
+
+		return 0;
+	}
+
+
+};
+
+VisualScriptNodeInstance* VisualScriptConstructor::instance(VisualScriptInstance* p_instance) {
+
+	VisualScriptNodeInstanceConstructor * instance = memnew(VisualScriptNodeInstanceConstructor );
+	instance->instance=p_instance;
+	instance->type=type;
+	instance->argcount=constructor.arguments.size();
+	return instance;
+}
+
+
+
+void VisualScriptConstructor::_bind_methods() {
+
+	ObjectTypeDB::bind_method(_MD("set_constructor_type","type"),&VisualScriptConstructor::set_constructor_type);
+	ObjectTypeDB::bind_method(_MD("get_constructor_type"),&VisualScriptConstructor::get_constructor_type);
+
+	ObjectTypeDB::bind_method(_MD("set_constructor","constructor"),&VisualScriptConstructor::set_constructor);
+	ObjectTypeDB::bind_method(_MD("get_constructor"),&VisualScriptConstructor::get_constructor);
+
+	ADD_PROPERTY( PropertyInfo(Variant::INT,"type",PROPERTY_HINT_NONE,"",PROPERTY_USAGE_NOEDITOR),_SCS("set_constructor_type"),_SCS("get_constructor_type"));
+	ADD_PROPERTY( PropertyInfo(Variant::DICTIONARY,"constructor",PROPERTY_HINT_NONE,"",PROPERTY_USAGE_NOEDITOR),_SCS("set_constructor"),_SCS("get_constructor"));
+
+}
+
+VisualScriptConstructor::VisualScriptConstructor() {
+
+	type=Variant::NIL;
+
+}
+
+static Map<String,Pair<Variant::Type,MethodInfo>  > constructor_map;
+
+static Ref<VisualScriptNode> create_constructor_node(const String& p_name) {
+
+	ERR_FAIL_COND_V(!constructor_map.has(p_name),Ref<VisualScriptNode>());
+
+	Ref<VisualScriptConstructor> vsc;
+	vsc.instance();
+	vsc->set_constructor_type(constructor_map[p_name].first);
+	vsc->set_constructor(constructor_map[p_name].second);
+
+	return vsc;
+}
+
+//////////////////////////////////////////
+////////////////LocalVar///////////
+//////////////////////////////////////////
+
+int VisualScriptLocalVar::get_output_sequence_port_count() const {
+
+	return 0;
+}
+
+bool VisualScriptLocalVar::has_input_sequence_port() const{
+
+	return false;
+}
+
+int VisualScriptLocalVar::get_input_value_port_count() const{
+	return 0;
+}
+int VisualScriptLocalVar::get_output_value_port_count() const{
+
+	return 1;
+}
+
+String VisualScriptLocalVar::get_output_sequence_port_text(int p_port) const {
+
+	return "";
+}
+
+PropertyInfo VisualScriptLocalVar::get_input_value_port_info(int p_idx) const{
+
+	return PropertyInfo();
+}
+PropertyInfo VisualScriptLocalVar::get_output_value_port_info(int p_idx) const{
+
+	return PropertyInfo(type,"get");
+}
+
+
+String VisualScriptLocalVar::get_caption() const {
+
+	return "LocalVarGet";
+}
+
+
+String VisualScriptLocalVar::get_text() const {
+
+	return name;
+}
+
+
+String VisualScriptLocalVar::get_category() const {
+
+	return "data";
+}
+
+
+void VisualScriptLocalVar::set_var_name(const StringName& p_name) {
+
+	if (name==p_name)
+		return;
+
+	name=p_name;
+	ports_changed_notify();
+
+}
+
+StringName VisualScriptLocalVar::get_var_name() const {
+
+	return name;
+}
+
+void VisualScriptLocalVar::set_var_type(Variant::Type p_type) {
+
+	type=p_type;
+	ports_changed_notify();
+}
+
+Variant::Type VisualScriptLocalVar::get_var_type() const {
+
+	return type;
+}
+
+
+class VisualScriptNodeInstanceLocalVar : public VisualScriptNodeInstance {
+public:
+
+	VisualScriptInstance* instance;
+	StringName name;
+
+
+	virtual int get_working_memory_size() const { return 1; }
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+
+		*p_outputs[0]=*p_working_mem;
+		return 0;
+	}
+
+
+};
+
+VisualScriptNodeInstance* VisualScriptLocalVar::instance(VisualScriptInstance* p_instance) {
+
+	VisualScriptNodeInstanceLocalVar * instance = memnew(VisualScriptNodeInstanceLocalVar );
+	instance->instance=p_instance;
+	instance->name=name;
+
+	return instance;
+}
+
+
+
+void VisualScriptLocalVar::_bind_methods() {
+
+	ObjectTypeDB::bind_method(_MD("set_var_name","name"),&VisualScriptLocalVar::set_var_name);
+	ObjectTypeDB::bind_method(_MD("get_var_name"),&VisualScriptLocalVar::get_var_name);
+
+	ObjectTypeDB::bind_method(_MD("set_var_type","type"),&VisualScriptLocalVar::set_var_type);
+	ObjectTypeDB::bind_method(_MD("get_var_type"),&VisualScriptLocalVar::get_var_type);
+
+	String argt="Any";
+	for(int i=1;i<Variant::VARIANT_MAX;i++) {
+		argt+=","+Variant::get_type_name(Variant::Type(i));
+	}
+
+	ADD_PROPERTY( PropertyInfo(Variant::STRING,"variable/name"),_SCS("set_var_name"),_SCS("get_var_name"));
+	ADD_PROPERTY( PropertyInfo(Variant::INT,"variable/type",PROPERTY_HINT_ENUM,argt),_SCS("set_var_type"),_SCS("get_var_type"));
+
+
+}
+
+VisualScriptLocalVar::VisualScriptLocalVar() {
+
+	name="new_local";
+	type=Variant::NIL;
+
+}
+
+//////////////////////////////////////////
+////////////////LocalVar///////////
+//////////////////////////////////////////
+
+int VisualScriptLocalVarSet::get_output_sequence_port_count() const {
+
+	return 1;
+}
+
+bool VisualScriptLocalVarSet::has_input_sequence_port() const{
+
+	return true;
+}
+
+int VisualScriptLocalVarSet::get_input_value_port_count() const{
+	return 1;
+}
+int VisualScriptLocalVarSet::get_output_value_port_count() const{
+
+	return 1;
+}
+
+String VisualScriptLocalVarSet::get_output_sequence_port_text(int p_port) const {
+
+	return "";
+}
+
+PropertyInfo VisualScriptLocalVarSet::get_input_value_port_info(int p_idx) const{
+
+	return PropertyInfo(type,"set");
+}
+PropertyInfo VisualScriptLocalVarSet::get_output_value_port_info(int p_idx) const{
+
+	return PropertyInfo(type,"get");
+}
+
+
+String VisualScriptLocalVarSet::get_caption() const {
+
+	return "LocalVarSet";
+}
+
+
+String VisualScriptLocalVarSet::get_text() const {
+
+	return name;
+}
+
+
+String VisualScriptLocalVarSet::get_category() const {
+
+	return "data";
+}
+
+
+void VisualScriptLocalVarSet::set_var_name(const StringName& p_name) {
+
+	if (name==p_name)
+		return;
+
+	name=p_name;
+	ports_changed_notify();
+
+}
+
+StringName VisualScriptLocalVarSet::get_var_name() const {
+
+	return name;
+}
+
+void VisualScriptLocalVarSet::set_var_type(Variant::Type p_type) {
+
+	type=p_type;
+	ports_changed_notify();
+}
+
+Variant::Type VisualScriptLocalVarSet::get_var_type() const {
+
+	return type;
+}
+
+
+class VisualScriptNodeInstanceLocalVarSet : public VisualScriptNodeInstance {
+public:
+
+	VisualScriptInstance* instance;
+	StringName name;
+
+
+	virtual int get_working_memory_size() const { return 1; }
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+
+		*p_working_mem=*p_inputs[0];
+		*p_outputs[0]=*p_working_mem;
+		return 0;
+	}
+
+
+};
+
+VisualScriptNodeInstance* VisualScriptLocalVarSet::instance(VisualScriptInstance* p_instance) {
+
+	VisualScriptNodeInstanceLocalVarSet * instance = memnew(VisualScriptNodeInstanceLocalVarSet );
+	instance->instance=p_instance;
+	instance->name=name;
+
+	return instance;
+}
+
+
+
+void VisualScriptLocalVarSet::_bind_methods() {
+
+	ObjectTypeDB::bind_method(_MD("set_var_name","name"),&VisualScriptLocalVarSet::set_var_name);
+	ObjectTypeDB::bind_method(_MD("get_var_name"),&VisualScriptLocalVarSet::get_var_name);
+
+	ObjectTypeDB::bind_method(_MD("set_var_type","type"),&VisualScriptLocalVarSet::set_var_type);
+	ObjectTypeDB::bind_method(_MD("get_var_type"),&VisualScriptLocalVarSet::get_var_type);
+
+	String argt="Any";
+	for(int i=1;i<Variant::VARIANT_MAX;i++) {
+		argt+=","+Variant::get_type_name(Variant::Type(i));
+	}
+
+	ADD_PROPERTY( PropertyInfo(Variant::STRING,"variable/name"),_SCS("set_var_name"),_SCS("get_var_name"));
+	ADD_PROPERTY( PropertyInfo(Variant::INT,"variable/type",PROPERTY_HINT_ENUM,argt),_SCS("set_var_type"),_SCS("get_var_type"));
+
+
+}
+
+VisualScriptLocalVarSet::VisualScriptLocalVarSet() {
+
+	name="new_local";
+	type=Variant::NIL;
+
+}
+
+
+//////////////////////////////////////////
+////////////////LocalVar///////////
+//////////////////////////////////////////
+
+int VisualScriptInputAction::get_output_sequence_port_count() const {
+
+	return 0;
+}
+
+bool VisualScriptInputAction::has_input_sequence_port() const{
+
+	return false;
+}
+
+int VisualScriptInputAction::get_input_value_port_count() const{
+	return 0;
+}
+int VisualScriptInputAction::get_output_value_port_count() const{
+
+	return 1;
+}
+
+String VisualScriptInputAction::get_output_sequence_port_text(int p_port) const {
+
+	return "";
+}
+
+PropertyInfo VisualScriptInputAction::get_input_value_port_info(int p_idx) const{
+
+	return PropertyInfo();
+}
+PropertyInfo VisualScriptInputAction::get_output_value_port_info(int p_idx) const{
+
+	return PropertyInfo(Variant::BOOL,"pressed");
+}
+
+
+String VisualScriptInputAction::get_caption() const {
+
+
+	return "Action";
+}
+
+
+String VisualScriptInputAction::get_text() const {
+
+	switch(mode) {
+		case MODE_PRESSED: {
+			return name;
+		} break;
+		case MODE_RELEASED: {
+			return "not "+name;
+		} break;
+		case MODE_JUST_PRESSED: {
+			return String(name)+" "+TTR("just pressed");
+		} break;
+		case MODE_JUST_RELEASED: {
+			return String(name)+" "+TTR("just released");
+		} break;
+	}
+
+	return String();
+}
+
+
+String VisualScriptInputAction::get_category() const {
+
+	return "data";
+}
+
+
+void VisualScriptInputAction::set_action_name(const StringName& p_name) {
+
+	if (name==p_name)
+		return;
+
+	name=p_name;
+	ports_changed_notify();
+
+}
+
+StringName VisualScriptInputAction::get_action_name() const {
+
+	return name;
+}
+
+void VisualScriptInputAction::set_action_mode(Mode p_mode) {
+
+	if (mode==p_mode)
+		return;
+
+	mode=p_mode;
+	ports_changed_notify();
+
+}
+VisualScriptInputAction::Mode VisualScriptInputAction::get_action_mode() const {
+
+	return mode;
+}
+
+
+class VisualScriptNodeInstanceInputAction : public VisualScriptNodeInstance {
+public:
+
+	VisualScriptInstance* instance;
+	StringName action;
+	VisualScriptInputAction::Mode mode;
+
+
+	virtual int get_working_memory_size() const { return 1; }
+
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+
+		switch(mode) {
+			case VisualScriptInputAction::MODE_PRESSED: {
+				*p_outputs[0]=Input::get_singleton()->is_action_pressed(action);
+			} break;
+			case VisualScriptInputAction::MODE_RELEASED: {
+				*p_outputs[0]=!Input::get_singleton()->is_action_pressed(action);
+			} break;
+			case VisualScriptInputAction::MODE_JUST_PRESSED: {
+				*p_outputs[0]=Input::get_singleton()->is_action_just_pressed(action);
+			} break;
+			case VisualScriptInputAction:: MODE_JUST_RELEASED: {
+				*p_outputs[0]=Input::get_singleton()->is_action_just_released(action);
+			} break;
+
+		}
+
+
+		return 0;
+	}
+
+
+};
+
+VisualScriptNodeInstance* VisualScriptInputAction::instance(VisualScriptInstance* p_instance) {
+
+	VisualScriptNodeInstanceInputAction * instance = memnew(VisualScriptNodeInstanceInputAction );
+	instance->instance=p_instance;
+	instance->action=name;
+	instance->mode=mode;
+
+	return instance;
+}
+
+void VisualScriptInputAction::_validate_property(PropertyInfo& property) const {
+
+
+	if (property.name=="action") {
+
+		property.hint=PROPERTY_HINT_ENUM;
+		String actions;
+
+		List<PropertyInfo> pinfo;
+		Globals::get_singleton()->get_property_list(&pinfo);
+		Vector<String> al;
+
+		for(List<PropertyInfo>::Element *E=pinfo.front();E;E=E->next()) {
+			const PropertyInfo &pi=E->get();
+
+			if (!pi.name.begins_with("input/"))
+				continue;
+
+			String name = pi.name.substr(pi.name.find("/")+1,pi.name.length());
+
+
+			al.push_back(name);
+		}
+
+		al.sort();;
+
+		for(int i=0;i<al.size();i++) {
+			if (actions!=String())
+				actions+=",";
+			actions+=al[i];
+		}
+
+		property.hint_string=actions;
+	}
+}
+
+
+void VisualScriptInputAction::_bind_methods() {
+
+	ObjectTypeDB::bind_method(_MD("set_action_name","name"),&VisualScriptInputAction::set_action_name);
+	ObjectTypeDB::bind_method(_MD("get_action_name"),&VisualScriptInputAction::get_action_name);
+
+	ObjectTypeDB::bind_method(_MD("set_action_mode","mode"),&VisualScriptInputAction::set_action_mode);
+	ObjectTypeDB::bind_method(_MD("get_action_mode"),&VisualScriptInputAction::get_action_mode);
+
+	ADD_PROPERTY( PropertyInfo(Variant::STRING,"action"),_SCS("set_action_name"),_SCS("get_action_name"));
+	ADD_PROPERTY( PropertyInfo(Variant::INT,"mode",PROPERTY_HINT_ENUM,"Pressed,Released,JustPressed,JustReleased"),_SCS("set_action_mode"),_SCS("get_action_mode"));
+
+}
+
+VisualScriptInputAction::VisualScriptInputAction() {
+
+	name="";
+	mode=MODE_PRESSED;
+
+}
+
+//////////////////////////////////////////
+////////////////Constructor///////////
+//////////////////////////////////////////
+
+int VisualScriptDeconstruct::get_output_sequence_port_count() const {
+
+	return 0;
+}
+
+bool VisualScriptDeconstruct::has_input_sequence_port() const{
+
+	return false;
+}
+
+int VisualScriptDeconstruct::get_input_value_port_count() const{
+	return 1;
+}
+int VisualScriptDeconstruct::get_output_value_port_count() const{
+
+	return elements.size();
+}
+
+String VisualScriptDeconstruct::get_output_sequence_port_text(int p_port) const {
+
+	return "";
+}
+
+PropertyInfo VisualScriptDeconstruct::get_input_value_port_info(int p_idx) const{
+
+	return PropertyInfo(type,"value");
+}
+
+PropertyInfo VisualScriptDeconstruct::get_output_value_port_info(int p_idx) const{
+
+	return PropertyInfo(elements[p_idx].type,elements[p_idx].name);
+}
+
+
+String VisualScriptDeconstruct::get_caption() const {
+
+	return "Deconstruct";
+}
+
+
+String VisualScriptDeconstruct::get_text() const {
+
+	return "from "+Variant::get_type_name(type)+":";
+}
+
+
+String VisualScriptDeconstruct::get_category() const {
+
+	return "functions";
+}
+
+void VisualScriptDeconstruct::_update_elements() {
+
+	elements.clear();;
+	Variant v;
+	if (type==Variant::INPUT_EVENT) {
+		InputEvent ie;
+		ie.type=input_type;
+		v=ie;
+	} else {
+		Variant::CallError ce;
+		v = Variant::construct(type,NULL,0,ce);
+	}
+
+	List<PropertyInfo> pinfo;
+	v.get_property_list(&pinfo);
+
+	for (List<PropertyInfo>::Element *E=pinfo.front();E;E=E->next()) {
+
+		Element e;
+		e.name=E->get().name;
+		e.type=E->get().type;
+		elements.push_back(e);
+	}
+}
+
+void VisualScriptDeconstruct::set_deconstruct_type(Variant::Type p_type) {
+
+	if (type==p_type)
+		return;
+
+	type=p_type;
+	_update_elements();
+	ports_changed_notify();
+	_change_notify(); //to make input appear/disappear
+}
+
+Variant::Type VisualScriptDeconstruct::get_deconstruct_type() const {
+
+	return type;
+}
+
+void VisualScriptDeconstruct::set_deconstruct_input_type(InputEvent::Type p_input_type) {
+
+	if (input_type==p_input_type)
+		return;
+
+	input_type=p_input_type;
+	_update_elements();
+	ports_changed_notify();
+}
+
+InputEvent::Type VisualScriptDeconstruct::get_deconstruct_input_type() const {
+
+	return input_type;
+}
+
+void VisualScriptDeconstruct::_set_elem_cache(const Array& p_elements) {
+
+	ERR_FAIL_COND(p_elements.size()%2==1);
+	elements.resize(p_elements.size()/2);
+	for(int i=0;i<elements.size();i++) {
+		elements[i].name=p_elements[i*2+0];
+		elements[i].type=Variant::Type(int(p_elements[i*2+1]));
+	}
+}
+
+Array VisualScriptDeconstruct::_get_elem_cache() const {
+
+	Array ret;
+	for(int i=0;i<elements.size();i++) {
+		ret.push_back(elements[i].name);
+		ret.push_back(elements[i].type);
+	}
+	return ret;
+}
+
+class VisualScriptNodeInstanceDeconstruct : public VisualScriptNodeInstance {
+public:
+
+	VisualScriptInstance* instance;
+	Vector<StringName> outputs;
+
+	//virtual int get_working_memory_size() const { return 0; }
+
+	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str) {
+
+		Variant in=*p_inputs[0];
+
+		for(int i=0;i<outputs.size();i++) {
+			bool valid;
+			*p_outputs[i]=in.get(outputs[i],&valid);
+			if (!valid) {
+				r_error_str="Can't obtain element '"+String(outputs[i])+"' from "+Variant::get_type_name(in.get_type());
+				r_error.error=Variant::CallError::CALL_ERROR_INVALID_METHOD;
+				return 0;
+			}
+
+		}
+
+		return 0;
+	}
+
+
+};
+
+VisualScriptNodeInstance* VisualScriptDeconstruct::instance(VisualScriptInstance* p_instance) {
+
+	VisualScriptNodeInstanceDeconstruct * instance = memnew(VisualScriptNodeInstanceDeconstruct );
+	instance->instance=p_instance;
+	instance->outputs.resize(elements.size());
+	for(int i=0;i<elements.size();i++) {
+		instance->outputs[i]=elements[i].name;
+	}
+
+	return instance;
+}
+
+
+
+void VisualScriptDeconstruct::_validate_property(PropertyInfo& property) const {
+
+	if (property.name=="input_type") {
+		if (type!=Variant::INPUT_EVENT) {
+			property.usage=0;
+		}
+	}
+}
+
+
+void VisualScriptDeconstruct::_bind_methods() {
+
+	ObjectTypeDB::bind_method(_MD("set_deconstruct_type","type"),&VisualScriptDeconstruct::set_deconstruct_type);
+	ObjectTypeDB::bind_method(_MD("get_deconstruct_type"),&VisualScriptDeconstruct::get_deconstruct_type);
+
+	ObjectTypeDB::bind_method(_MD("set_deconstruct_input_type","input_type"),&VisualScriptDeconstruct::set_deconstruct_input_type);
+	ObjectTypeDB::bind_method(_MD("get_deconstruct_input_type"),&VisualScriptDeconstruct::get_deconstruct_input_type);
+
+	ObjectTypeDB::bind_method(_MD("_set_elem_cache","_cache"),&VisualScriptDeconstruct::_set_elem_cache);
+	ObjectTypeDB::bind_method(_MD("_get_elem_cache"),&VisualScriptDeconstruct::_get_elem_cache);
+
+	String argt="Any";
+	for(int i=1;i<Variant::VARIANT_MAX;i++) {
+		argt+=","+Variant::get_type_name(Variant::Type(i));
+	}
+
+	String iet="None,Key,MouseMotion,MouseButton,JoystickMotion,JoystickButton,ScreenTouch,ScreenDrag,Action";
+
+	ADD_PROPERTY( PropertyInfo(Variant::INT,"type",PROPERTY_HINT_ENUM,argt),_SCS("set_deconstruct_type"),_SCS("get_deconstruct_type"));
+	ADD_PROPERTY( PropertyInfo(Variant::INT,"input_type",PROPERTY_HINT_ENUM,iet),_SCS("set_deconstruct_input_type"),_SCS("get_deconstruct_input_type"));
+	ADD_PROPERTY( PropertyInfo(Variant::ARRAY,"elem_cache",PROPERTY_HINT_NONE,"",PROPERTY_USAGE_NOEDITOR),_SCS("_set_elem_cache"),_SCS("_get_elem_cache"));
+
+}
+
+VisualScriptDeconstruct::VisualScriptDeconstruct() {
+
+	type=Variant::NIL;
+	input_type=InputEvent::NONE;
+
+}
+
 
 void register_visual_script_nodes() {
 
-	VisualScriptLanguage::singleton->add_register_func("data/set_variable",create_node_generic<VisualScriptVariableGet>);
-	VisualScriptLanguage::singleton->add_register_func("data/get_variable",create_node_generic<VisualScriptVariableSet>);
-	VisualScriptLanguage::singleton->add_register_func("data/constant",create_node_generic<VisualScriptConstant>);
-	VisualScriptLanguage::singleton->add_register_func("data/global_constant",create_node_generic<VisualScriptGlobalConstant>);
-	VisualScriptLanguage::singleton->add_register_func("data/math_constant",create_node_generic<VisualScriptMathConstant>);
+	VisualScriptLanguage::singleton->add_register_func("data/set_variable",create_node_generic<VisualScriptVariableSet>);
+	VisualScriptLanguage::singleton->add_register_func("data/get_variable",create_node_generic<VisualScriptVariableGet>);
 	VisualScriptLanguage::singleton->add_register_func("data/engine_singleton",create_node_generic<VisualScriptEngineSingleton>);
 	VisualScriptLanguage::singleton->add_register_func("data/scene_node",create_node_generic<VisualScriptSceneNode>);
 	VisualScriptLanguage::singleton->add_register_func("data/scene_tree",create_node_generic<VisualScriptSceneTree>);
 	VisualScriptLanguage::singleton->add_register_func("data/resource_path",create_node_generic<VisualScriptResourcePath>);
 	VisualScriptLanguage::singleton->add_register_func("data/self",create_node_generic<VisualScriptSelf>);
+	VisualScriptLanguage::singleton->add_register_func("data/comment",create_node_generic<VisualScriptComment>);
+	VisualScriptLanguage::singleton->add_register_func("data/get_local_variable",create_node_generic<VisualScriptLocalVar>);
+	VisualScriptLanguage::singleton->add_register_func("data/set_local_variable",create_node_generic<VisualScriptLocalVarSet>);
+	VisualScriptLanguage::singleton->add_register_func("data/preload",create_node_generic<VisualScriptPreload>);
+	VisualScriptLanguage::singleton->add_register_func("data/action",create_node_generic<VisualScriptInputAction>);
+
+	VisualScriptLanguage::singleton->add_register_func("constants/constant",create_node_generic<VisualScriptConstant>);
+	VisualScriptLanguage::singleton->add_register_func("constants/math_constant",create_node_generic<VisualScriptMathConstant>);
+	VisualScriptLanguage::singleton->add_register_func("constants/class_constant",create_node_generic<VisualScriptClassConstant>);
+	VisualScriptLanguage::singleton->add_register_func("constants/global_constant",create_node_generic<VisualScriptGlobalConstant>);
+	VisualScriptLanguage::singleton->add_register_func("constants/basic_type_constant",create_node_generic<VisualScriptBasicTypeConstant>);
+
 	VisualScriptLanguage::singleton->add_register_func("custom/custom_node",create_node_generic<VisualScriptCustomNode>);
 	VisualScriptLanguage::singleton->add_register_func("custom/sub_call",create_node_generic<VisualScriptSubCall>);
-	VisualScriptLanguage::singleton->add_register_func("data/comment",create_node_generic<VisualScriptComment>);
-
 
 	VisualScriptLanguage::singleton->add_register_func("index/get_index",create_node_generic<VisualScriptIndexGet>);
 	VisualScriptLanguage::singleton->add_register_func("index/set_index",create_node_generic<VisualScriptIndexSet>);
@@ -2652,5 +3916,43 @@ void register_visual_script_nodes() {
 	VisualScriptLanguage::singleton->add_register_func("operators/logic/not",create_op_node<Variant::OP_NOT>);
 	VisualScriptLanguage::singleton->add_register_func("operators/logic/in",create_op_node<Variant::OP_IN>);
 
+	VisualScriptLanguage::singleton->add_register_func("functions/deconstruct",create_node_generic<VisualScriptDeconstruct>);
 
+	for(int i=1;i<Variant::VARIANT_MAX;i++) {
+
+		List<MethodInfo> constructors;
+		Variant::get_constructor_list(Variant::Type(i),&constructors);
+
+		for(List<MethodInfo>::Element *E=constructors.front();E;E=E->next()) {
+
+			if  (E->get().arguments.size()>0) {
+
+
+				String name = "functions/constructors/"+Variant::get_type_name(Variant::Type(i))+" ( ";
+				for(int j=0;j<E->get().arguments.size();j++) {
+					if (j>0)
+						name+=", ";
+					if (E->get().arguments.size()==1)
+						name+=Variant::get_type_name(E->get().arguments[j].type);
+					else
+						name+=E->get().arguments[j].name;
+				}
+				name+=") ";
+
+				VisualScriptLanguage::singleton->add_register_func(name,create_constructor_node);
+				Pair<Variant::Type,MethodInfo> pair;
+				pair.first=Variant::Type(i);
+				pair.second=E->get();
+				constructor_map[name]=pair;
+			}
+		}
+	}
 }
+
+
+
+void unregister_visual_script_nodes() {
+
+	constructor_map.clear();
+}
+

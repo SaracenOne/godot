@@ -449,6 +449,12 @@ void Control::remove_child_notify(Node *p_child) {
 
 }
 
+void Control::_update_canvas_item_transform() {
+
+	Matrix32 xform=get_transform();
+	VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(),xform);
+
+}
 
 void Control::_notification(int p_notification) {
 
@@ -599,8 +605,10 @@ void Control::_notification(int p_notification) {
 			emit_signal(SceneStringNames::get_singleton()->resized);
 		} break;
 		case NOTIFICATION_DRAW: {
-			VisualServer::get_singleton()->canvas_item_set_transform(get_canvas_item(),data.mat_cache);
-			VisualServer::get_singleton()->canvas_item_set_custom_rect( get_canvas_item(),true, Rect2(Point2(),get_size()));
+
+			_update_canvas_item_transform();
+			VisualServer::get_singleton()->canvas_item_set_custom_rect( get_canvas_item(),!data.disable_visibility_clip, Rect2(Point2(),get_size()));
+
 			//emit_signal(SceneStringNames::get_singleton()->draw);
 
 		} break;
@@ -1269,32 +1277,28 @@ void Control::_size_changed() {
 	new_size_cache.x = MAX( minimum_size.x, new_size_cache.x );
 	new_size_cache.y = MAX( minimum_size.y, new_size_cache.y );
 
+	bool pos_changed = new_pos_cache != data.pos_cache;
+	bool size_changed = new_size_cache != data.size_cache;
 
-	if (new_pos_cache == data.pos_cache && new_size_cache == data.size_cache && data.scale_rotate_pivot_changed == false)
-		return; // did not change, don't emit signal
 
 	data.scale_rotate_pivot_changed = false;
 
 	data.pos_cache=new_pos_cache;
 	data.size_cache=new_size_cache;
 
-	// Cache matrix
-	Vector2 pos_point = get_pos() + get_size() * get_pivot();
-	Vector2 pivot_point = get_pos() + get_size() * get_pivot();
-	Vector2 scale_point = get_scale() * get_size() * get_pivot();
+	if (size_changed) {
+		notification(NOTIFICATION_RESIZED);
+	}
+	if (pos_changed || size_changed) {
+		item_rect_changed(size_changed);
+		_change_notify_margins();
+		_notify_transform();
+	}
 
-	Vector2 rotation_scale_offset = _get_rotation_and_scale_offset(pos_point, pivot_point, scale_point, get_rotation());
+	if (pos_changed && !size_changed) {
+		_update_canvas_item_transform(); //move because it won't be updated
+	}
 
-	Matrix32 xform;
-	xform.translate(rotation_scale_offset);
-	xform.set_rotation_and_scale(-get_rotation(), get_scale());
-	data.mat_cache = xform;
-	//
-
-	notification(NOTIFICATION_RESIZED);
-	item_rect_changed();
-	_change_notify_margins();
-	_notify_transform();
 }
 
 float Control::_get_parent_range(int p_idx) const {
@@ -2006,7 +2010,16 @@ Control::CursorShape Control::get_cursor_shape(const Point2& p_pos) const {
 
 Matrix32 Control::get_transform() const {
  
-	return data.mat_cache;
+	Vector2 pos_point = get_pos() + get_size() * get_pivot();
+	Vector2 pivot_point = get_pos() + get_size() * get_pivot();
+	Vector2 scale_point = get_scale() * get_size() * get_pivot();
+
+	Vector2 rotation_scale_offset = _get_rotation_and_scale_offset(pos_point, pivot_point, scale_point, get_rotation());
+
+	Matrix32 xform;
+	xform.translate(rotation_scale_offset);
+	xform.set_rotation_and_scale(-get_rotation(), get_scale());
+	return xform;
 }
 
 String Control::_get_tooltip() const {
@@ -2313,13 +2326,9 @@ bool Control::is_text_field() const {
 
 void Control::set_rotation(float p_radians) {
 
-	if (p_radians != data.rotation) {
-		data.scale_rotate_pivot_changed = true;
-		data.rotation = p_radians;
-		update();
-		_notify_transform();
-		_size_changed();
-	}
+	data.rotation=p_radians;
+	update();
+	_notify_transform();
 	_change_notify("rect/rotation");
 }
 
@@ -2376,13 +2385,9 @@ void Control::_font_changed(){
 
 void Control::set_scale(const Vector2& p_scale){
 
-	if (p_scale != data.scale)
-	{
-		data.scale_rotate_pivot_changed = true;
-		data.scale = p_scale;
-		_size_changed();
-		_change_notify("rect/scale");
-	}
+	data.scale=p_scale;
+	update();
+	_notify_transform();
 }
 Vector2 Control::get_scale() const{
 
@@ -2410,7 +2415,6 @@ Control *Control::get_root_parent_control() const {
 	return const_cast<Control*>(root);
 }
 
-
 void Control::set_block_minimum_size_adjust(bool p_block) {
 	data.block_minimum_size_adjust=p_block;
 }
@@ -2418,6 +2422,18 @@ void Control::set_block_minimum_size_adjust(bool p_block) {
 bool Control::is_minimum_size_adjust_blocked() const {
 
 	return data.block_minimum_size_adjust;
+}
+
+
+void Control::set_disable_visibility_clip(bool p_ignore) {
+
+	data.disable_visibility_clip=p_ignore;
+	update();
+}
+
+bool Control::is_visibility_clip_disabled() const {
+
+	return data.disable_visibility_clip;
 }
 
 void Control::set_pivot(const Size2& p_pivot)
@@ -2687,8 +2703,8 @@ Control::Control() {
 	data.drag_owner=0;
 	data.modal_frame=0;
 	data.block_minimum_size_adjust=false;
+	data.disable_visibility_clip=false;
 	data.pivot = Vector2(0.0, 0.0);
-	data.scale_rotate_pivot_changed=true;
 
 
 	for (int i=0;i<4;i++) {

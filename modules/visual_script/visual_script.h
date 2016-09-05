@@ -38,6 +38,8 @@ public:
 
 	virtual String get_output_sequence_port_text(int p_port) const=0;
 
+	virtual bool has_mixed_input_and_sequence_ports() const { return false; }
+
 	virtual int get_input_value_port_count() const=0;
 	virtual int get_output_value_port_count() const=0;
 
@@ -58,6 +60,18 @@ public:
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance)=0;
 
+	struct TypeGuess {
+
+		Variant::Type type;
+		InputEvent::Type ev_type;
+		StringName obj_type;
+		Ref<Script> script;
+
+		TypeGuess() { type=Variant::NIL; ev_type=InputEvent::NONE; }
+	};
+
+	virtual TypeGuess guess_output_type(TypeGuess* p_inputs, int p_output) const;
+
 	VisualScriptNode();
 };
 
@@ -71,7 +85,6 @@ friend class VisualScriptLanguage; //for debugger
 		INPUT_SHIFT=1<<24,
 		INPUT_MASK=INPUT_SHIFT-1,
 		INPUT_DEFAULT_VALUE_BIT=INPUT_SHIFT, // from unassigned input port, using default value (edited by user)
-		INPUT_UNSEQUENCED_READ_BIT=INPUT_SHIFT<<1, //from unsequenced read (requires calling a function, used for constants, variales, etc).
 	};
 
 
@@ -79,11 +92,13 @@ friend class VisualScriptLanguage; //for debugger
 	int sequence_index;
 	VisualScriptNodeInstance **sequence_outputs;
 	int sequence_output_count;
+	Vector<VisualScriptNodeInstance*> dependencies;
 	int *input_ports;
 	int input_port_count;
 	int *output_ports;
 	int output_port_count;
 	int working_mem_idx;
+	int pass_idx;
 
 	VisualScriptNode *base;
 
@@ -116,10 +131,6 @@ public:
 	_FORCE_INLINE_ int  get_id() const { return id; }
 
 	virtual int get_working_memory_size() const { return 0; }
-
-	//unsequenced ports are those that can return a value even if no sequence happened through them, used for constants, variables, etc.
-	virtual bool is_output_port_unsequenced(int p_idx) const { return false; }
-	virtual bool get_output_port_unsequenced(int p_idx,Variant* r_value,Variant* p_working_mem,String &r_error) const { return true; }
 
 	virtual int step(const Variant** p_inputs,Variant** p_outputs,StartMode p_start_mode,Variant* p_working_mem,Variant::CallError& r_error,String& r_error_str)=0; //do a step, return which sequence port to go out
 
@@ -209,13 +220,13 @@ friend class VisualScriptInstance;
 	struct Variable {
 		PropertyInfo info;
 		Variant default_value;
+		bool _export;
 	};
 
 
 
 	Map<StringName,Function> functions;
 	Map<StringName,Variable> variables;
-	Map<StringName,StringName> script_variable_remap;
 	Map<StringName,Vector<Argument> > custom_signals;
 
 	Map<Object*,VisualScriptInstance*> instances;
@@ -269,14 +280,17 @@ public:
 	bool has_data_connection(const StringName& p_func,int p_from_node,int p_from_port,int p_to_node,int p_to_port) const;
 	void get_data_connection_list(const StringName& p_func,List<DataConnection> *r_connection) const;
 	bool is_input_value_port_connected(const StringName& p_name,int p_node,int p_port) const;
+	bool get_input_value_port_connection_source(const StringName& p_name,int p_node,int p_port,int *r_node,int *r_port) const;
 
-	void add_variable(const StringName& p_name,const Variant& p_default_value=Variant());
+	void add_variable(const StringName& p_name,const Variant& p_default_value=Variant(),bool p_export=false);
 	bool has_variable(const StringName& p_name) const;
 	void remove_variable(const StringName& p_name);
 	void set_variable_default_value(const StringName& p_name,const Variant& p_value);
 	Variant get_variable_default_value(const StringName& p_name) const;
 	void set_variable_info(const StringName& p_name,const PropertyInfo& p_info);
 	PropertyInfo get_variable_info(const StringName& p_name) const;
+	void set_variable_export(const StringName& p_name,bool p_export);
+	bool get_variable_export(const StringName& p_name) const;
 	void get_variable_list(List<StringName> *r_variables) const;
 	void rename_variable(const StringName& p_name,const StringName& p_new_name);
 
@@ -330,6 +344,7 @@ public:
 
 	virtual void get_script_property_list(List<PropertyInfo> *p_list) const;
 
+	virtual bool are_subnodes_edited() const;
 
 	VisualScript();
 	~VisualScript();
@@ -349,18 +364,10 @@ class VisualScriptInstance : public ScriptInstance {
 		int trash_pos;
 		int return_pos;
 		int flow_stack_size;
+		int pass_stack_size;
 		int node_count;
 		int argument_count;
 		bool valid;
-
-		struct UnsequencedGet {
-			VisualScriptNodeInstance* from;
-			int from_port;
-			int to_stack;
-		};
-
-		Vector<UnsequencedGet> unsequenced_gets;
-
 	};
 
 	Map<StringName,Function> functions;
@@ -370,7 +377,8 @@ class VisualScriptInstance : public ScriptInstance {
 
 	StringName source;
 
-	Variant _call_internal(const StringName& p_method, void* p_stack,int p_stack_size, VisualScriptNodeInstance* p_node, int p_flow_stack_pos, bool p_resuming_yield,Variant::CallError &r_error);
+	void _dependency_step(VisualScriptNodeInstance* node, int p_pass, int *pass_stack, const Variant **input_args, Variant **output_args, Variant *variant_stack, Variant::CallError& r_error, String& error_str, VisualScriptNodeInstance **r_error_node);
+	Variant _call_internal(const StringName& p_method, void* p_stack,int p_stack_size, VisualScriptNodeInstance* p_node, int p_flow_stack_pos, int p_pass, bool p_resuming_yield,Variant::CallError &r_error);
 
 
 	//Map<StringName,Function> functions;
@@ -439,6 +447,7 @@ friend class VisualScriptInstance;
 	int variant_stack_size;
 	VisualScriptNodeInstance *node;
 	int flow_stack_pos;
+	int pass;
 
 	Variant _signal_callback(const Variant** p_args, int p_argcount, Variant::CallError& r_error);
 protected:

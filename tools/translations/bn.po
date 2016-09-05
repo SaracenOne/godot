@@ -8,7 +8,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
-"PO-Revision-Date: 2016-08-10 17:10+0000\n"
+"PO-Revision-Date: 2016-08-12 06:37+0000\n"
 "Last-Translator: ABU MD. MARUF SARKER <maruf.webdev@gmail.com>\n"
 "Language-Team: Bengali <https://hosted.weblate.org/projects/godot-engine/"
 "godot/bn/>\n"
@@ -65,34 +65,40 @@ msgid ""
 "A node yielded without working memory, please read the docs on how to yield "
 "properly!"
 msgstr ""
+"একটি নোড কার্যকর মেমোরি ছাড়াই উৎপন্ন হয়েছে, কি করে সঠিকভাবে সরবারহ করতে হয় তা "
+"অনুগ্রহ করে ডকুমেন্টেশনে পড়ুন!"
 
 #: modules/visual_script/visual_script.cpp
 msgid ""
 "Node yielded, but did not return a function state in the first working "
 "memory."
 msgstr ""
+"নোড ডাকা হয়েছে, কিন্তু প্রথম কার্যকর মেমোরিতে ফাংশনের কোনো অবস্থা ফেরত পাঠায়নি।"
 
 #: modules/visual_script/visual_script.cpp
 msgid ""
 "Return value must be assigned to first element of node working memory! Fix "
 "your node please."
 msgstr ""
+"নোডের কার্যকর মেমোরির প্রাথমিক উপাদানে অবশ্যই ফিরতি মান নির্দিষ্ট করতে হবে! অনুগ্রহ "
+"করে আপনার নোডটি মেরামত করুন।"
 
 #: modules/visual_script/visual_script.cpp
 msgid "Node returned an invalid sequence output: "
-msgstr ""
+msgstr "নোড অনিয়মিত ক্রমের ফলাফল পাঠিয়েছে: "
 
 #: modules/visual_script/visual_script.cpp
 msgid "Found sequence bit but not the node in the stack, report bug!"
 msgstr ""
+"ক্রম বিট (bit) পাওয়া গিয়েছে কিন্তু নোডটি স্ট্যাক/তাক-এ নেই, সমস্যাটি রিপোর্ট করুন!"
 
 #: modules/visual_script/visual_script.cpp
 msgid "Stack overflow with stack depth: "
-msgstr ""
+msgstr "স্ট্যাক/তাক-এর গভীরতায় স্ট্যাক/তাক অধিপ্রবাহিত/প্লাবিত হয়েছে: "
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Functions:"
-msgstr ""
+msgstr "ফাংশনগুলি:"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Variables:"
@@ -111,9 +117,8 @@ msgid "Name already in use by another func/var/signal:"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Rename Function"
-msgstr "নির্বাচিত সমূহ অপসারণ করুন"
+msgstr "ফাংশনের (Function) নতুন নামকরণ করুন"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Rename Variable"
@@ -136,9 +141,8 @@ msgid "Add Signal"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Remove Function"
-msgstr "নির্বাচিত সমূহ অপসারণ করুন"
+msgstr "ফাংশন (Function) অপসারণ করুন"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Remove Variable"
@@ -149,9 +153,8 @@ msgid "Editing Variable:"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Remove Signal"
-msgstr "নির্বাচিত সমূহ অপসারণ করুন"
+msgstr "সংকেত (Signal) অপসারণ করুন"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Editing Signal:"
@@ -162,15 +165,43 @@ msgid "Add Node"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Meta to drop a Getter. Hold Shift to drop a generic signature."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Ctrl to drop a Getter. Hold Shift to drop a generic signature."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Meta to drop a simple reference to the node."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Ctrl to drop a simple reference to the node."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Meta to drop a Variable Setter."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Ctrl to drop a Variable Setter."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Preload Node"
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
 msgid "Add Node(s) From Tree"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
-msgid "Add Setter Property"
+msgid "Add Getter Property"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
-msgid "Add Getter Property"
+msgid "Add Setter Property"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
@@ -224,9 +255,8 @@ msgid "Change"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Delete Selected"
-msgstr "নির্বাচিত সমূহ অনুলিপি করুন"
+msgstr "নির্বাচিত সমূহ অপসারণ করুন"
 
 #: modules/visual_script/visual_script_editor.cpp
 #: tools/editor/plugins/script_text_editor.cpp
@@ -234,8 +264,21 @@ msgid "Toggle Breakpoint"
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
-msgid "Find Node Tyoe"
+msgid "Find Node Type"
 msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Copy Nodes"
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Cut Nodes"
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Paste Nodes"
+msgstr "প্রতিলেপন/পেস্ট করুন"
 
 #: modules/visual_script/visual_script_flow_control.cpp
 msgid "Input type not iterable: "
@@ -279,12 +322,6 @@ msgstr ""
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "VariableSet not found in script: "
-msgstr ""
-
-#: modules/visual_script/visual_script_nodes.cpp
-msgid ""
-"Custom node has no _get_output_port_unsequenced(idx,wmem), but unsequenced "
-"ports were specified."
 msgstr ""
 
 #: modules/visual_script/visual_script_nodes.cpp
@@ -532,7 +569,8 @@ msgstr "সব ফাইল (*)"
 #: scene/gui/file_dialog.cpp tools/editor/editor_file_dialog.cpp
 #: tools/editor/editor_help.cpp tools/editor/editor_node.cpp
 #: tools/editor/filesystem_dock.cpp
-#: tools/editor/plugins/script_editor_plugin.cpp tools/editor/quick_open.cpp
+#: tools/editor/plugins/script_editor_plugin.cpp
+#: tools/editor/property_selector.cpp tools/editor/quick_open.cpp
 msgid "Open"
 msgstr "খুলুন"
 
@@ -1075,7 +1113,8 @@ msgstr ""
 
 #: tools/editor/asset_library_editor_plugin.cpp tools/editor/create_dialog.cpp
 #: tools/editor/editor_help.cpp tools/editor/editor_node.cpp
-#: tools/editor/plugins/script_editor_plugin.cpp tools/editor/quick_open.cpp
+#: tools/editor/plugins/script_editor_plugin.cpp
+#: tools/editor/property_selector.cpp tools/editor/quick_open.cpp
 #: tools/editor/settings_config_dialog.cpp
 msgid "Search:"
 msgstr ""
@@ -1324,8 +1363,14 @@ msgid "Create New"
 msgstr ""
 
 #: tools/editor/create_dialog.cpp tools/editor/editor_help.cpp
-#: tools/editor/plugins/script_editor_plugin.cpp tools/editor/quick_open.cpp
+#: tools/editor/plugins/script_editor_plugin.cpp
+#: tools/editor/property_selector.cpp tools/editor/quick_open.cpp
 msgid "Matches:"
+msgstr ""
+
+#: tools/editor/create_dialog.cpp tools/editor/editor_help.cpp
+#: tools/editor/property_selector.cpp tools/editor/script_editor_debugger.cpp
+msgid "Description:"
 msgstr ""
 
 #: tools/editor/dependency_editor.cpp
@@ -1644,10 +1689,6 @@ msgstr ""
 
 #: tools/editor/editor_help.cpp
 msgid "Constants:"
-msgstr ""
-
-#: tools/editor/editor_help.cpp tools/editor/script_editor_debugger.cpp
-msgid "Description:"
 msgstr ""
 
 #: tools/editor/editor_help.cpp
@@ -3579,9 +3620,8 @@ msgid "Paste Pose"
 msgstr ""
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
-#, fuzzy
 msgid "Select Mode"
-msgstr "সবগুলি বাছাই করুন"
+msgstr "মোড (Mode) বাছাই করুন"
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Drag: Rotate"
@@ -3600,9 +3640,8 @@ msgid "Alt+RMB: Depth list selection"
 msgstr ""
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
-#, fuzzy
 msgid "Move Mode"
-msgstr "সংযোগ (অ্যাড) বোতাম সরান"
+msgstr "মোড (Mode) সরান"
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Rotate Mode"
@@ -6011,6 +6050,16 @@ msgstr ""
 msgid "Sections:"
 msgstr ""
 
+#: tools/editor/property_selector.cpp
+#, fuzzy
+msgid "Select Property"
+msgstr "মোড (Mode) বাছাই করুন"
+
+#: tools/editor/property_selector.cpp
+#, fuzzy
+msgid "Select Method"
+msgstr "মোড (Mode) বাছাই করুন"
+
 #: tools/editor/pvrtc_compress.cpp
 msgid "Could not execute PVRTC tool:"
 msgstr ""
@@ -6216,9 +6265,8 @@ msgid "Save Branch as Scene"
 msgstr ""
 
 #: tools/editor/scene_tree_dock.cpp
-#, fuzzy
 msgid "Delete (No Confirm)"
-msgstr "অনুগ্রহ করে নিশ্চিত করুন..."
+msgstr "অপসারণ করুন (নিশ্চয়তাকরণ নেই)"
 
 #: tools/editor/scene_tree_dock.cpp
 msgid "Add/Create a New Node"

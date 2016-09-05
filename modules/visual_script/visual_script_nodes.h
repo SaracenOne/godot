@@ -75,6 +75,7 @@ class VisualScriptOperator : public VisualScriptNode {
 	OBJ_TYPE(VisualScriptOperator,VisualScriptNode)
 
 
+	Variant::Type typed;
 	Variant::Operator op;
 protected:
 
@@ -101,6 +102,9 @@ public:
 
 	void set_operator(Variant::Operator p_op);
 	Variant::Operator get_operator() const;
+
+	void set_typed(Variant::Type p_op);
+	Variant::Type get_typed() const;
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
 
@@ -215,7 +219,7 @@ public:
 
 	virtual String get_caption() const;
 	virtual String get_text() const;
-	virtual String get_category() const { return "data"; }
+	virtual String get_category() const { return "constants"; }
 
 	void set_constant_type(Variant::Type p_type);
 	Variant::Type get_constant_type() const;
@@ -228,6 +232,45 @@ public:
 	VisualScriptConstant();
 };
 
+
+
+class VisualScriptPreload : public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptPreload,VisualScriptNode)
+
+
+	Ref<Resource> preload;
+protected:
+
+	static void _bind_methods();
+
+public:
+
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const { return "data"; }
+
+	void set_preload(const Ref<Resource>& p_value);
+	Ref<Resource> get_preload() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptPreload();
+};
 
 class VisualScriptIndexGet : public VisualScriptNode {
 
@@ -317,7 +360,7 @@ public:
 
 	virtual String get_caption() const;
 	virtual String get_text() const;
-	virtual String get_category() const { return "data"; }
+	virtual String get_category() const { return "constants"; }
 
 	void set_global_constant(int p_which);
 	int get_global_constant();
@@ -325,6 +368,89 @@ public:
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
 
 	VisualScriptGlobalConstant();
+};
+
+
+class VisualScriptClassConstant : public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptClassConstant,VisualScriptNode)
+
+	StringName base_type;
+	StringName name;
+protected:
+	static void _bind_methods();
+	virtual void _validate_property(PropertyInfo& property) const;
+
+public:
+
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const { return "constants"; }
+
+	void set_class_constant(const StringName& p_which);
+	StringName get_class_constant();
+
+	void set_base_type(const StringName& p_which);
+	StringName get_base_type();
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptClassConstant();
+};
+
+class VisualScriptBasicTypeConstant : public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptBasicTypeConstant,VisualScriptNode)
+
+	Variant::Type type;
+	StringName name;
+protected:
+	static void _bind_methods();
+	virtual void _validate_property(PropertyInfo& property) const;
+
+public:
+
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const { return "constants"; }
+
+	void set_basic_type_constant(const StringName& p_which);
+	StringName get_basic_type_constant() const;
+
+	void set_basic_type(Variant::Type p_which);
+	Variant::Type get_basic_type() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptBasicTypeConstant();
 };
 
 
@@ -368,7 +494,7 @@ public:
 
 	virtual String get_caption() const;
 	virtual String get_text() const;
-	virtual String get_category() const { return "data"; }
+	virtual String get_category() const { return "constants"; }
 
 	void set_math_constant(MathConstant p_which);
 	MathConstant get_math_constant();
@@ -412,6 +538,9 @@ public:
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
 
+	virtual TypeGuess guess_output_type(TypeGuess* p_inputs, int p_output) const;
+
+
 	VisualScriptEngineSingleton();
 };
 
@@ -451,6 +580,8 @@ public:
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
 
+	virtual TypeGuess guess_output_type(TypeGuess* p_inputs, int p_output) const;
+
 	VisualScriptSceneNode();
 };
 
@@ -486,6 +617,8 @@ public:
 	virtual String get_category() const { return "data"; }
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	virtual TypeGuess guess_output_type(TypeGuess* p_inputs, int p_output) const;
 
 	VisualScriptSceneTree();
 };
@@ -560,6 +693,8 @@ public:
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
 
+	virtual TypeGuess guess_output_type(TypeGuess* p_inputs, int p_output) const;
+
 	VisualScriptSelf();
 };
 
@@ -622,7 +757,6 @@ class VisualScriptSubCall: public VisualScriptNode {
 
 protected:
 
-	virtual bool _use_builtin_script() const { return true; }
 
 	static void _bind_methods();
 public:
@@ -659,8 +793,6 @@ class VisualScriptComment: public VisualScriptNode {
 	Size2 size;
 protected:
 
-	virtual bool _use_builtin_script() const { return true; }
-
 	static void _bind_methods();
 public:
 	virtual int get_output_sequence_port_count() const;
@@ -695,6 +827,242 @@ public:
 	VisualScriptComment();
 };
 
+class VisualScriptConstructor: public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptConstructor,VisualScriptNode)
+
+
+	Variant::Type type;
+	MethodInfo constructor;
+
+protected:
+
+
+	static void _bind_methods();
+public:
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const;
+
+	void set_constructor_type(Variant::Type p_type);
+	Variant::Type get_constructor_type() const;
+
+	void set_constructor(const Dictionary& p_info);
+	Dictionary get_constructor() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptConstructor();
+};
+
+
+
+
+class VisualScriptLocalVar: public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptLocalVar,VisualScriptNode)
+
+	StringName name;
+	Variant::Type type;
+
+protected:
+
+	static void _bind_methods();
+public:
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const;
+
+	void set_var_name(const StringName& p_name);
+	StringName get_var_name() const;
+
+	void set_var_type(Variant::Type p_type);
+	Variant::Type get_var_type() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptLocalVar();
+};
+
+class VisualScriptLocalVarSet: public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptLocalVarSet,VisualScriptNode)
+
+	StringName name;
+	Variant::Type type;
+
+protected:
+
+	static void _bind_methods();
+public:
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const;
+
+	void set_var_name(const StringName& p_name);
+	StringName get_var_name() const;
+
+	void set_var_type(Variant::Type p_type);
+	Variant::Type get_var_type() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptLocalVarSet();
+};
+
+
+
+class VisualScriptInputAction: public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptInputAction,VisualScriptNode)
+public:
+	enum Mode {
+		MODE_PRESSED,
+		MODE_RELEASED,
+		MODE_JUST_PRESSED,
+		MODE_JUST_RELEASED,
+	};
+
+	StringName name;
+	Mode mode;
+
+protected:
+
+	virtual void _validate_property(PropertyInfo& property) const;
+
+	static void _bind_methods();
+public:
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const;
+
+	void set_action_name(const StringName& p_name);
+	StringName get_action_name() const;
+
+	void set_action_mode(Mode p_mode);
+	Mode get_action_mode() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptInputAction();
+};
+
+VARIANT_ENUM_CAST( VisualScriptInputAction::Mode )
+
+class VisualScriptDeconstruct: public VisualScriptNode {
+
+	OBJ_TYPE(VisualScriptDeconstruct,VisualScriptNode)
+
+
+	struct Element {
+		StringName name;
+		Variant::Type type;
+	};
+
+
+	Vector<Element> elements;
+
+	void _update_elements();
+	Variant::Type type;
+	InputEvent::Type input_type;
+
+	void _set_elem_cache(const Array& p_elements);
+	Array _get_elem_cache() const;
+
+	virtual void _validate_property(PropertyInfo& property) const;
+
+protected:
+
+
+	static void _bind_methods();
+public:
+	virtual int get_output_sequence_port_count() const;
+	virtual bool has_input_sequence_port() const;
+
+
+	virtual String get_output_sequence_port_text(int p_port) const;
+
+
+	virtual int get_input_value_port_count() const;
+	virtual int get_output_value_port_count() const;
+
+
+	virtual PropertyInfo get_input_value_port_info(int p_idx) const;
+	virtual PropertyInfo get_output_value_port_info(int p_idx) const;
+
+	virtual String get_caption() const;
+	virtual String get_text() const;
+	virtual String get_category() const;
+
+	void set_deconstruct_type(Variant::Type p_type);
+	Variant::Type get_deconstruct_type() const;
+
+	void set_deconstruct_input_type(InputEvent::Type p_input_type);
+	InputEvent::Type get_deconstruct_input_type() const;
+
+	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	VisualScriptDeconstruct();
+};
+
+
 void register_visual_script_nodes();
+void unregister_visual_script_nodes();
 
 #endif // VISUAL_SCRIPT_NODES_H

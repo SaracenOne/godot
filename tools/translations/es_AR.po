@@ -3,13 +3,14 @@
 # This file is distributed under the same license as the Godot source code.
 #
 # Lisandro Lorea <lisandrolorea@gmail.com>, 2016.
+# Sebastian Silva <sebastian@sugarlabs.org>, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Godot Engine editor\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2016-07-15 07:17+0000\n"
-"Last-Translator: Lisandro Lorea <lisandrolorea@gmail.com>\n"
+"PO-Revision-Date: 2016-08-23 11:49+0000\n"
+"Last-Translator: Sebastian Silva <sebastian@sugarlabs.org>\n"
 "Language-Team: Spanish (Argentina) <https://hosted.weblate.org/projects/"
 "godot-engine/godot/es_AR/>\n"
 "Language: es_AR\n"
@@ -70,40 +71,45 @@ msgid ""
 "A node yielded without working memory, please read the docs on how to yield "
 "properly!"
 msgstr ""
+"Un nodo rindió(yielded) sin memoria de trabajo, por favor lee los docs sobre "
+"como usar yield correctamente!"
 
 #: modules/visual_script/visual_script.cpp
 msgid ""
 "Node yielded, but did not return a function state in the first working "
 "memory."
 msgstr ""
+"El nodo rindió(yielded), pero no retornó un estado de función en la primera "
+"memoria de trabajo."
 
 #: modules/visual_script/visual_script.cpp
 msgid ""
 "Return value must be assigned to first element of node working memory! Fix "
 "your node please."
 msgstr ""
+"El valor de retorno debe ser asignado al primer elemento de la memoria de "
+"trabajo nodos! Arreglá tu nodo, por favor."
 
 #: modules/visual_script/visual_script.cpp
 msgid "Node returned an invalid sequence output: "
-msgstr ""
+msgstr "El nodo retornó una secuencia de salida inválida: "
 
 #: modules/visual_script/visual_script.cpp
 msgid "Found sequence bit but not the node in the stack, report bug!"
 msgstr ""
+"Se encontró un bit de secuencia pero no el nodo en el stack, reportá el bug!"
 
 #: modules/visual_script/visual_script.cpp
 msgid "Stack overflow with stack depth: "
-msgstr ""
+msgstr "Stack overflow con la profundidad del stack: "
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Functions:"
-msgstr "Funcion:"
+msgstr "Funciones:"
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Variables:"
-msgstr "Variable"
+msgstr "Variables:"
 
 #: modules/visual_script/visual_script_editor.cpp tools/editor/editor_help.cpp
 msgid "Signals:"
@@ -111,84 +117,100 @@ msgstr "Señales:"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Name is not a valid identifier:"
-msgstr ""
+msgstr "El nombre no es un identificador válido:"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Name already in use by another func/var/signal:"
+msgstr "El nombre ya esta en uso por otra func/var/señal:"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Rename Function"
+msgstr "Renombrar Función"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Rename Variable"
+msgstr "Renombrar Variable"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Rename Signal"
+msgstr "Renombrar Señal"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Function"
+msgstr "Agregar Función"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Variable"
+msgstr "Agregar Variable"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Signal"
+msgstr "Agregar Señal"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Remove Function"
+msgstr "Quitar Función"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Remove Variable"
+msgstr "Quitar Variable"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Editing Variable:"
+msgstr "Editando Variable:"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Remove Signal"
+msgstr "Quitar Señal"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Editing Signal:"
+msgstr "Editando Señal:"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Node"
+msgstr "Agregar Nodo"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Meta to drop a Getter. Hold Shift to drop a generic signature."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Ctrl to drop a Getter. Hold Shift to drop a generic signature."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Meta to drop a simple reference to the node."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Ctrl to drop a simple reference to the node."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Meta to drop a Variable Setter."
+msgstr ""
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Hold Ctrl to drop a Variable Setter."
 msgstr ""
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
-msgid "Rename Function"
-msgstr "Crear Función"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Rename Variable"
-msgstr "Renombrar Muestra"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Rename Signal"
-msgstr "Renombrar Muestra"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Function"
-msgstr "Funcion:"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Variable"
-msgstr "Variable"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Signal"
-msgstr "Señales"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Remove Function"
-msgstr "Quitar Selección"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Remove Variable"
-msgstr "Variable"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Editing Variable:"
-msgstr "Variable"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Remove Signal"
-msgstr "Quitar Selección"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Editing Signal:"
-msgstr "Conectando Señal:"
-
-#: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
-msgid "Add Node"
+msgid "Add Preload Node"
 msgstr "Agregar Nodo Hijo"
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Add Node(s) From Tree"
-msgstr "Nodo desde Escena"
-
-#: modules/visual_script/visual_script_editor.cpp
-msgid "Add Setter Property"
-msgstr ""
+msgstr "Agregar Nodo(s) Desde Arbol"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Add Getter Property"
-msgstr ""
+msgstr "Agregar Propiedad Getter"
+
+#: modules/visual_script/visual_script_editor.cpp
+msgid "Add Setter Property"
+msgstr "Agregar Propiedad Setter"
 
 #: modules/visual_script/visual_script_editor.cpp
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
@@ -200,22 +222,20 @@ msgid "Edit"
 msgstr "Editar"
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Base Type:"
-msgstr "Tipo de Datos:"
+msgstr "Tipo Base:"
 
 #: modules/visual_script/visual_script_editor.cpp tools/editor/editor_help.cpp
 msgid "Members:"
 msgstr "Miembros:"
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Available Nodes:"
-msgstr "Nodo TimeScale"
+msgstr "Nodos Disponibles:"
 
 #: modules/visual_script/visual_script_editor.cpp
 msgid "Select or create a function to edit graph"
-msgstr ""
+msgstr "Seleccioná o creá una función para editar el grafo"
 
 #: modules/visual_script/visual_script_editor.cpp tools/editor/call_dialog.cpp
 #: tools/editor/connections_dialog.cpp
@@ -231,24 +251,20 @@ msgid "Close"
 msgstr "Cerrar"
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Edit Signal Arguments:"
-msgstr "Argumentos de Llamada Extras:"
+msgstr "Editar Argumentos de Señal:"
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Edit Variable:"
-msgstr "Variable"
+msgstr "Editar Variable:"
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Change"
-msgstr "Cambiar Tipo"
+msgstr "Cambiar"
 
 #: modules/visual_script/visual_script_editor.cpp
-#, fuzzy
 msgid "Delete Selected"
-msgstr "Eliminar archivos seleccionados?"
+msgstr "Eliminar Seleccionados"
 
 #: modules/visual_script/visual_script_editor.cpp
 #: tools/editor/plugins/script_text_editor.cpp
@@ -257,72 +273,81 @@ msgstr "Act/Desact. Breakpoint"
 
 #: modules/visual_script/visual_script_editor.cpp
 #, fuzzy
-msgid "Find Node Tyoe"
-msgstr "Encontrar Siguiente"
+msgid "Find Node Type"
+msgstr "Encontrar Tipo de Nodo"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Copy Nodes"
+msgstr "Copiar Pose"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Cut Nodes"
+msgstr "Crear Nodo"
+
+#: modules/visual_script/visual_script_editor.cpp
+#, fuzzy
+msgid "Paste Nodes"
+msgstr "Pegar Pose"
 
 #: modules/visual_script/visual_script_flow_control.cpp
 msgid "Input type not iterable: "
-msgstr ""
+msgstr "Tipo de input no iterable: "
 
 #: modules/visual_script/visual_script_flow_control.cpp
 msgid "Iterator became invalid"
-msgstr ""
+msgstr "El iterador se volvió inválido"
 
 #: modules/visual_script/visual_script_flow_control.cpp
 msgid "Iterator became invalid: "
-msgstr ""
+msgstr "El iterador se volvió inválido: "
 
 #: modules/visual_script/visual_script_func_nodes.cpp
-#, fuzzy
 msgid "Invalid index property name."
-msgstr "Nombre de clase padre inválido"
+msgstr "Nombre de propiedad indíce inválido."
 
 #: modules/visual_script/visual_script_func_nodes.cpp
 msgid "Base object is not a Node!"
-msgstr ""
+msgstr "El objeto base no es un Nodo!"
 
 #: modules/visual_script/visual_script_func_nodes.cpp
-#, fuzzy
 msgid "Path does not lead Node!"
-msgstr "La ruta no es local"
+msgstr "La ruta no apunta a un Nodo!"
 
 #: modules/visual_script/visual_script_func_nodes.cpp
 msgid "Invalid index property name '%s' in node %s."
-msgstr ""
+msgstr "Nombre de propiedad índice '%s'  inválido en nodo %s."
 
 #: modules/visual_script/visual_script_nodes.cpp
-#, fuzzy
 msgid ": Invalid argument of type: "
-msgstr "Nombre de clase padre inválido"
+msgstr ": Argumento inválido de tipo: "
 
 #: modules/visual_script/visual_script_nodes.cpp
-#, fuzzy
 msgid ": Invalid arguments: "
-msgstr "Nombre de clase padre inválido"
+msgstr ": Argumentos inválidos: "
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "VariableGet not found in script: "
-msgstr ""
+msgstr "VariableGet no encontrado en el script: "
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "VariableSet not found in script: "
-msgstr ""
-
-#: modules/visual_script/visual_script_nodes.cpp
-msgid ""
-"Custom node has no _get_output_port_unsequenced(idx,wmem), but unsequenced "
-"ports were specified."
-msgstr ""
+msgstr "VariableSet no encontrado en el script: "
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid "Custom node has no _step() method, can't process graph."
 msgstr ""
+"El nodo personalizado no tiene ningún método _step(), no se puede procesar "
+"el grafo."
 
 #: modules/visual_script/visual_script_nodes.cpp
 msgid ""
 "Invalid return value from _step(), must be integer (seq out), or string "
 "(error)."
 msgstr ""
+"Valor de retorno inválido de _step(), debe ser un entero (seq out), o string "
+"(error)."
 
 #: scene/2d/animated_sprite.cpp
 msgid ""
@@ -563,7 +588,8 @@ msgstr "Todos los Archivos (*)"
 #: scene/gui/file_dialog.cpp tools/editor/editor_file_dialog.cpp
 #: tools/editor/editor_help.cpp tools/editor/editor_node.cpp
 #: tools/editor/filesystem_dock.cpp
-#: tools/editor/plugins/script_editor_plugin.cpp tools/editor/quick_open.cpp
+#: tools/editor/plugins/script_editor_plugin.cpp
+#: tools/editor/property_selector.cpp tools/editor/quick_open.cpp
 msgid "Open"
 msgstr "Abrir"
 
@@ -1055,6 +1081,7 @@ msgstr "Optimizar"
 #: tools/editor/animation_editor.cpp
 msgid "Select an AnimationPlayer from the Scene Tree to edit animations."
 msgstr ""
+"Seleccioná un AnimationPlayer de el Arbol de Escenas para editar animaciones."
 
 #: tools/editor/animation_editor.cpp
 msgid "Key"
@@ -1106,7 +1133,8 @@ msgstr "Cambiar Valor del Array"
 
 #: tools/editor/asset_library_editor_plugin.cpp tools/editor/create_dialog.cpp
 #: tools/editor/editor_help.cpp tools/editor/editor_node.cpp
-#: tools/editor/plugins/script_editor_plugin.cpp tools/editor/quick_open.cpp
+#: tools/editor/plugins/script_editor_plugin.cpp
+#: tools/editor/property_selector.cpp tools/editor/quick_open.cpp
 #: tools/editor/settings_config_dialog.cpp
 msgid "Search:"
 msgstr "Buscar:"
@@ -1264,7 +1292,7 @@ msgstr "Zoom Out"
 
 #: tools/editor/code_editor.cpp
 msgid "Reset Zoom"
-msgstr ""
+msgstr "Resetear el Zoom"
 
 #: tools/editor/code_editor.cpp tools/editor/script_editor_debugger.cpp
 msgid "Line:"
@@ -1355,9 +1383,15 @@ msgid "Create New"
 msgstr "Crear Nuevo"
 
 #: tools/editor/create_dialog.cpp tools/editor/editor_help.cpp
-#: tools/editor/plugins/script_editor_plugin.cpp tools/editor/quick_open.cpp
+#: tools/editor/plugins/script_editor_plugin.cpp
+#: tools/editor/property_selector.cpp tools/editor/quick_open.cpp
 msgid "Matches:"
 msgstr "Coincidencias:"
+
+#: tools/editor/create_dialog.cpp tools/editor/editor_help.cpp
+#: tools/editor/property_selector.cpp tools/editor/script_editor_debugger.cpp
+msgid "Description:"
+msgstr "Descripción:"
 
 #: tools/editor/dependency_editor.cpp
 msgid "Search Replacement For:"
@@ -1685,10 +1719,6 @@ msgstr "Items de Tema de la GUI:"
 #: tools/editor/editor_help.cpp
 msgid "Constants:"
 msgstr "Constantes:"
-
-#: tools/editor/editor_help.cpp tools/editor/script_editor_debugger.cpp
-msgid "Description:"
-msgstr "Descripción:"
 
 #: tools/editor/editor_help.cpp
 msgid "Method Description:"
@@ -3669,9 +3699,8 @@ msgid "Paste Pose"
 msgstr "Pegar Pose"
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
-#, fuzzy
 msgid "Select Mode"
-msgstr "Seleccionar Modo (Q)"
+msgstr "Seleccionar Modo"
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
 msgid "Drag: Rotate"
@@ -3692,14 +3721,12 @@ msgid "Alt+RMB: Depth list selection"
 msgstr "Alt+Click Der.: Selección en depth list"
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
-#, fuzzy
 msgid "Move Mode"
-msgstr "Modo Mover (W)"
+msgstr "Modo Mover"
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
-#, fuzzy
 msgid "Rotate Mode"
-msgstr "Modo Rotar (E)"
+msgstr "Modo Rotar"
 
 #: tools/editor/plugins/canvas_item_editor_plugin.cpp
 #: tools/editor/plugins/spatial_editor_plugin.cpp
@@ -4513,9 +4540,8 @@ msgid "Save Theme As"
 msgstr "Guardar Tema Como"
 
 #: tools/editor/plugins/script_editor_plugin.cpp
-#, fuzzy
 msgid "Close Docs"
-msgstr "Clonar hacia Abajo"
+msgstr "Cerrar Docs"
 
 #: tools/editor/plugins/script_editor_plugin.cpp
 #: tools/editor/plugins/script_text_editor.cpp
@@ -5787,14 +5813,12 @@ msgid "Unnamed Project"
 msgstr "Proyecto Sin Nombre"
 
 #: tools/editor/project_manager.cpp
-#, fuzzy
 msgid "Are you sure to open more than one project?"
 msgstr "¿Estás seguro/a que querés abrir mas de un proyecto?"
 
 #: tools/editor/project_manager.cpp
-#, fuzzy
 msgid "Are you sure to run more than one project?"
-msgstr "¿Estás seguro/a que queres ejecutar mas de un proyecto?"
+msgstr "¿Estás seguro/a que querés ejecutar mas de un proyecto?"
 
 #: tools/editor/project_manager.cpp
 msgid "Remove project from the list? (Folder contents will not be modified)"
@@ -5807,6 +5831,8 @@ msgid ""
 "You are about the scan %s folders for existing Godot projects. Do you "
 "confirm?"
 msgstr ""
+"Estas a punto de examinar %s carpetas en busca de proyectos de Godot. "
+"Confirmar?"
 
 #: tools/editor/project_manager.cpp
 msgid "Project Manager"
@@ -5825,9 +5851,8 @@ msgid "Scan"
 msgstr "Escanear"
 
 #: tools/editor/project_manager.cpp
-#, fuzzy
 msgid "Select a Folder to Scan"
-msgstr "Seleccionar un Nodo"
+msgstr "Seleccionar una Carpeta para Examinar"
 
 #: tools/editor/project_manager.cpp
 msgid "New Project"
@@ -6121,6 +6146,16 @@ msgstr "Global"
 msgid "Sections:"
 msgstr "Selecciones:"
 
+#: tools/editor/property_selector.cpp
+#, fuzzy
+msgid "Select Property"
+msgstr "Seleccionar Puntos"
+
+#: tools/editor/property_selector.cpp
+#, fuzzy
+msgid "Select Method"
+msgstr "Seleccionar Modo"
+
 #: tools/editor/pvrtc_compress.cpp
 msgid "Could not execute PVRTC tool:"
 msgstr "No se pudo ejecutar la herramienta PVRTC:"
@@ -6195,9 +6230,8 @@ msgid "No parent to instance a child at."
 msgstr "No hay padre al que instanciarle un hijo."
 
 #: tools/editor/scene_tree_dock.cpp
-#, fuzzy
 msgid "No parent to instance the scenes at."
-msgstr "No hay padre al que instanciarle un hijo."
+msgstr "No hay padre donde instanciar la escena."
 
 #: tools/editor/scene_tree_dock.cpp
 msgid "Error loading scene from %s"
@@ -6333,9 +6367,8 @@ msgid "Save Branch as Scene"
 msgstr "Guardar Rama como Escena"
 
 #: tools/editor/scene_tree_dock.cpp
-#, fuzzy
 msgid "Delete (No Confirm)"
-msgstr "Confirmá, por favor..."
+msgstr "Eliminar (Sin Confirmación)"
 
 #: tools/editor/scene_tree_dock.cpp
 msgid "Add/Create a New Node"
@@ -6350,10 +6383,8 @@ msgstr ""
 "existe ningún nodo raíz."
 
 #: tools/editor/scene_tree_dock.cpp
-#, fuzzy
 msgid "Create a new script for the selected node."
-msgstr ""
-"Instanciar la(s) escena(s) seleccionadas como hijas del nodo seleccionado."
+msgstr "Crear un nuevo script para el nodo seleccionado."
 
 #: tools/editor/scene_tree_editor.cpp
 msgid ""
@@ -6549,7 +6580,7 @@ msgstr "Inspector Remoto"
 
 #: tools/editor/script_editor_debugger.cpp
 msgid "Live Scene Tree:"
-msgstr "Arbos de Escenas en Vivo:"
+msgstr "Árbol de Escenas en Vivo:"
 
 #: tools/editor/script_editor_debugger.cpp
 msgid "Remote Object Properties: "
@@ -6654,6 +6685,13 @@ msgstr "Cambiar Largo de Shape Rayo"
 #: tools/editor/spatial_editor_gizmos.cpp
 msgid "Change Notifier Extents"
 msgstr "Cambiar Alcances de Notificadores"
+
+#~ msgid ""
+#~ "Custom node has no _get_output_port_unsequenced(idx,wmem), but "
+#~ "unsequenced ports were specified."
+#~ msgstr ""
+#~ "El nodo personalizado no tiene ningún _get_output_port_unsequenced(idx,"
+#~ "wmem), pero se especificaron puertos no secuenciados."
 
 #~ msgid "Cannot go into subdir:"
 #~ msgstr "No se puede acceder al subdir:"

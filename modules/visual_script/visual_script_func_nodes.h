@@ -13,6 +13,7 @@ public:
 		CALL_MODE_NODE_PATH,
 		CALL_MODE_INSTANCE,
 		CALL_MODE_BASIC_TYPE,
+		CALL_MODE_SINGLETON,
 	};
 
 	enum RPCCallMode {
@@ -33,6 +34,8 @@ private:
 	StringName function;
 	int use_default_args;
 	RPCCallMode rpc_call_mode;
+	StringName singleton;
+	bool validate;
 
 
 	Node *_get_base_node() const;
@@ -78,11 +81,15 @@ public:
 	void set_base_script(const String& p_path);
 	String get_base_script() const;
 
+	void set_singleton(const StringName& p_type);
+	StringName get_singleton() const;
+
 	void set_function(const StringName& p_type);
 	StringName get_function() const;
 
 	void set_base_path(const NodePath& p_type);
 	NodePath get_base_path() const;
+
 
 	void set_call_mode(CallMode p_mode);
 	CallMode get_call_mode() const;
@@ -90,10 +97,16 @@ public:
 	void set_use_default_args(int p_amount);
 	int get_use_default_args() const;
 
+	void set_validate(bool p_amount);
+	bool get_validate() const;
+
 	void set_rpc_call_mode(RPCCallMode p_mode);
 	RPCCallMode get_rpc_call_mode() const;
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+	virtual TypeGuess guess_output_type(TypeGuess* p_inputs, int p_output) const;
+
 
 	VisualScriptFunctionCall();
 };
@@ -124,8 +137,6 @@ private:
 	String base_script;
 	NodePath base_path;
 	StringName property;
-	bool use_builtin_value;
-	Variant builtin_value;
 	InputEvent::Type event_type;
 
 	Node *_get_base_node() const;
@@ -185,13 +196,9 @@ public:
 	void set_call_mode(CallMode p_mode);
 	CallMode get_call_mode() const;
 
-	void set_use_builtin_value(bool p_use);
-	bool is_using_builtin_value() const;
-
-	void set_builtin_value(const Variant &p_value);
-	Variant get_builtin_value() const;
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+	virtual TypeGuess guess_output_type(TypeGuess* p_inputs, int p_output) const;
 
 	VisualScriptPropertySet();
 };
@@ -328,6 +335,9 @@ public:
 	StringName get_signal() const;
 
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
+
+
+
 
 	VisualScriptEmitSignal();
 };

@@ -572,7 +572,7 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	set("scenetree_editor/draw_relationship_lines",false);
 	set("scenetree_editor/relationship_line_color",Color::html("464646"));
 
-	set("gridmap_editor/pick_distance", 5000.0);
+	set("grid_map/pick_distance", 5000.0);
 
 	set("3d_editor/default_fov",45.0);
 	set("3d_editor/default_z_near",0.1);
@@ -621,6 +621,11 @@ void EditorSettings::_load_defaults(Ref<ConfigFile> p_extra_config) {
 	hints["file_dialog/display_mode"]=PropertyInfo(Variant::INT,"file_dialog/display_mode",PROPERTY_HINT_ENUM,"Thumbnails,List");
 	set("file_dialog/thumbnail_size", 64);
 	hints["file_dialog/thumbnail_size"]=PropertyInfo(Variant::INT,"file_dialog/thumbnail_size",PROPERTY_HINT_RANGE,"32,128,16");
+
+	set("filesystem_dock/display_mode", 0);
+	hints["filesystem_dock/display_mode"]=PropertyInfo(Variant::INT,"filesystem_dock/display_mode",PROPERTY_HINT_ENUM,"Thumbnails,List");
+	set("filesystem_dock/thumbnail_size", 64);
+	hints["filesystem_dock/thumbnail_size"]=PropertyInfo(Variant::INT,"filesystem_dock/thumbnail_size",PROPERTY_HINT_RANGE,"32,128,16");
 
 	set("animation/autorename_animation_tracks",true);
 	set("animation/confirm_insert_track",true);
@@ -729,6 +734,25 @@ void EditorSettings::notify_changes() {
 	}
 	root->propagate_notification(NOTIFICATION_EDITOR_SETTINGS_CHANGED);
 
+}
+
+void EditorSettings::_add_property_info_bind(const Dictionary& p_info) {
+
+	ERR_FAIL_COND(!p_info.has("name"));
+	ERR_FAIL_COND(!p_info.has("type"));
+
+	PropertyInfo pinfo;
+	pinfo.name = p_info["name"];
+	ERR_FAIL_COND(!props.has(pinfo.name));
+	pinfo.type = Variant::Type(p_info["type"].operator int());
+	ERR_FAIL_INDEX(pinfo.type, Variant::VARIANT_MAX);
+
+	if (p_info.has("hint"))
+		pinfo.hint = PropertyHint(p_info["hint"].operator int());
+	if (p_info.has("hint_string"))
+		pinfo.hint_string = p_info["hint_string"];
+
+	add_property_hint(pinfo);
 }
 
 void EditorSettings::add_property_hint(const PropertyInfo& p_hint) {
@@ -1000,6 +1024,8 @@ void EditorSettings::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("erase","property"),&EditorSettings::erase);
 	ObjectTypeDB::bind_method(_MD("get_settings_path"),&EditorSettings::get_settings_path);
 	ObjectTypeDB::bind_method(_MD("get_project_settings_path"),&EditorSettings::get_project_settings_path);
+
+	ObjectTypeDB::bind_method(_MD("add_property_info", "info"),&EditorSettings::_add_property_info_bind);
 
 	ObjectTypeDB::bind_method(_MD("set_favorite_dirs","dirs"),&EditorSettings::set_favorite_dirs);
 	ObjectTypeDB::bind_method(_MD("get_favorite_dirs"),&EditorSettings::get_favorite_dirs);

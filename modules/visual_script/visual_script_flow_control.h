@@ -197,13 +197,23 @@ public:
 
 
 
-class VisualScriptInputSelector : public VisualScriptNode {
+class VisualScriptSwitch : public VisualScriptNode {
 
-	OBJ_TYPE(VisualScriptInputSelector,VisualScriptNode)
+	OBJ_TYPE(VisualScriptSwitch,VisualScriptNode)
 
+	struct Case {
+		Variant::Type type;
+		Case() { type=Variant::NIL; }
+	};
 
+	Vector<Case> case_values;
 
+friend class VisualScriptNodeInstanceSwitch;
 protected:
+
+	bool _set(const StringName& p_name, const Variant& p_value);
+	bool _get(const StringName& p_name,Variant &r_ret) const;
+	void _get_property_list( List<PropertyInfo> *p_list) const;
 
 	static void _bind_methods();
 public:
@@ -213,6 +223,7 @@ public:
 
 
 	virtual String get_output_sequence_port_text(int p_port) const;
+	virtual bool has_mixed_input_and_sequence_ports() const { return true; }
 
 
 	virtual int get_input_value_port_count() const;
@@ -229,7 +240,7 @@ public:
 	virtual VisualScriptNodeInstance* instance(VisualScriptInstance* p_instance);
 
 
-	VisualScriptInputSelector();
+	VisualScriptSwitch();
 };
 
 
@@ -319,6 +330,9 @@ public:
 
 	VisualScriptTypeCast();
 };
+
+
+
 
 void register_visual_script_flow_control_nodes();
 
