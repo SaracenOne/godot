@@ -72,6 +72,15 @@ class MeshDataTool : public Reference  {
 
 	Vector<Face> faces;
 
+	struct Morph {
+		DVector<Vector3> vertices;
+		DVector<int> indexes;
+
+		uint32_t format;
+	};
+
+	Map<StringName,Morph> morphs;
+
 	Ref<Material> material;
 protected:
 
@@ -79,6 +88,7 @@ protected:
 public:
 
 	void clear();
+	Error append_from_surface(const Ref<Mesh>& p_mesh, int p_surface);
 	Error create_from_surface(const Ref<Mesh>& p_mesh,int p_surface);
 	Error commit_to_surface(const Ref<Mesh>& p_mesh);
 
