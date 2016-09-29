@@ -205,6 +205,10 @@ void AcceptDialog::_notification(int p_what) {
 
 		_update_child_rect();
 	}
+	if (p_what == NOTIFICATION_READY) {
+
+		_update_child_rect();
+	}
 }
 
 void AcceptDialog::_builtin_text_entered(const String& p_text) {
