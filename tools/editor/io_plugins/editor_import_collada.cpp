@@ -1299,7 +1299,7 @@ Error ColladaImport::_create_mesh_surfaces(bool p_optimize,Ref<Mesh>& p_mesh,con
 			for (int mi = 0; mi<p_morph_meshes.size(); mi++) {
 
 				//	print_line("want surface "+itos(mi)+" has "+itos(p_morph_meshes[mi]->get_surface_count()));
-				Ref<MorphDataSurface> morphDataSurface = p_morph_meshes.get(mi)->surfaceMorphs[surface];
+				Ref<MorphDataBuffer> morphDataSurface = p_morph_meshes.get(mi)->surface_morphs[surface];
 
 				Array a;
 				a.resize(VS::MORPH_ARRAY_MAX);
@@ -1314,9 +1314,9 @@ Error ColladaImport::_create_mesh_surfaces(bool p_optimize,Ref<Mesh>& p_mesh,con
 
 				DVector<int> morph_indexes;
 
-				for (int j = 0; j < morphDataSurface->indexes.size(); j++)
+				for (int j = 0; j < morphDataSurface->indices.size(); j++)
 				{
-					int index = morphDataSurface->indexes[j];
+					int index = morphDataSurface->indices[j];
 					morph_indexes.append(index);
 				}
 

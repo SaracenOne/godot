@@ -31,11 +31,11 @@
 
 #include "scene/resources/mesh.h"
 
-class MorphDataSurface;
+class MorphDataBuffer;
 
-class MorphData : public Reference  {
+class MorphData : public Resource  {
 
-	OBJ_TYPE(MorphData,Reference);
+	OBJ_TYPE(MorphData,Resource);
 	RES_BASE_EXTENSION("mor");
 	OBJ_SAVE_TYPE(MoprhData);
 
@@ -55,11 +55,15 @@ public:
 	};
 
 public:
-	Vector<Ref<MorphDataSurface> > surfaceMorphs;
+	Vector<Ref<MorphDataBuffer> > surface_morphs;
 protected:
 
 	static void _bind_methods();
 public:
+	bool _set(const StringName& p_name, const Variant& p_value);
+	bool _get(const StringName& p_name, Variant &r_ret) const;
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+
 	void clear();
 	void resize(int p_surface, int p_size);
 
@@ -80,24 +84,29 @@ public:
 	int get_index(int p_surface,int p_idx) const;
 	void set_index(int p_surface,int p_idx, const int& p_index);
 
+	void set_surface_count(const int p_surface_count);
 	int get_surface_count() const;
 
 	MorphData();
 	~MorphData();
 };
 
-class MorphDataSurface : public Reference {
-	OBJ_TYPE(MorphDataSurface, Reference);
+class MorphDataBuffer : public Resource {
+	OBJ_TYPE(MorphDataBuffer, Resource);
+	RES_BASE_EXTENSION("mdb");
+	OBJ_SAVE_TYPE(MorphDataBuffer);
+
 public:
 	Vector<Vector3> vertices;
 	Vector<Vector3> normals;
 
-	Vector<int> indexes;
-	MorphData::MorphType morphType;
+	Vector<int> indices;
+	MorphData::MorphType morph_type;
 
-	MorphDataSurface();
-	~MorphDataSurface();
-
+	bool _set(const StringName& p_name, const Variant& p_value);
+	bool _get(const StringName& p_name, Variant &r_ret) const;
+	void _get_property_list(List<PropertyInfo> *p_list) const;
 };
+
 
 #endif // MOPRH_DATA_H
