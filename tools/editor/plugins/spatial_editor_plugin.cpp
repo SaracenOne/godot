@@ -3203,6 +3203,8 @@ void SpatialEditor::_init_indicators() {
 		Vector<Color> origin_colors;
 		Vector<Vector3> origin_points;
 
+		Color grid_color = EditorSettings::get_singleton()->get("3d_editor/grid_color");
+
 		for(int i=0;i<3;i++) {
 			Vector3 axis;
 			axis[i]=1;
@@ -3220,10 +3222,10 @@ void SpatialEditor::_init_indicators() {
 			for(int j=-ORIGIN_GRID_SIZE;j<=ORIGIN_GRID_SIZE;j++) {
 
 
-				grid_colors[i].push_back(Color(axis.x,axis.y,axis.z,0.2));
-				grid_colors[i].push_back(Color(axis.x,axis.y,axis.z,0.2));
-				grid_colors[i].push_back(Color(axis.x,axis.y,axis.z,0.2));
-				grid_colors[i].push_back(Color(axis.x,axis.y,axis.z,0.2));
+				grid_colors[i].push_back(grid_color);
+				grid_colors[i].push_back(grid_color);
+				grid_colors[i].push_back(grid_color);
+				grid_colors[i].push_back(grid_color);
 				grid_points[i].push_back(axis_n1*ORIGIN_GRID_SIZE+axis_n2*j);
 				grid_points[i].push_back(-axis_n1*ORIGIN_GRID_SIZE+axis_n2*j);
 				grid_points[i].push_back(axis_n2*ORIGIN_GRID_SIZE+axis_n1*j);
@@ -3519,6 +3521,8 @@ void SpatialEditor::_unhandled_key_input(InputEvent p_event) {
 	if (!is_visible() || get_viewport()->gui_has_modal_stack())
 		return;
 
+#if 0
+//i don't remember this being used, why was it here?
 	{
 
 		EditorNode *en = editor;
@@ -3530,6 +3534,7 @@ void SpatialEditor::_unhandled_key_input(InputEvent p_event) {
 		}
 
 	}
+#endif
 
 	switch(p_event.type) {
 

@@ -372,6 +372,7 @@ void AcceptDialog::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("_custom_action"),&AcceptDialog::_custom_action);
 	ObjectTypeDB::bind_method(_MD("set_text","text"),&AcceptDialog::set_text);
 	ObjectTypeDB::bind_method(_MD("get_text"),&AcceptDialog::get_text);
+	ObjectTypeDB::bind_method(_MD("set_child_rect","child:Control"),&AcceptDialog::set_child_rect);
 
 	ADD_SIGNAL( MethodInfo("confirmed") );
 	ADD_SIGNAL( MethodInfo("custom_action",PropertyInfo(Variant::STRING,"action")) );
@@ -403,8 +404,6 @@ AcceptDialog::AcceptDialog() {
 	add_child(label);
 
 	hbc = memnew( HBoxContainer );
-	hbc->set_area_as_parent_rect(margin);
-	hbc->set_anchor_and_margin(MARGIN_TOP,ANCHOR_END,button_margin);
 	add_child(hbc);
 
 	hbc->add_spacer();

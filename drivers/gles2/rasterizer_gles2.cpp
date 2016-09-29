@@ -2054,7 +2054,6 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 				if (use_VBO) {
 
 					elem_size=VS::ARRAY_WEIGHTS_SIZE*sizeof(GLushort);
-					elem_count=VS::ARRAY_WEIGHTS_SIZE;
 					valid_local=false;
 					bind=true;
 					normalize=true;
@@ -2063,7 +2062,6 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 
 				} else {
 					elem_size=VS::ARRAY_WEIGHTS_SIZE*sizeof(GLfloat);
-					elem_count=VS::ARRAY_WEIGHTS_SIZE;
 					valid_local=false;
 					bind=false;
 					datatype=GL_FLOAT;
@@ -2075,7 +2073,6 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 
 				if (use_VBO) {
 					elem_size=VS::ARRAY_WEIGHTS_SIZE*sizeof(GLubyte);
-					elem_count=VS::ARRAY_WEIGHTS_SIZE;
 					valid_local=false;
 					bind=true;
 					datatype=GL_UNSIGNED_BYTE;
@@ -2083,7 +2080,6 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 				} else {
 
 					elem_size=VS::ARRAY_WEIGHTS_SIZE*sizeof(GLushort);
-					elem_count=VS::ARRAY_WEIGHTS_SIZE;
 					valid_local=false;
 					bind=false;
 					datatype=GL_UNSIGNED_SHORT;
@@ -4950,7 +4946,7 @@ void RasterizerGLES2::_update_shader( Shader* p_shader) const {
 			enablers.push_back("#define USE_LIGHT_SHADER_CODE\n");
 		}
 		if (light_flags.uses_shadow_color) {
-			enablers.push_back("#define USE_LIGHT_SHADOW_COLOR\n");
+			enablers.push_back("#define USE_OUTPUT_SHADOW_COLOR\n");
 		}
 		if (light_flags.uses_time || fragment_flags.uses_time || vertex_flags.uses_time) {
 			enablers.push_back("#define USE_TIME\n");
@@ -4993,7 +4989,7 @@ void RasterizerGLES2::_update_shader( Shader* p_shader) const {
 			enablers.push_back("#define USE_TEXPIXEL_SIZE\n");
 		}
 		if (light_flags.uses_shadow_color) {
-			enablers.push_back("#define USE_LIGHT_SHADOW_COLOR\n");
+			enablers.push_back("#define USE_OUTPUT_SHADOW_COLOR\n");
 		}
 
 		if (vertex_flags.uses_worldvec) {
@@ -5505,7 +5501,6 @@ bool RasterizerGLES2::_setup_material_pass(const Material::Pass *p_material_pass
 
 		material_shader.set_conditional(MaterialShaderGLES2::USE_FOG,current_env && current_env->fx_enabled[VS::ENV_FX_FOG]);
 		//glDepthMask( true );
-
 	}
 
 
@@ -7059,7 +7054,7 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 			}
 		}
 
-		if (e->instance->billboard || e->instance->depth_scale) {
+		if (e->instance->billboard || e->instance->billboard_y || e->instance->depth_scale) {
 
 			Transform xf=e->instance->transform;
 			if (e->instance->depth_scale) {
@@ -7088,6 +7083,21 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 					xf.set_look_at(xf.origin, xf.origin + p_view_transform.get_basis().get_axis(2), p_view_transform.get_basis().get_axis(1));
 				}
 
+				xf.basis.scale(scale);
+			}
+			
+			if (e->instance->billboard_y) {
+				
+				Vector3 scale = xf.basis.get_scale();
+				Vector3 look_at =  p_view_transform.get_origin();
+				look_at.y = 0.0;
+				Vector3 look_at_norm = look_at.normalized();
+				
+				if (current_rt && current_rt_vflip) {
+					xf.set_look_at(xf.origin,xf.origin + look_at_norm, Vector3(0.0, -1.0, 0.0));
+				} else {
+					xf.set_look_at(xf.origin,xf.origin + look_at_norm, Vector3(0.0, 1.0, 0.0));
+				}
 				xf.basis.scale(scale);
 			}
 			material_shader.set_uniform(MaterialShaderGLES2::WORLD_TRANSFORM, xf);
@@ -7288,6 +7298,10 @@ void RasterizerGLES2::_process_glow_bloom() {
 }
 
 void RasterizerGLES2::_process_hdr() {
+
+	if (framebuffer.luminance.empty()) {
+		return;
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.luminance[0].fbo);
 	glActiveTexture(GL_TEXTURE0);
@@ -11213,6 +11227,11 @@ void RasterizerGLES2::init() {
 	copy_shader.set_conditional(CopyShaderGLES2::USE_GLES_OVER_GL,true);
 #endif
 
+#ifdef ANGLE_ENABLED
+	// Fix for ANGLE
+	material_shader.set_conditional(MaterialShaderGLES2::DISABLE_FRONT_FACING, true);
+#endif
+
 
 	shadow=NULL;
 	shadow_pass=0;
@@ -11300,7 +11319,11 @@ void RasterizerGLES2::init() {
 
 
 	srgb_supported=extensions.has("GL_EXT_sRGB");
+#ifndef ANGLE_ENABLED
 	s3tc_srgb_supported =  s3tc_supported && extensions.has("GL_EXT_texture_compression_s3tc");
+#else
+	s3tc_srgb_supported = s3tc_supported;
+#endif
 	latc_supported = extensions.has("GL_EXT_texture_compression_latc");
 	anisotropic_level=1.0;
 	use_anisotropic_filter=extensions.has("GL_EXT_texture_filter_anisotropic");

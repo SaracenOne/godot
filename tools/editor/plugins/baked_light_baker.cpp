@@ -1211,7 +1211,7 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 		if (passthrough == true && triangle_id !=-1)
 		{
 			p_ignore_list->push_back(triangle_id);
-			ret = _throw_ray(thread_stack, p_ignore_list, p_bake_direct, r_point, p_end, p_rest, p_light, p_att_curve, p_att_pos, p_att_curve_len, p_bounces, p_first_bounce, p_only_dist);
+			ret=_throw_ray(thread_stack,p_ignore_list,p_bake_direct,r_point,p_end,p_rest,p_light,p_att_curve,p_att_pos,p_att_curve_len,p_bounces,p_first_bounce,p_only_dist);
 		}
 		else if (p_bounces>0 ) {
 
