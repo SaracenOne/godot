@@ -169,6 +169,12 @@ void MorphData::set_surface_count(const int p_surface_count) {
 
 	surface_morphs.resize(p_surface_count);
 
+	for (int i=0;i<surface_morphs.size();i++) {
+		if(surface_morphs[i].is_null()) {
+			surface_morphs[i] = Ref<MorphDataBuffer>(memnew(MorphDataBuffer));
+		}
+	}
+
 	_change_notify();
 	emit_changed();
 }

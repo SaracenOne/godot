@@ -1548,12 +1548,12 @@ Error ColladaImport::_create_resources(Collada::Node *p_node) {
 							{
 								String morphmeshid = names[i];
 								if (collada.state.mesh_data_map.has(morphmeshid)) {
-									Ref<MorphData> morphData = Ref<MorphData>(memnew(MorphData));
-									const Collada::MeshData &morphmeshdata = collada.state.mesh_data_map[morphmeshid];
-									const Collada::MeshData &meshdata = collada.state.mesh_data_map[meshid];
-									Error err = _create_morph_data(true, morphData, morphmeshdata, meshdata, apply_xform, morph);
+									const Collada::MeshData &morph_mesh_data = collada.state.mesh_data_map[morphmeshid];
+									const Collada::MeshData &mesh_data = collada.state.mesh_data_map[meshid];
+									Ref<MorphData> morph_data = Ref<MorphData>(memnew(MorphData));
+									Error err = _create_morph_data(true, morph_data, morph_mesh_data, mesh_data, apply_xform, morph);
 									ERR_FAIL_COND_V(err, err);
-									morphs.push_back(morphData);
+									morphs.push_back(morph_data);
 								}
 								else {
 									valid = false;
