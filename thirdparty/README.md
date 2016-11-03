@@ -84,7 +84,7 @@ Files extracted from upstream source:
 ## libpng
 
 - Upstream: http://libpng.org/pub/png/libpng.html
-- Version: 1.6.23
+- Version: 1.6.26
 - License: libpng/zlib
 
 Files extracted from upstream source:
@@ -93,6 +93,12 @@ Files extracted from upstream source:
   `example.c` and `pngtest.c`
 - the arm/ folder
 - `scripts/pnglibconf.h.prebuilt` as `pnglibconf.h`
+
+
+## libsimplewebm
+
+- Upstream: https://github.com/zaps166/libsimplewebm
+- License: MIT, BSD-3-Clause
 
 
 ## libvorbis
@@ -106,6 +112,13 @@ Files extracted from upstream source:
 - `src/*` except from: `lookups.pl`, `Makefile.*`
 - `include/vorbis/*.h` as vorbis/
 - COPYING
+
+
+## libvpx
+
+- Upstream: http://www.webmproject.org/code/
+- Version: 1.6.0
+- License: BSD-3-Clause
 
 
 ## libwebp

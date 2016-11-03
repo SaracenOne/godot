@@ -945,7 +945,7 @@ void ScriptEditor::_menu_option(int p_option) {
 		}
 	}
 
-	EditorHelp *help = tab_container->get_child(selected)->cast_to<EditorHelp>();
+	EditorHelp *help = tab_container->get_current_tab_control()->cast_to<EditorHelp>();
 	if (help) {
 
 		switch(p_option) {
@@ -1909,19 +1909,14 @@ void ScriptEditor::_update_selected_editor_menu() {
 				se->get_edit_menu()->hide();
 		}
 
-		EditorHelp *eh = tab_container->get_child(i)->cast_to<EditorHelp>();
-
-		if (eh) {
-
-			if (current)
-				script_search_menu->show();
-			else
-				script_search_menu->hide();
-		}
-
-
 	}
 
+	EditorHelp *eh=tab_container->get_current_tab_control()->cast_to<EditorHelp>();
+	if (eh) {
+		script_search_menu->show();
+	} else {
+		script_search_menu->hide();
+	}
 }
 
 void ScriptEditor::_update_history_pos(int p_new_pos) {

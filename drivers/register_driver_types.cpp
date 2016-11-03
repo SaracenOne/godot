@@ -40,8 +40,6 @@
 #include "platform/windows/export/export.h"
 #endif
 
-#include "drivers/nrex/regex.h"
-
 static ImageLoaderPNG *image_loader_png=NULL;
 static ResourceSaverPNG *resource_saver_png=NULL;
 
@@ -53,8 +51,6 @@ void register_core_driver_types() {
 
 	resource_saver_png = memnew( ResourceSaverPNG );
 	ResourceSaver::add_resource_format_saver(resource_saver_png);
-
-	ObjectTypeDB::register_type<RegEx>();
 }
 
 void unregister_core_driver_types() {
