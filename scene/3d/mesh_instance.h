@@ -72,6 +72,7 @@ public:
 	float get_morph_track_value(const int p_idx) const;
 	StringName get_morph_track_name(const int p_idx) const;
 	int get_morph_track_index(const StringName &p_name) const;
+	int get_morph_track_count() const;
 
 	void set_skeleton_path(const NodePath& p_skeleton);
 	NodePath get_skeleton_path();

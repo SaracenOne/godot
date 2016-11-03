@@ -186,6 +186,9 @@ int MeshInstance::get_morph_track_index(const StringName &p_name) const {
 	return -1;
 }
 
+int MeshInstance::get_morph_track_count() const {
+	return morph_tracks.size();
+}
 
 void MeshInstance::_resolve_skeleton_path(){
 
@@ -354,6 +357,7 @@ void MeshInstance::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("get_morph_track_name", "idx"), &MeshInstance::get_morph_track_name);
 	ObjectTypeDB::bind_method(_MD("get_morph_track_index", "name"), &MeshInstance::get_morph_track_index);
+	ObjectTypeDB::bind_method(_MD("get_morph_track_count"), &MeshInstance::get_morph_track_count);
 
 
 	ObjectTypeDB::bind_method(_MD("set_skeleton_path","skeleton_path:NodePath"),&MeshInstance::set_skeleton_path);
