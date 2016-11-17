@@ -345,6 +345,7 @@ public:
 		OP_MULTIPLY,
 		OP_DIVIDE,
 		OP_NEGATE,
+		OP_POSITIVE,
 		OP_MODULE,
 		OP_STRING_CONCAT,
 		//bitwise
