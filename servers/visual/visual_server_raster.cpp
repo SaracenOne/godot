@@ -249,6 +249,15 @@ VS::MaterialBlendMode VisualServerRaster::material_get_blend_mode(RID p_material
 	return rasterizer->material_get_blend_mode(p_material,p_pass);
 }
 
+void VisualServerRaster::material_set_depth_test_mode(RID p_material,const int p_pass,MaterialDepthTestMode p_mode) {
+	VS_CHANGED;
+	rasterizer->material_set_depth_test_mode(p_material, p_pass, p_mode);
+}
+VS::MaterialDepthTestMode VisualServerRaster::material_get_depth_test_mode(RID p_material,const int p_pass) const {
+
+	return rasterizer->material_get_depth_test_mode(p_material, p_pass);
+}
+
 void VisualServerRaster::material_set_line_width(RID p_material,const int p_pass,float p_line_width) {
 	VS_CHANGED;
 	rasterizer->material_set_line_width(p_material,p_pass,p_line_width);

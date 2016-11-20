@@ -1850,6 +1850,26 @@ VS::MaterialBlendMode RasterizerGLES2::material_get_blend_mode(RID p_material, c
 	return pass->blend_mode;
 }
 
+void RasterizerGLES2::material_set_depth_test_mode(RID p_material,const int p_pass_index,VS::MaterialDepthTestMode p_depth_test_mode) {
+
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+
+	pass->depth_test_mode = p_depth_test_mode;
+
+}
+VS::MaterialDepthTestMode RasterizerGLES2::material_get_depth_test_mode(RID p_material, const int p_pass_index) const {
+
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL);
+
+	return pass->depth_test_mode;
+}
+
 void RasterizerGLES2::material_set_line_width(RID p_material,const int p_pass_index,float p_line_width) {
 
 	Material *material = material_owner.get(p_material);
@@ -5444,6 +5464,33 @@ bool RasterizerGLES2::_setup_material_pass(const Material::Pass *p_material_pass
 		glDisable(GL_CULL_FACE);
 	} else {
 		glEnable(GL_CULL_FACE);
+	}
+
+	switch (p_material_pass->depth_test_mode) {
+		case VS::MATERIAL_DEPTH_TEST_MODE_NEVER:
+			glDepthFunc(GL_NEVER);
+			break;
+		case VS::MATERIAL_DEPTH_TEST_MODE_LESS:
+			glDepthFunc(GL_LESS);
+			break;
+		case VS::MATERIAL_DEPTH_TEST_MODE_EQUAL:
+			glDepthFunc(GL_EQUAL);
+			break;
+		case VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL:
+			glDepthFunc(GL_LEQUAL);
+			break;
+		case VS::MATERIAL_DEPTH_TEST_MODE_GREATER:
+			glDepthFunc(GL_GREATER);
+			break;
+		case VS::MATERIAL_DEPTH_TEST_MODE_NOTEQUAL:
+			glDepthFunc(GL_NOTEQUAL);
+			break;
+		case VS::MATERIAL_DEPTH_TEST_MODE_GEQUAL:
+			glDepthFunc(GL_GEQUAL);
+			break;
+		case VS::MATERIAL_DEPTH_TEST_MODE_ALWAYS:
+			glDepthFunc(GL_ALWAYS);
+			break;
 	}
 
 	//glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);

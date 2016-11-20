@@ -360,6 +360,26 @@ VS::MaterialBlendMode RasterizerDummy::material_get_blend_mode(RID p_material,co
 	return pass->blend_mode;
 }
 
+void RasterizerDummy::material_set_depth_test_mode(RID p_material,const int p_pass_index,VS::MaterialDepthTestMode p_mode) {
+
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+
+	pass->depth_test_mode = p_mode;
+
+}
+VS::MaterialDepthTestMode RasterizerDummy::material_get_depth_test_mode(RID p_material, const int p_pass_index) const {
+
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL);
+
+	return pass->depth_test_mode;
+}
+
 void RasterizerDummy::material_set_line_width(RID p_material,const int p_pass_index,float p_line_width) {
 
 	Material *material = material_owner.get(p_material);

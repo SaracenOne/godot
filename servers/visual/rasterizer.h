@@ -236,6 +236,9 @@ public:
 	virtual void material_set_blend_mode(RID p_material, const int p_pass_index, VS::MaterialBlendMode p_mode)=0;
 	virtual VS::MaterialBlendMode material_get_blend_mode(RID p_material, const int p_pass_index) const=0;
 
+	virtual void material_set_depth_test_mode(RID p_material, const int p_pass_index, VS::MaterialDepthTestMode p_mode)=0;
+	virtual VS::MaterialDepthTestMode material_get_depth_test_mode(RID p_material, const int p_pass_index) const=0;
+
 	virtual void material_set_line_width(RID p_material, const int p_pass_index, float p_line_width)=0;
 	virtual float material_get_line_width(RID p_material, const int p_pass_index) const=0;
 

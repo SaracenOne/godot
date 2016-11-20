@@ -153,6 +153,9 @@ public:
 	FUNC3(material_set_blend_mode,RID,int,MaterialBlendMode);
 	FUNC2RC(MaterialBlendMode,material_get_blend_mode,RID,int);
 
+	FUNC3(material_set_depth_test_mode,RID,int,MaterialDepthTestMode);
+	FUNC2RC(MaterialDepthTestMode,material_get_depth_test_mode,RID,int);
+
 	FUNC3(material_set_line_width,RID,int,float);
 	FUNC2RC(float,material_get_line_width,RID,int);
 

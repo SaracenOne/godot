@@ -70,6 +70,8 @@ void Material::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_line_width"), &Material::get_line_width);
 	ObjectTypeDB::bind_method(_MD("set_depth_draw_mode", "mode"), &Material::set_depth_draw_mode);
 	ObjectTypeDB::bind_method(_MD("get_depth_draw_mode"), &Material::get_depth_draw_mode);
+	ObjectTypeDB::bind_method(_MD("set_depth_test_mode", "mode"), &Material::set_depth_test_mode);
+	ObjectTypeDB::bind_method(_MD("get_depth_test_mode"), &Material::get_depth_test_mode);
 
 	BIND_CONSTANT(FLAG_VISIBLE);
 	BIND_CONSTANT(FLAG_DOUBLE_SIDED);
@@ -84,6 +86,15 @@ void Material::_bind_methods() {
 	BIND_CONSTANT(DEPTH_DRAW_OPAQUE_ONLY);
 	BIND_CONSTANT(DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA);
 	BIND_CONSTANT(DEPTH_DRAW_NEVER);
+
+	BIND_CONSTANT(DEPTH_TEST_MODE_NEVER);
+	BIND_CONSTANT(DEPTH_TEST_MODE_LESS);
+	BIND_CONSTANT(DEPTH_TEST_MODE_EQUAL);
+	BIND_CONSTANT(DEPTH_TEST_MODE_LEQUAL);
+	BIND_CONSTANT(DEPTH_TEST_MODE_GREATER);
+	BIND_CONSTANT(DEPTH_TEST_MODE_NOTEQUAL);
+	BIND_CONSTANT(DEPTH_TEST_MODE_GEQUAL);
+	BIND_CONSTANT(DEPTH_TEST_MODE_ALWAYS);
 
 	BIND_CONSTANT(BLEND_MODE_MIX);
 	BIND_CONSTANT(BLEND_MODE_ADD);
@@ -110,6 +121,7 @@ void SinglePassMaterial::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "params/blend_mode", PROPERTY_HINT_ENUM, "Mix,Add,Sub,PMAlpha"), _SCS("set_blend_mode"), _SCS("get_blend_mode"));
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "params/depth_draw", PROPERTY_HINT_ENUM, "Always,Opaque Only,Pre-Pass Alpha,Never"), _SCS("set_depth_draw_mode"), _SCS("get_depth_draw_mode"));
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "params/depth_test", PROPERTY_HINT_ENUM, "Never,Less,Equal,Less-or-Equal,Greater,Not Equal,Greater-or-Equal,Always"), _SCS("set_depth_test_mode"), _SCS("get_depth_test_mode"));
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "params/line_width", PROPERTY_HINT_RANGE, "0.1,32.0,0.1"), _SCS("set_line_width"), _SCS("get_line_width"));
 }
 
@@ -147,6 +159,17 @@ Material::DepthDrawMode SinglePassMaterial::get_depth_draw_mode() const {
 	return depth_draw_mode;
 }
 
+void SinglePassMaterial::set_depth_test_mode(DepthTestMode p_depth_test_mode) {
+
+	depth_test_mode = p_depth_test_mode;
+	VisualServer::get_singleton()->material_set_depth_test_mode(material, 0, (VS::MaterialDepthTestMode)p_depth_test_mode);
+}
+
+Material::DepthTestMode SinglePassMaterial::get_depth_test_mode() const {
+
+	return depth_test_mode;
+}
+
 bool SinglePassMaterial::get_flag(Flag p_flag) const {
 
 	ERR_FAIL_INDEX_V(p_flag,FLAG_MAX,false);
@@ -176,6 +199,7 @@ SinglePassMaterial::SinglePassMaterial(const RID& p_material) : Material(p_mater
 	flags[FLAG_COLOR_ARRAY_SRGB] = false;
 
 	depth_draw_mode = DEPTH_DRAW_OPAQUE_ONLY;
+	depth_test_mode = DEPTH_TEST_MODE_LEQUAL;
 	blend_mode = BLEND_MODE_MIX;
 	line_width = 0.1;
 
@@ -632,6 +656,10 @@ bool MultiPassMaterial::_set(const StringName& p_name, const Variant& p_value) {
 						set_pass_depth_draw_mode(pass_index, (Material::DepthDrawMode)(int)p_value);
 						return true;
 					}
+					else if (split_path[3] == "depth_test") {
+						set_pass_depth_test_mode(pass_index, (Material::DepthTestMode)(int)p_value);
+						return true;
+					}
 					else if (split_path[3] == "line_width") {
 						set_pass_line_width(pass_index, p_value);
 						return true;
@@ -689,6 +717,10 @@ bool MultiPassMaterial::_get(const StringName& p_name, Variant &r_ret) const {
 						r_ret = get_pass_depth_draw_mode(pass_index);
 						return true;
 					}
+					else if (split_path[3] == "depth_test") {
+						r_ret = get_pass_depth_test_mode(pass_index);
+						return true;
+					}
 					else if (split_path[3] == "line_width") {
 						r_ret = get_pass_line_width(pass_index);
 						return true;
@@ -742,6 +774,7 @@ void MultiPassMaterial::_get_property_list(List<PropertyInfo> *p_list) const {
 
 		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/blend_mode", PROPERTY_HINT_ENUM, "Mix,Add,Sub,PMAlpha"));
 		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/depth_draw", PROPERTY_HINT_ENUM, "Always,Opaque Only,Pre-Pass Alpha,Never"));
+		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/depth_test", PROPERTY_HINT_ENUM, "Never,Less,Equal,Less-or-Equal,Greater,Not Equal,Greater-or-Equal,Always"));
 		p_list->push_back(PropertyInfo(Variant::REAL, "passes/" + itos(i) + "/params/line_width", PROPERTY_HINT_RANGE, "0.1,32.0,0.1"));
 	}
 }
@@ -770,6 +803,7 @@ void MultiPassMaterial::set_pass_count(const int p_pass_count) {
 				set_pass_flag(i, FLAG_COLOR_ARRAY_SRGB, false);
 				
 				set_pass_depth_draw_mode(i, DEPTH_DRAW_OPAQUE_ONLY);
+				set_pass_depth_test_mode(i, DEPTH_TEST_MODE_LEQUAL);
 				set_pass_blend_mode(i, BLEND_MODE_MIX);
 				set_pass_line_width(i, 0.1f);
 			}
@@ -804,6 +838,14 @@ void MultiPassMaterial::set_depth_draw_mode(DepthDrawMode p_depth_draw_mode) {
 
 Material::DepthDrawMode MultiPassMaterial::get_depth_draw_mode() const {
 	return get_pass_depth_draw_mode(0);
+}
+
+void MultiPassMaterial::set_depth_test_mode(DepthTestMode p_depth_test_mode) {
+	set_pass_depth_test_mode(0, p_depth_test_mode);
+}
+
+Material::DepthTestMode MultiPassMaterial::get_depth_test_mode() const {
+	return get_pass_depth_test_mode(0);
 }
 
 void MultiPassMaterial::set_pass_flag(const int p_pass_index, Flag p_flag, bool p_enabled) {
@@ -841,6 +883,17 @@ void MultiPassMaterial::set_pass_depth_draw_mode(const int p_pass_index, DepthDr
 Material::DepthDrawMode MultiPassMaterial::get_pass_depth_draw_mode(const int p_pass_index) const {
 	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), DEPTH_DRAW_ALWAYS);
 	return passes[p_pass_index].depth_draw_mode;
+}
+
+void MultiPassMaterial::set_pass_depth_test_mode(const int p_pass_index, DepthTestMode p_depth_test_mode) {
+	ERR_FAIL_INDEX(p_pass_index, passes.size());
+	passes[p_pass_index].depth_test_mode = p_depth_test_mode;
+	VisualServer::get_singleton()->material_set_depth_test_mode(material, p_pass_index, (VS::MaterialDepthTestMode)p_depth_test_mode);
+}
+
+Material::DepthTestMode MultiPassMaterial::get_pass_depth_test_mode(const int p_pass_index) const {
+	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), DEPTH_TEST_MODE_LEQUAL);
+	return passes[p_pass_index].depth_test_mode;
 }
 
 void MultiPassMaterial::set_pass_line_width(const int p_pass_index, float p_width) {
@@ -910,6 +963,8 @@ void MultiPassMaterial::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_pass_line_width", "pass_index"), &MultiPassMaterial::get_pass_line_width);
 	ObjectTypeDB::bind_method(_MD("set_pass_depth_draw_mode", "pass_index", "mode"), &MultiPassMaterial::set_pass_depth_draw_mode);
 	ObjectTypeDB::bind_method(_MD("get_pass_depth_draw_mode", "pass_index"), &MultiPassMaterial::get_pass_depth_draw_mode);
+	ObjectTypeDB::bind_method(_MD("set_pass_depth_test_mode", "pass_index", "mode"), &MultiPassMaterial::set_pass_depth_test_mode);
+	ObjectTypeDB::bind_method(_MD("get_pass_depth_test_mode", "pass_index"), &MultiPassMaterial::get_pass_depth_test_mode);
 
 	ObjectTypeDB::bind_method(_MD("set_pass_count", "pass_count"), &MultiPassMaterial::set_pass_count);
 	ObjectTypeDB::bind_method(_MD("get_pass_count"), &MultiPassMaterial::get_pass_count);
@@ -955,6 +1010,7 @@ MultiPassMaterial::MultiPassMaterial() :Material(VisualServer::get_singleton()->
 	set_pass_flag(0, FLAG_COLOR_ARRAY_SRGB, false);
 
 	set_pass_depth_draw_mode(0, DEPTH_DRAW_OPAQUE_ONLY);
+	set_pass_depth_test_mode(0, DEPTH_TEST_MODE_LEQUAL);
 	set_pass_blend_mode(0, BLEND_MODE_MIX);
 	set_pass_line_width(0, 0.1f);
 }

@@ -246,6 +246,8 @@ class RasterizerGLES2 : public Rasterizer {
 		struct Pass {
 			bool flags[VS::MATERIAL_FLAG_MAX];
 
+			VS::MaterialDepthTestMode depth_test_mode;
+
 			VS::MaterialBlendMode blend_mode;
 			VS::MaterialDepthDrawMode depth_draw_mode;
 
@@ -277,6 +279,7 @@ class RasterizerGLES2 : public Rasterizer {
 				line_width = 1;
 				has_alpha = false;
 				depth_draw_mode = VS::MATERIAL_DEPTH_DRAW_OPAQUE_ONLY;
+				depth_test_mode = VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL;
 				blend_mode = VS::MATERIAL_BLEND_MODE_MIX;
 				shader_version = 0;
 				shader_cache = NULL;
@@ -1417,6 +1420,9 @@ public:
 
 	virtual void material_set_blend_mode(RID p_material, const int p_pass_index, VS::MaterialBlendMode p_mode);
 	virtual VS::MaterialBlendMode material_get_blend_mode(RID p_material, const int p_pass_index) const;
+
+	virtual void material_set_depth_test_mode(RID p_material, const int p_pass_index, VS::MaterialDepthTestMode p_depth_test_mode);
+	virtual VS::MaterialDepthTestMode material_get_depth_test_mode(RID p_material, const int p_pass_index) const;
 
 	virtual void material_set_line_width(RID p_material, const int p_pass_index, float p_line_width);
 	virtual float material_get_line_width(RID p_material, const int p_pass_index) const;

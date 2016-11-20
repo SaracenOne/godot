@@ -90,6 +90,8 @@ class RasterizerDummy : public Rasterizer {
 		struct Pass {
 			bool flags[VS::MATERIAL_FLAG_MAX];
 
+			VS::MaterialDepthTestMode depth_test_mode;
+
 			VS::MaterialBlendMode blend_mode;
 			VS::MaterialDepthDrawMode depth_draw_mode;
 
@@ -485,6 +487,9 @@ public:
 
 	virtual void material_set_blend_mode(RID p_material,const int p_pass_index,VS::MaterialBlendMode p_mode);
 	virtual VS::MaterialBlendMode material_get_blend_mode(RID p_material, const int p_pass_index) const;
+
+	virtual void material_set_depth_test_mode(RID p_material, const int p_pass_index, VS::MaterialDepthTestMode p_mode);
+	virtual VS::MaterialDepthTestMode material_get_depth_test_mode(RID p_material, const int p_pass_index) const;
 
 	virtual void material_set_line_width(RID p_material,const int p_pass_index,float p_line_width);
 	virtual float material_get_line_width(RID p_material, const int p_pass_index) const;

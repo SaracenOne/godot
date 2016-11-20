@@ -744,6 +744,9 @@ public:
 	virtual void material_set_blend_mode(RID p_material, const int p_pass, MaterialBlendMode p_mode);
 	virtual MaterialBlendMode material_get_blend_mode(RID p_material, const int p_pass) const;
 
+	virtual void material_set_depth_test_mode(RID p_material, const int p_pass, MaterialDepthTestMode p_mode);
+	virtual MaterialDepthTestMode material_get_depth_test_mode(RID p_material, const int p_depth_test_mode) const;
+
 	virtual void material_set_line_width(RID p_material, const int p_pass, float p_line_width);
 	virtual float material_get_line_width(RID p_material, const int p_pass) const;
 

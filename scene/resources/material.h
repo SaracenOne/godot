@@ -75,6 +75,17 @@ public:
 		DEPTH_DRAW_NEVER = VS::MATERIAL_DEPTH_DRAW_NEVER
 	};
 
+	enum DepthTestMode {
+		DEPTH_TEST_MODE_NEVER = VS::MATERIAL_DEPTH_TEST_MODE_NEVER,
+		DEPTH_TEST_MODE_LESS = VS::MATERIAL_DEPTH_TEST_MODE_LESS,
+		DEPTH_TEST_MODE_EQUAL = VS::MATERIAL_DEPTH_TEST_MODE_EQUAL,
+		DEPTH_TEST_MODE_LEQUAL = VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL,
+		DEPTH_TEST_MODE_GREATER = VS::MATERIAL_DEPTH_TEST_MODE_GREATER,
+		DEPTH_TEST_MODE_NOTEQUAL = VS::MATERIAL_DEPTH_TEST_MODE_NOTEQUAL,
+		DEPTH_TEST_MODE_GEQUAL = VS::MATERIAL_DEPTH_TEST_MODE_GEQUAL,
+		DEPTH_TEST_MODE_ALWAYS = VS::MATERIAL_DEPTH_TEST_MODE_ALWAYS
+	};
+
 protected:
 	RID material;
 
@@ -90,6 +101,9 @@ public:
 	virtual void set_depth_draw_mode(DepthDrawMode p_depth_draw_mode) = 0;
 	virtual DepthDrawMode get_depth_draw_mode() const = 0;
 
+	virtual void set_depth_test_mode(DepthTestMode p_depth_test_mode) = 0;
+	virtual DepthTestMode get_depth_test_mode() const = 0;
+
 	virtual void set_line_width(float p_width) = 0;
 	virtual float get_line_width() const = 0;
 
@@ -103,6 +117,8 @@ VARIANT_ENUM_CAST( Material::Flag );
 VARIANT_ENUM_CAST( Material::DepthDrawMode );
 
 VARIANT_ENUM_CAST( Material::BlendMode );
+VARIANT_ENUM_CAST( Material::DepthTestMode);
+
 
 class SinglePassMaterial : public Material {
 	OBJ_TYPE(SinglePassMaterial, Material);
@@ -115,6 +131,7 @@ private:
 	bool flags[VS::MATERIAL_FLAG_MAX];
 	float line_width;
 	DepthDrawMode depth_draw_mode;
+	DepthTestMode depth_test_mode;
 public:
 	void set_flag(Flag p_flag, bool p_enabled);
 	bool get_flag(Flag p_flag) const;
@@ -124,6 +141,9 @@ public:
 
 	void set_depth_draw_mode(DepthDrawMode p_depth_draw_mode);
 	DepthDrawMode get_depth_draw_mode() const;
+
+	void set_depth_test_mode(DepthTestMode p_depth_test_mode);
+	DepthTestMode get_depth_test_mode() const;
 
 	void set_line_width(float p_width);
 	float get_line_width() const;
@@ -279,6 +299,7 @@ class MultiPassMaterial : public Material {
 		bool flags[VS::MATERIAL_FLAG_MAX];
 		float line_width;
 		DepthDrawMode depth_draw_mode;
+		DepthTestMode depth_test_mode;
 	};
 
 
@@ -307,6 +328,9 @@ public:
 	void set_depth_draw_mode(DepthDrawMode p_depth_draw_mode);
 	DepthDrawMode get_depth_draw_mode() const;
 
+	void set_depth_test_mode(DepthTestMode p_depth_test_mode);
+	DepthTestMode get_depth_test_mode() const;
+
 	void set_line_width(float p_width);
 	float get_line_width() const;
 
@@ -319,6 +343,9 @@ public:
 
 	void set_pass_depth_draw_mode(const int p_pass_index, DepthDrawMode p_depth_draw_mode);
 	DepthDrawMode get_pass_depth_draw_mode(const int p_pass_index) const;
+
+	void set_pass_depth_test_mode(const int p_pass_index, DepthTestMode p_depth_test_mode);
+	DepthTestMode get_pass_depth_test_mode(const int p_pass_index) const;
 
 	void set_pass_line_width(const int p_pass_index, float p_width);
 	float get_pass_line_width(const int p_pass_index) const;
