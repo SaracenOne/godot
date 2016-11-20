@@ -88,7 +88,9 @@ protected:
 public:
 
 	void clear();
-	Error append_from_surface(const Ref<Mesh>& p_mesh, int p_surface);
+	Error append_from_surface(const Ref<Mesh>& p_mesh, int p_surface,
+		const Vector2& p_min=Vector2(0.0, 0.0), const Vector2& p_max=Vector2(1.0, 1.0));
+
 	Error create_from_surface(const Ref<Mesh>& p_mesh,int p_surface);
 	Error commit_to_surface(const Ref<Mesh>& p_mesh);
 

@@ -39,7 +39,8 @@ void MeshDataTool::clear() {
 	format=0;
 }
 
-Error MeshDataTool::append_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
+Error MeshDataTool::append_from_surface(const Ref<Mesh>& p_mesh,int p_surface,
+	const Vector2& p_min, const Vector2& p_max) {
 
 	ERR_FAIL_COND_V(p_mesh.is_null(),ERR_INVALID_PARAMETER);
 
@@ -50,6 +51,8 @@ Error MeshDataTool::append_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
 
 	uint32_t previous_vcount = vertices.size();
 	uint32_t previous_index = faces.size() * 3;
+
+	bool use_uv_scale = (p_min != Vector2(0.0, 0.0) && p_max != Vector2(1.0, 1.0));
 
 	Array arrays = p_mesh->surface_get_arrays(p_surface);
 	ERR_FAIL_COND_V( arrays.empty(), ERR_INVALID_PARAMETER );
@@ -151,7 +154,10 @@ Error MeshDataTool::append_from_surface(const Ref<Mesh>& p_mesh,int p_surface) {
 		if (ta.ptr())
 			v.tangent=Plane(ta[i*4+0],ta[i*4+1],ta[i*4+2],ta[i*4+3]);
 		if (uv.ptr())
-			v.uv=uv[i];
+		if (use_uv_scale)
+			v.uv = p_min+(uv[i]*p_max)*(Vector2(1.0, 1.0)-p_min);
+			else
+				v.uv=uv[i];
 		if (uv2.ptr())
 			v.uv2=uv2[i];
 		if (col.ptr())
@@ -660,7 +666,7 @@ void MeshDataTool::set_material(const Ref<Material> &p_material) {
 void MeshDataTool::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("clear"),&MeshDataTool::clear);
-	ObjectTypeDB::bind_method(_MD("append_from_surface","mesh","surface"),&MeshDataTool::append_from_surface);
+	ObjectTypeDB::bind_method(_MD("append_from_surface","mesh","surface","min","max"),&MeshDataTool::append_from_surface,DEFVAL(Vector2(0.0, 0.0)),DEFVAL(Vector2(1.0, 1.0)));
 	ObjectTypeDB::bind_method(_MD("create_from_surface","mesh","surface"),&MeshDataTool::create_from_surface);
 	ObjectTypeDB::bind_method(_MD("commit_to_surface","mesh"),&MeshDataTool::commit_to_surface);
 
