@@ -685,6 +685,13 @@ Variant GDScript::call(const StringName& p_method,const Variant** p_args,int p_a
 		top=top->_base;
 	}
 
+	// Workaround hack
+	if (p_method == "get_script" && p_argcount == 0)
+	{
+		r_error.error = Variant::CallError::CALL_OK;
+		return Ref<GDScript>(this);
+	}
+
 	//none found, regular
 
 	return Script::call(p_method,p_args,p_argcount,r_error);
