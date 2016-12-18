@@ -468,10 +468,6 @@ Vector3& Vector3::operator*=(real_t p_scalar) {
 	z *= p_scalar;
 #endif
 	return *this;
-	x*=p_scalar;
-	y*=p_scalar;
-	z*=p_scalar;
-	return *this;
 }
 
 _FORCE_INLINE_ Vector3 operator*(real_t p_scalar, const Vector3& p_vec) {
@@ -624,7 +620,7 @@ void Vector3::fast_normalize() {
 
 void Vector3::normalize() {
 
-	real_t l=length();
+	real_t l=length_squared();
 	if (l==0) {
 		x=y=z=0;
 	} else {
