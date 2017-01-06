@@ -84,6 +84,7 @@
 #include "scene/gui/graph_node.h"
 #include "scene/gui/graph_edit.h"
 #include "scene/gui/tool_button.h"
+#include "scene/gui/mask_container.h"
 #include "scene/resources/video_stream.h"
 #include "scene/2d/particles_2d.h"
 #include "scene/2d/path_2d.h"
@@ -363,6 +364,7 @@ void register_scene_types() {
 	ObjectTypeDB::register_type<VSplitContainer>();
 	ObjectTypeDB::register_type<GraphNode>();
 	ObjectTypeDB::register_type<GraphEdit>();
+	ObjectTypeDB::register_type<MaskContainer>();
 
 	OS::get_singleton()->yield(); //may take time to init
 

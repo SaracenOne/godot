@@ -147,6 +147,24 @@ public:
 	FUNC4(material_set_flag,RID,int,MaterialFlag,bool);
 	FUNC3RC(bool,material_get_flag,RID,int,MaterialFlag);
 
+	FUNC4(material_set_color_mask_bit,RID,int,MaterialColorMaskBit,bool);
+	FUNC3RC(bool, material_get_color_mask_bit,RID,int,MaterialColorMaskBit);
+
+	FUNC3(material_set_stencil_reference_value,RID,int,uint8_t);
+	FUNC2RC(uint8_t, material_get_stencil_reference_value,RID,int);
+
+	FUNC3(material_set_stencil_read_mask,RID,int,uint8_t);
+	FUNC2RC(uint8_t,material_get_stencil_read_mask,RID,int);
+
+	FUNC3(material_set_stencil_write_mask,RID,int,uint8_t);
+	FUNC2RC(uint8_t,material_get_stencil_write_mask,RID,int);
+
+	FUNC3(material_set_stencil_comparison,RID,int,MaterialStencilComparison);
+	FUNC2RC(MaterialStencilComparison,material_get_stencil_comparison,RID,int);
+
+	FUNC4(material_set_stencil_option,RID,int,MaterialStencilOperationOption,MaterialStencilOperation);
+	FUNC3RC(MaterialStencilOperation,material_get_stencil_option,RID,int,MaterialStencilOperationOption);
+
 	FUNC3(material_set_depth_draw_mode,RID,int,MaterialDepthDrawMode);
 	FUNC2RC(MaterialDepthDrawMode,material_get_depth_draw_mode,RID,int);
 
@@ -603,6 +621,7 @@ public:
 	//FUNC(canvas_item_set_rect,RID, const Rect2& p_rect);
 	FUNC2(canvas_item_set_transform,RID, const Matrix32& );
 	FUNC2(canvas_item_set_clip,RID, bool );
+	FUNC2(canvas_item_set_mask,RID, bool);
 	FUNC2(canvas_item_set_distance_field_mode,RID, bool );
 	FUNC3(canvas_item_set_custom_rect,RID, bool ,const Rect2&);
 	FUNC2(canvas_item_set_opacity,RID, float );

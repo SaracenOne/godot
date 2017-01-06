@@ -96,6 +96,7 @@ Error ContextGL_X11::initialize() {
 	    GLX_GREEN_SIZE, 1,
 	    GLX_BLUE_SIZE, 1,
 	    GLX_DEPTH_SIZE, 24,
+		GLX_STENCIL_SIZE, 8,
 	    None
 	};
 

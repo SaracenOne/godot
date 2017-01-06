@@ -208,15 +208,84 @@ public:
 		MATERIAL_DEPTH_DRAW_NEVER
 	};
 
-	virtual void material_set_depth_draw_mode(RID p_material, int p_pass, MaterialDepthDrawMode p_mode) = 0;
+	virtual void material_set_depth_draw_mode(RID p_material, int p_pass, MaterialDepthDrawMode p_mode)=0;
 	virtual MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material,int p_pass) const=0;
+
+	enum MaterialColorMaskBit {
+		MATERIAL_COLOR_MASK_BIT_R=0,
+		MATERIAL_COLOR_MASK_BIT_G,
+		MATERIAL_COLOR_MASK_BIT_B,
+		MATERIAL_COLOR_MASK_BIT_A,
+		MATERIAL_COLOR_MASK_BIT_COUNT
+	};
+
+	virtual void material_set_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit, bool p_enabled)=0;
+	virtual bool material_get_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit) const = 0;
+
+	enum MaterialAlphaTestComparison {
+		MATERIAL_ALPHA_TEST_COMPARISON_NEVER = 0,
+		MATERIAL_ALPHA_TEST_COMPARISON_ALWAYS,
+		MATERIAL_ALPHA_TEST_COMPARISON_LESS,
+		MATERIAL_ALPHA_TEST_COMPARISON_EQUAL,
+		MATERIAL_ALPHA_TEST_COMPARISON_LEQUAL,
+		MATERIAL_ALPHA_TEST_COMPARISON_GREATER,
+		MATERIAL_ALPHA_TEST_COMPARISON_NOTEQUAL,
+		MATERIAL_ALPHA_TEST_COMPARISON_GEQUAL,
+		MATERIAL_ALPHA_TEST_COMPARISON_COUNT
+	};
+
+	virtual void material_set_stencil_reference_value(RID p_material, int p_pass, uint8_t p_reference_value)=0;
+	virtual uint8_t material_get_stencil_reference_value(RID p_material, int p_pass) const=0;
+	virtual void material_set_stencil_read_mask(RID p_material, int p_pass, uint8_t p_read_mask)=0;
+	virtual uint8_t material_get_stencil_read_mask(RID p_material, int p_pass) const=0;
+	virtual void material_set_stencil_write_mask(RID p_material, int p_pass, uint8_t p_write_mask)=0;
+	virtual uint8_t material_get_stencil_write_mask(RID p_material, int p_pass) const=0;
+
+	enum MaterialStencilComparison {
+		MATERIAL_STENCIL_COMPARISON_NEVER=0,
+		MATERIAL_STENCIL_COMPARISON_LESS,
+		MATERIAL_STENCIL_COMPARISON_EQUAL,
+		MATERIAL_STENCIL_COMPARISON_LEQUAL,
+		MATERIAL_STENCIL_COMPARISON_GREATER,
+		MATERIAL_STENCIL_COMPARISON_NOTEQUAL,
+		MATERIAL_STENCIL_COMPARISON_GEQUAL,
+		MATERIAL_STENCIL_COMPARISON_ALWAYS,
+		MATERIAL_STENCIL_COMPARISON_COUNT
+	};
+
+	virtual void material_set_stencil_comparison(RID p_material, int p_pass, MaterialStencilComparison p_option)=0;
+	virtual MaterialStencilComparison material_get_stencil_comparison(RID p_material, int p_pass) const=0;
+
+	enum MaterialStencilOperation {
+		MATERIAL_STENCIL_OP_KEEP=0,
+		MATERIAL_STENCIL_OP_ZERO,
+		MATERIAL_STENCIL_OP_REPLACE,
+		MATERIAL_STENCIL_OP_INCREMENT_SATURATE,
+		MATERIAL_STENCIL_OP_INCREMENT_WRAP,
+		MATERIAL_STENCIL_OP_DECREMENT_SATURATE,
+		MATERIAL_STENCIL_OP_DECREMENT_WRAP,
+		MATERIAL_STENCIL_OP_INVERT,
+		MATERIAL_STENCIL_OP_COUNT
+	};
+
+	enum MaterialStencilOperationOption {
+		MATERIAL_STENCIL_OP_OPTION_SFAIL = 0,
+		MATERIAL_STENCIL_OP_OPTION_DPFAIL,
+		MATERIAL_STENCIL_OP_OPTION_DPPASS,
+		MATERIAL_STENCIL_OP_OPTION_COUNT
+	};
+
+	virtual void material_set_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option, MaterialStencilOperation p_operation)=0;
+	virtual MaterialStencilOperation material_get_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option) const=0;
+
 
 	enum MaterialBlendMode {
 		MATERIAL_BLEND_MODE_MIX, //default
 		MATERIAL_BLEND_MODE_ADD,
 		MATERIAL_BLEND_MODE_SUB,
 		MATERIAL_BLEND_MODE_MUL,
-		MATERIAL_BLEND_MODE_PREMULT_ALPHA
+		MATERIAL_BLEND_MODE_PREMULT_ALPHA,
+		MATERIAL_BLEND_MODE_NO_BLEND
 	};
 
 
@@ -1041,6 +1110,7 @@ public:
 
 	virtual void canvas_item_set_transform(RID p_item, const Matrix32& p_transform)=0;
 	virtual void canvas_item_set_clip(RID p_item, bool p_clip)=0;
+	virtual void canvas_item_set_mask(RID p_item, bool p_use_mask)=0;
 	virtual void canvas_item_set_distance_field_mode(RID p_item, bool p_enable)=0;
 	virtual void canvas_item_set_custom_rect(RID p_item, bool p_custom_rect,const Rect2& p_rect=Rect2())=0;
 	virtual void canvas_item_set_opacity(RID p_item, float p_opacity)=0;
@@ -1236,6 +1306,13 @@ VARIANT_ENUM_CAST( VisualServer::TextureFlags );
 VARIANT_ENUM_CAST( VisualServer::ShaderMode );
 VARIANT_ENUM_CAST( VisualServer::MaterialFlag );
 VARIANT_ENUM_CAST( VisualServer::MaterialBlendMode );
+VARIANT_ENUM_CAST( VisualServer::MaterialDepthDrawMode );
+VARIANT_ENUM_CAST( VisualServer::MaterialDepthTestMode );
+VARIANT_ENUM_CAST( VisualServer::MaterialColorMaskBit );
+VARIANT_ENUM_CAST( VisualServer::MaterialAlphaTestComparison );
+VARIANT_ENUM_CAST( VisualServer::MaterialStencilOperationOption );
+VARIANT_ENUM_CAST( VisualServer::MaterialStencilOperation );
+VARIANT_ENUM_CAST( VisualServer::MaterialStencilComparison );
 VARIANT_ENUM_CAST( VisualServer::ParticleVariable );
 VARIANT_ENUM_CAST( VisualServer::ArrayType );
 VARIANT_ENUM_CAST( VisualServer::ArrayFormat );

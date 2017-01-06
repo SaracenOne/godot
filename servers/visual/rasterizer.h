@@ -230,6 +230,29 @@ public:
 	virtual void material_set_flag(RID p_material, const int p_pass_index, VS::MaterialFlag p_flag, bool p_enabled)=0;
 	virtual bool material_get_flag(RID p_material, const int p_pass_index, VS::MaterialFlag p_flag) const=0;
 
+	virtual void material_set_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit, bool p_enabled)=0;
+	virtual bool material_get_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit) const=0;
+
+	virtual void material_set_alpha_test_comparison(RID p_material, int p_pass, VS::MaterialAlphaTestComparison p_alpha_test_comparison)=0;
+	virtual VS::MaterialAlphaTestComparison material_get_alpha_test_comparison(RID p_material, int p_pass) const=0;
+	virtual void material_set_alpha_test_value(RID p_material, int p_pass, float p_value)=0;
+	virtual float material_get_alpha_test_value(RID p_material, int p_pass) const=0;
+
+	virtual void material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value)=0;
+	virtual uint8_t material_get_stencil_reference_value(RID p_material, const int p_pass_index) const=0;
+
+	virtual void material_set_stencil_read_mask(RID p_material, const int p_pass_index, uint8_t p_read_mask)=0;
+	virtual uint8_t material_get_stencil_read_mask(RID p_material, const int p_pass_index) const=0;
+
+	virtual void material_set_stencil_write_mask(RID p_material, const int p_pass_index, uint8_t p_write_mask)=0;
+	virtual uint8_t material_get_stencil_write_mask(RID p_material, const int p_pass_index) const=0;
+
+	virtual void material_set_stencil_comparison(RID p_material, const int p_pass_index, VS::MaterialStencilComparison p_comparison)=0;
+	virtual VS::MaterialStencilComparison material_get_stencil_comparison(RID p_material, const int p_pass_index) const=0;
+
+	virtual void material_set_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option, VS::MaterialStencilOperation p_operation)=0;
+	virtual VS::MaterialStencilOperation material_get_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option) const=0;
+
 	virtual void material_set_depth_draw_mode(RID p_material, const int p_pass_index, VS::MaterialDepthDrawMode p_mode)=0;
 	virtual VS::MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material, const int p_pass_index) const=0;
 
@@ -785,6 +808,7 @@ public:
 
 		Matrix32 xform;
 		bool clip;
+		bool mask;
 		bool visible;
 		bool ontop;
 		VS::MaterialBlendMode blend_mode;
@@ -811,6 +835,7 @@ public:
 		ViewportRender *vp_render;
 		bool distance_field;
 		bool light_masked;
+		uint8_t stencil_id;
 
 		Rect2 global_rect_cache;
 
@@ -937,8 +962,8 @@ public:
 			return rect;
 		}
 
-		void clear() { for (int i=0;i<commands.size();i++) memdelete( commands[i] ); commands.clear(); clip=false; rect_dirty=true; final_clip_owner=NULL;  material_owner=NULL; light_masked=false; }
-		CanvasItem() { light_mask=1; vp_render=NULL; next=NULL; final_clip_owner=NULL; clip=false; final_opacity=1;  blend_mode=VS::MATERIAL_BLEND_MODE_MIX; visible=true; rect_dirty=true; custom_rect=false; ontop=true; material_owner=NULL; material=NULL; copy_back_buffer=NULL; distance_field=false; light_masked=false; }
+		void clear() { for (int i=0;i<commands.size();i++) memdelete( commands[i] ); commands.clear(); clip=false; mask=false; rect_dirty=true; final_clip_owner=NULL;  material_owner=NULL; light_masked=false; stencil_id=0x00; }
+		CanvasItem() { light_mask=1; vp_render=NULL; next=NULL; final_clip_owner=NULL; clip=false; mask=false; final_opacity=1;  blend_mode=VS::MATERIAL_BLEND_MODE_MIX; visible=true; rect_dirty=true; custom_rect=false; ontop=true; material_owner=NULL; material=NULL; copy_back_buffer=NULL; distance_field=false; light_masked=false; stencil_id=0x00; }
 		virtual ~CanvasItem() { clear(); if (copy_back_buffer) memdelete(copy_back_buffer); }
 	};
 
@@ -1054,6 +1079,8 @@ public:
 
 	Rasterizer();
 	virtual ~Rasterizer() {}
+
+	virtual int get_stencil_bits()=0;
 };
 
 

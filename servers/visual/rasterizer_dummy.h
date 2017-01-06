@@ -95,6 +95,20 @@ class RasterizerDummy : public Rasterizer {
 			VS::MaterialBlendMode blend_mode;
 			VS::MaterialDepthDrawMode depth_draw_mode;
 
+			// Color Mask
+			bool color_bits[VS::MATERIAL_COLOR_MASK_BIT_COUNT];
+
+			// Alpha Test
+			VS::MaterialAlphaTestComparison alpha_test_comparison;
+			float alpha_test_value;
+
+			// Stencil
+			uint8_t stencil_reference_value;
+			uint8_t stencil_read_mask;
+			uint8_t stencil_write_mask;
+			VS::MaterialStencilComparison stencil_comparision_function;
+			VS::MaterialStencilOperation stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_COUNT];
+
 			float line_width;
 			bool has_alpha;
 
@@ -123,7 +137,23 @@ class RasterizerDummy : public Rasterizer {
 				line_width = 1;
 				has_alpha = false;
 				depth_draw_mode = VS::MATERIAL_DEPTH_DRAW_OPAQUE_ONLY;
+				depth_test_mode = VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL;
 				blend_mode = VS::MATERIAL_BLEND_MODE_MIX;
+
+				for (int i = 0; i<VS::MATERIAL_COLOR_MASK_BIT_COUNT; i++)
+					color_bits[i] = true;
+
+				alpha_test_comparison = VS::MATERIAL_ALPHA_TEST_COMPARISON_ALWAYS;
+				alpha_test_value = 0.0;
+
+				stencil_reference_value = 0xff;
+				stencil_read_mask = 0xff;
+				stencil_write_mask = 0xff;
+				stencil_comparision_function = VS::MATERIAL_STENCIL_COMPARISON_ALWAYS;
+				stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_SFAIL] = VS::MATERIAL_STENCIL_OP_KEEP;
+				stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_DPFAIL] = VS::MATERIAL_STENCIL_OP_KEEP;
+				stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_DPPASS] = VS::MATERIAL_STENCIL_OP_KEEP;
+
 				shader_version = 0;
 				shader_cache = NULL;
 				last_pass = 0;
@@ -481,6 +511,29 @@ public:
 
 	virtual void material_set_flag(RID p_material, const int p_pass_index, VS::MaterialFlag p_flag, bool p_enabled);
 	virtual bool material_get_flag(RID p_material, const int p_pass_index, VS::MaterialFlag p_flag) const;
+
+	virtual void material_set_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit, bool p_enabled);
+	virtual bool material_get_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit) const;
+
+	virtual void material_set_alpha_test_comparison(RID p_material, int p_pass, VS::MaterialAlphaTestComparison p_alpha_test_comparison);
+	virtual VS::MaterialAlphaTestComparison material_get_alpha_test_comparison(RID p_material, int p_pass) const;
+	virtual void material_set_alpha_test_value(RID p_material, int p_pass, float p_value);
+	virtual float material_get_alpha_test_value(RID p_material, int p_pass) const;
+
+	virtual void material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value);
+	virtual uint8_t material_get_stencil_reference_value(RID p_material, const int p_pass_index) const;
+
+	virtual void material_set_stencil_read_mask(RID p_material, const int p_pass_index, uint8_t p_read_mask);
+	virtual uint8_t material_get_stencil_read_mask(RID p_material, const int p_pass_index) const;
+
+	virtual void material_set_stencil_write_mask(RID p_material, const int p_pass_index, uint8_t p_write_mask);
+	virtual uint8_t material_get_stencil_write_mask(RID p_material, const int p_pass_index) const;
+
+	virtual void material_set_stencil_comparison(RID p_material, const int p_pass_index, VS::MaterialStencilComparison p_comparison);
+	virtual VS::MaterialStencilComparison material_get_stencil_comparison(RID p_material, const int p_pass_index) const;
+
+	virtual void material_set_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option, VS::MaterialStencilOperation p_operation);
+	virtual VS::MaterialStencilOperation material_get_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option) const;
 
 	virtual void material_set_depth_draw_mode(RID p_material, const int p_pass_index, VS::MaterialDepthDrawMode p_mode);
 	virtual VS::MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material, const int p_pass_index) const;

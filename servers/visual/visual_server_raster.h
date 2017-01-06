@@ -665,7 +665,7 @@ class VisualServerRaster : public VisualServer {
 	void _render_camera(Viewport *p_viewport,Camera *p_camera, Scenario *p_scenario);
 	static void _render_canvas_item_viewport(VisualServer* p_self,void *p_vp,const Rect2& p_rect);
 	void _render_canvas_item_tree(CanvasItem *p_canvas_item, const Matrix32& p_transform, const Rect2& p_clip_rect, const Color &p_modulate, Rasterizer::CanvasLight *p_lights);
-	void _render_canvas_item(CanvasItem *p_canvas_item, const Matrix32& p_transform, const Rect2& p_clip_rect, float p_opacity, int p_z, Rasterizer::CanvasItem **z_list, Rasterizer::CanvasItem **z_last_list, CanvasItem *p_canvas_clip, CanvasItem *p_material_owner);
+	void _render_canvas_item(CanvasItem *p_canvas_item, const Matrix32& p_transform, const Rect2& p_clip_rect, uint8_t &p_stencil_id, float p_opacity, int p_z, Rasterizer::CanvasItem **z_list, Rasterizer::CanvasItem **z_last_list, CanvasItem *p_canvas_clip, CanvasItem *p_material_owner);
 	void _render_canvas(Canvas *p_canvas, const Matrix32 &p_transform, Rasterizer::CanvasLight *p_lights, Rasterizer::CanvasLight *p_masked_lights);
 	void _light_mask_canvas_items(int p_z,Rasterizer::CanvasItem *p_canvas_item,Rasterizer::CanvasLight *p_masked_lights);
 
@@ -740,6 +740,22 @@ public:
 
 	virtual void material_set_flag(RID p_material, const int p_pass, MaterialFlag p_flag, bool p_enabled);
 	virtual bool material_get_flag(RID p_material, const int p_pass, MaterialFlag p_flag) const;
+
+	virtual void material_set_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit, bool p_enabled);
+	virtual bool material_get_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit) const;
+
+	virtual void material_set_stencil_reference_value(RID p_material, int p_pass, uint8_t p_reference_value);
+	virtual uint8_t material_get_stencil_reference_value(RID p_material, int p_pass) const;
+	virtual void material_set_stencil_read_mask(RID p_material, int p_pass, uint8_t p_read_mask);
+	virtual uint8_t material_get_stencil_read_mask(RID p_material, int p_pass) const;
+	virtual void material_set_stencil_write_mask(RID p_material, int p_pass, uint8_t p_write_mask);
+	virtual uint8_t material_get_stencil_write_mask(RID p_material, int p_pass) const;
+
+	virtual void material_set_stencil_comparison(RID p_material, int p_pass, MaterialStencilComparison p_comparison);
+	virtual MaterialStencilComparison material_get_stencil_comparison(RID p_material, int p_pass) const;
+
+	virtual void material_set_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option, MaterialStencilOperation p_operation);
+	virtual MaterialStencilOperation material_get_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option) const;
 
 	virtual void material_set_depth_draw_mode(RID p_material, const int p_pass, MaterialDepthDrawMode p_mode);
 	virtual MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material, const int p_pass) const;
@@ -1198,6 +1214,7 @@ public:
 	//virtual void canvas_item_set_rect(RID p_item, const Rect2& p_rect);
 	virtual void canvas_item_set_transform(RID p_item, const Matrix32& p_transform);
 	virtual void canvas_item_set_clip(RID p_item, bool p_clip);
+	virtual void canvas_item_set_mask(RID p_item, bool p_mask);
 	virtual void canvas_item_set_distance_field_mode(RID p_item, bool p_enable);
 	virtual void canvas_item_set_custom_rect(RID p_item, bool p_custom_rect,const Rect2& p_rect=Rect2());
 	virtual void canvas_item_set_opacity(RID p_item, float p_opacity);

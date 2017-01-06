@@ -380,6 +380,22 @@ void VisualServer::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("material_set_line_width"),&VisualServer::material_set_line_width);
 	ObjectTypeDB::bind_method(_MD("material_get_line_width"),&VisualServer::material_get_line_width);
 
+	ObjectTypeDB::bind_method(_MD("material_set_depth_test_mode"),&VisualServer::material_set_depth_test_mode);
+	ObjectTypeDB::bind_method(_MD("material_get_depth_test_mode"),&VisualServer::material_get_depth_test_mode);
+
+	ObjectTypeDB::bind_method(_MD("material_set_color_mask_bit"), &VisualServer::material_set_color_mask_bit);
+	ObjectTypeDB::bind_method(_MD("material_get_color_mask_bit"), &VisualServer::material_get_color_mask_bit);
+
+	ObjectTypeDB::bind_method(_MD("material_set_stencil_reference_value"), &VisualServer::material_set_stencil_reference_value);
+	ObjectTypeDB::bind_method(_MD("material_get_stencil_reference_value"), &VisualServer::material_get_stencil_reference_value);
+	ObjectTypeDB::bind_method(_MD("material_set_stencil_read_mask"), &VisualServer::material_set_stencil_read_mask);
+	ObjectTypeDB::bind_method(_MD("material_get_stencil_read_mask"), &VisualServer::material_get_stencil_read_mask);
+	ObjectTypeDB::bind_method(_MD("material_set_stencil_write_mask"), &VisualServer::material_set_stencil_write_mask);
+	ObjectTypeDB::bind_method(_MD("material_get_stencil_write_mask"), &VisualServer::material_get_stencil_write_mask);
+	ObjectTypeDB::bind_method(_MD("material_set_stencil_comparison"), &VisualServer::material_set_stencil_comparison);
+	ObjectTypeDB::bind_method(_MD("material_get_stencil_comparison"), &VisualServer::material_get_stencil_comparison);
+	ObjectTypeDB::bind_method(_MD("material_set_stencil_option"), &VisualServer::material_set_stencil_option);
+	ObjectTypeDB::bind_method(_MD("material_get_stencil_option"), &VisualServer::material_get_stencil_option);
 
 	ObjectTypeDB::bind_method(_MD("mesh_create"),&VisualServer::mesh_create);
 	ObjectTypeDB::bind_method(_MD("mesh_add_surface"),&VisualServer::mesh_add_surface, DEFVAL(Array()), DEFVAL(false));
@@ -526,6 +542,7 @@ void VisualServer::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("canvas_item_set_transform"),&VisualServer::canvas_item_set_transform);
 	ObjectTypeDB::bind_method(_MD("canvas_item_set_custom_rect"),&VisualServer::canvas_item_set_custom_rect);
 	ObjectTypeDB::bind_method(_MD("canvas_item_set_clip"),&VisualServer::canvas_item_set_clip);
+	ObjectTypeDB::bind_method(_MD("canvas_item_set_mask"),&VisualServer::canvas_item_set_mask);
 	ObjectTypeDB::bind_method(_MD("canvas_item_set_opacity"),&VisualServer::canvas_item_set_opacity);
 	ObjectTypeDB::bind_method(_MD("canvas_item_get_opacity"),&VisualServer::canvas_item_get_opacity);
 	ObjectTypeDB::bind_method(_MD("canvas_item_set_self_opacity"),&VisualServer::canvas_item_set_self_opacity);
@@ -599,6 +616,33 @@ void VisualServer::_bind_methods() {
 	BIND_CONSTANT( MATERIAL_FLAG_UNSHADED );
 	BIND_CONSTANT( MATERIAL_FLAG_ONTOP );
 	BIND_CONSTANT( MATERIAL_FLAG_MAX );
+
+	BIND_CONSTANT( MATERIAL_STENCIL_COMPARISON_NEVER );
+	BIND_CONSTANT( MATERIAL_STENCIL_COMPARISON_LESS );
+	BIND_CONSTANT( MATERIAL_STENCIL_COMPARISON_EQUAL );
+	BIND_CONSTANT( MATERIAL_STENCIL_COMPARISON_LEQUAL );
+	BIND_CONSTANT( MATERIAL_STENCIL_COMPARISON_GREATER );
+	BIND_CONSTANT( MATERIAL_STENCIL_COMPARISON_NOTEQUAL );
+	BIND_CONSTANT( MATERIAL_STENCIL_COMPARISON_GEQUAL );
+	BIND_CONSTANT( MATERIAL_STENCIL_COMPARISON_ALWAYS );
+
+	BIND_CONSTANT( MATERIAL_STENCIL_OP_KEEP );
+	BIND_CONSTANT( MATERIAL_STENCIL_OP_ZERO );
+	BIND_CONSTANT( MATERIAL_STENCIL_OP_REPLACE );
+	BIND_CONSTANT( MATERIAL_STENCIL_OP_INCREMENT_SATURATE );
+	BIND_CONSTANT( MATERIAL_STENCIL_OP_DECREMENT_SATURATE );
+	BIND_CONSTANT( MATERIAL_STENCIL_OP_INVERT );
+	BIND_CONSTANT( MATERIAL_STENCIL_OP_INCREMENT_WRAP );
+	BIND_CONSTANT( MATERIAL_STENCIL_OP_DECREMENT_WRAP );
+
+	BIND_CONSTANT( MATERIAL_DEPTH_TEST_MODE_NEVER );
+	BIND_CONSTANT( MATERIAL_DEPTH_TEST_MODE_LESS );
+	BIND_CONSTANT( MATERIAL_DEPTH_TEST_MODE_EQUAL );
+	BIND_CONSTANT( MATERIAL_DEPTH_TEST_MODE_LEQUAL );
+	BIND_CONSTANT( MATERIAL_DEPTH_TEST_MODE_GREATER );
+	BIND_CONSTANT( MATERIAL_DEPTH_TEST_MODE_NOTEQUAL );
+	BIND_CONSTANT( MATERIAL_DEPTH_TEST_MODE_GEQUAL );
+	BIND_CONSTANT( MATERIAL_DEPTH_TEST_MODE_ALWAYS );
 
 	BIND_CONSTANT( MATERIAL_BLEND_MODE_MIX );
 	BIND_CONSTANT( MATERIAL_BLEND_MODE_ADD );

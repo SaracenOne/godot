@@ -122,6 +122,15 @@ public:
 	CanvasItemShader() : Shader(MODE_CANVAS_ITEM) {};
 };
 
+class PostProcessShader : public Shader {
+
+	OBJ_TYPE(PostProcessShader, Shader);
+
+public:
+
+	PostProcessShader() : Shader(MODE_POST_PROCESS) {};
+};
+
 
 
 class ResourceFormatLoaderShader : public ResourceFormatLoader {

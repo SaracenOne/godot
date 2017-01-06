@@ -222,6 +222,66 @@ void VisualServerRaster::material_set_flag(RID p_material, const int p_pass, Mat
 	rasterizer->material_set_flag(p_material,p_pass,p_flag, p_enabled);
 }
 
+void VisualServerRaster::material_set_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit, bool p_enabled) {
+	VS_CHANGED;
+	rasterizer->material_set_color_mask_bit(p_material, p_pass, p_color_bit, p_enabled);
+}
+
+bool VisualServerRaster::material_get_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit) const {
+
+	return rasterizer->material_get_color_mask_bit(p_material, p_pass, p_color_bit);
+}
+
+void VisualServerRaster::material_set_stencil_reference_value(RID p_material, int p_pass, uint8_t p_reference_value) {
+	VS_CHANGED;
+	rasterizer->material_set_stencil_reference_value(p_material, p_pass, p_reference_value);
+}
+
+uint8_t VisualServerRaster::material_get_stencil_reference_value(RID p_material, int p_pass) const {
+
+	return rasterizer->material_get_stencil_reference_value(p_material, p_pass);
+}
+
+void VisualServerRaster::material_set_stencil_read_mask(RID p_material, int p_pass, uint8_t p_read_mask) {
+	VS_CHANGED;
+	rasterizer->material_set_stencil_read_mask(p_material, p_pass, p_read_mask);
+}
+
+uint8_t VisualServerRaster::material_get_stencil_read_mask(RID p_material, int p_pass) const {
+
+	return rasterizer->material_get_stencil_read_mask(p_material, p_pass);
+}
+
+void VisualServerRaster::material_set_stencil_write_mask(RID p_material, int p_pass, uint8_t p_write_mask) {
+	VS_CHANGED;
+	rasterizer->material_set_stencil_write_mask(p_material, p_pass, p_write_mask);
+}
+
+uint8_t VisualServerRaster::material_get_stencil_write_mask(RID p_material, int p_pass) const {
+
+	return rasterizer->material_get_stencil_write_mask(p_material, p_pass);
+}
+
+void VisualServerRaster::material_set_stencil_comparison(RID p_material, int p_pass, MaterialStencilComparison p_comparison) {
+	VS_CHANGED;
+	rasterizer->material_set_stencil_comparison(p_material, p_pass, p_comparison);
+}
+
+VS::MaterialStencilComparison VisualServerRaster::material_get_stencil_comparison(RID p_material, int p_pass) const {
+
+	return rasterizer->material_get_stencil_comparison(p_material, p_pass);
+}
+
+void VisualServerRaster::material_set_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option, MaterialStencilOperation p_operation) {
+	VS_CHANGED;
+	rasterizer->material_set_stencil_option(p_material, p_pass, p_option, p_operation);
+}
+
+VS::MaterialStencilOperation VisualServerRaster::material_get_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option) const {
+	
+	return rasterizer->material_get_stencil_option(p_material, p_pass, p_option);
+}
+
 void VisualServerRaster::material_set_depth_draw_mode(RID p_material, const int p_pass, MaterialDepthDrawMode p_mode) {
 
 	VS_CHANGED;
@@ -251,7 +311,7 @@ VS::MaterialBlendMode VisualServerRaster::material_get_blend_mode(RID p_material
 
 void VisualServerRaster::material_set_depth_test_mode(RID p_material,const int p_pass,MaterialDepthTestMode p_mode) {
 	VS_CHANGED;
-	rasterizer->material_set_depth_test_mode(p_material, p_pass, p_mode);
+	rasterizer->material_set_depth_test_mode(p_material,p_pass,p_mode);
 }
 VS::MaterialDepthTestMode VisualServerRaster::material_get_depth_test_mode(RID p_material,const int p_pass) const {
 
@@ -3639,6 +3699,14 @@ void VisualServerRaster::canvas_item_set_clip(RID p_item, bool p_clip) {
 	canvas_item->clip=p_clip;
 }
 
+void VisualServerRaster::canvas_item_set_mask(RID p_item, bool p_mask) {
+	VS_CHANGED;
+	CanvasItem *canvas_item = canvas_item_owner.get(p_item);
+	ERR_FAIL_COND(!canvas_item);
+
+	canvas_item->mask = p_mask;
+}
+
 void VisualServerRaster::canvas_item_set_distance_field_mode(RID p_item, bool p_distance_field) {
 	VS_CHANGED;
 	CanvasItem *canvas_item = canvas_item_owner.get( p_item );
@@ -7000,8 +7068,8 @@ void VisualServerRaster::_render_canvas_item_tree(CanvasItem *p_canvas_item, con
 		z_last_list[i]=NULL;
 	}
 
-
-	_render_canvas_item(p_canvas_item,p_transform,p_clip_rect,1.0,0,z_list,z_last_list,NULL,NULL);
+	uint8_t stencil_id = 0x00;
+	_render_canvas_item(p_canvas_item,p_transform,p_clip_rect,stencil_id,1.0,0,z_list,z_last_list,NULL,NULL);
 
 	for(int i=0;i<z_range;i++) {
 		if (!z_list[i])
@@ -7022,7 +7090,7 @@ void VisualServerRaster::_render_canvas_item_viewport(VisualServer* p_self,void 
 }
 
 
-void VisualServerRaster::_render_canvas_item(CanvasItem *p_canvas_item,const Matrix32& p_transform,const Rect2& p_clip_rect, float p_opacity,int p_z,Rasterizer::CanvasItem **z_list,Rasterizer::CanvasItem **z_last_list,CanvasItem *p_canvas_clip,CanvasItem *p_material_owner) {
+void VisualServerRaster::_render_canvas_item(CanvasItem *p_canvas_item,const Matrix32& p_transform,const Rect2& p_clip_rect,uint8_t &p_stencil_id,float p_opacity,int p_z,Rasterizer::CanvasItem **z_list,Rasterizer::CanvasItem **z_last_list,CanvasItem *p_canvas_clip,CanvasItem *p_material_owner) {
 
 	CanvasItem *ci = p_canvas_item;
 
@@ -7105,11 +7173,17 @@ void VisualServerRaster::_render_canvas_item(CanvasItem *p_canvas_item,const Mat
 	else
 		p_z=ci->z;
 
+	if (ci->mask)
+		p_stencil_id++;
+
+	// Assign stencil ID
+	ci->stencil_id = p_stencil_id;
+
 	for(int i=0;i<child_item_count;i++) {
 
 		if (child_items[i]->ontop)
 			continue;
-		_render_canvas_item(child_items[i],xform,p_clip_rect,opacity,p_z,z_list,z_last_list,(CanvasItem*)ci->final_clip_owner,p_material_owner);
+		_render_canvas_item(child_items[i],xform,p_clip_rect,p_stencil_id,opacity,p_z,z_list,z_last_list,(CanvasItem*)ci->final_clip_owner,p_material_owner);
 	}
 
 	if (ci->copy_back_buffer) {
@@ -7146,9 +7220,11 @@ void VisualServerRaster::_render_canvas_item(CanvasItem *p_canvas_item,const Mat
 
 		if (!child_items[i]->ontop)
 			continue;
-		_render_canvas_item(child_items[i],xform,p_clip_rect,opacity,p_z,z_list,z_last_list,(CanvasItem*)ci->final_clip_owner,p_material_owner);
+		_render_canvas_item(child_items[i],xform,p_clip_rect,p_stencil_id,opacity,p_z,z_list,z_last_list,(CanvasItem*)ci->final_clip_owner,p_material_owner);
 	}
 
+	if (ci->mask)
+		p_stencil_id--;
 }
 
 void VisualServerRaster::_light_mask_canvas_items(int p_z,Rasterizer::CanvasItem *p_canvas_item,Rasterizer::CanvasLight *p_masked_lights) {
@@ -7204,8 +7280,9 @@ void VisualServerRaster::_render_canvas(Canvas *p_canvas,const Matrix32 &p_trans
 			z_list[i]=NULL;
 			z_last_list[i]=NULL;
 		}
+		uint8_t stencil_id = 0x00;
 		for(int i=0;i<l;i++) {
-			_render_canvas_item(ci[i].item,p_transform,clip_rect,1.0,0,z_list,z_last_list,NULL,NULL);
+			_render_canvas_item(ci[i].item,p_transform,clip_rect,stencil_id,1.0,0,z_list,z_last_list,NULL,NULL);
 		}
 
 		for(int i=0;i<z_range;i++) {

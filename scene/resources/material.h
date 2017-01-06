@@ -65,6 +65,7 @@ public:
 		BLEND_MODE_ADD = VS::MATERIAL_BLEND_MODE_ADD,
 		BLEND_MODE_SUB = VS::MATERIAL_BLEND_MODE_SUB,
 		BLEND_MODE_PREMULT_ALPHA = VS::MATERIAL_BLEND_MODE_PREMULT_ALPHA,
+		BLEND_MODE_NO_BLEND = VS::MATERIAL_BLEND_MODE_NO_BLEND,
 
 	};
 
@@ -85,6 +86,46 @@ public:
 		DEPTH_TEST_MODE_GEQUAL = VS::MATERIAL_DEPTH_TEST_MODE_GEQUAL,
 		DEPTH_TEST_MODE_ALWAYS = VS::MATERIAL_DEPTH_TEST_MODE_ALWAYS
 	};
+
+	enum ColorMaskBit {
+		COLOR_MASK_BIT_R = VS::MATERIAL_COLOR_MASK_BIT_R,
+		COLOR_MASK_BIT_G = VS::MATERIAL_COLOR_MASK_BIT_G,
+		COLOR_MASK_BIT_B = VS::MATERIAL_COLOR_MASK_BIT_B,
+		COLOR_MASK_BIT_A = VS::MATERIAL_COLOR_MASK_BIT_A,
+		COLOR_MASK_BIT_COUNT = VS::MATERIAL_COLOR_MASK_BIT_COUNT
+	};
+
+	enum StencilComparison {
+		STENCIL_COMPARISON_NEVER = VS::MATERIAL_STENCIL_COMPARISON_NEVER,
+		STENCIL_COMPARISON_LESS = VS::MATERIAL_STENCIL_COMPARISON_LESS,
+		STENCIL_COMPARISON_EQUAL = VS::MATERIAL_STENCIL_COMPARISON_EQUAL,
+		STENCIL_COMPARISON_LEQUAL = VS::MATERIAL_STENCIL_COMPARISON_LEQUAL,
+		STENCIL_COMPARISON_GREATER = VS::MATERIAL_STENCIL_COMPARISON_GREATER,
+		STENCIL_COMPARISON_NOTEQUAL = VS::MATERIAL_STENCIL_COMPARISON_NOTEQUAL,
+		STENCIL_COMPARISON_GEQUAL = VS::MATERIAL_STENCIL_COMPARISON_GEQUAL,
+		STENCIL_COMPARISON_ALWAYS = VS::MATERIAL_STENCIL_COMPARISON_ALWAYS,
+		STENCIL_COMPARISON_COUNT = VS::MATERIAL_STENCIL_COMPARISON_COUNT
+	};
+
+	enum StencilOperation {
+		STENCIL_OPERATION_KEEP = VS::MATERIAL_STENCIL_OP_KEEP,
+		STENCIL_OPERATION_ZERO = VS::MATERIAL_STENCIL_OP_ZERO,
+		STENCIL_OPERATION_REPLACE = VS::MATERIAL_STENCIL_OP_REPLACE,
+		STENCIL_OPERATION_INCREMENT_SATURATE = VS::MATERIAL_STENCIL_OP_INCREMENT_SATURATE,
+		STENCIL_OPERATION_INCREMENT_WRAP = VS::MATERIAL_STENCIL_OP_INCREMENT_WRAP,
+		STENCIL_OPERATION_DECREMENT_SATURATE = VS::MATERIAL_STENCIL_OP_DECREMENT_SATURATE,
+		STENCIL_OPERATION_DECREMENT_WRAP = VS::MATERIAL_STENCIL_OP_DECREMENT_WRAP,
+		STENCIL_OPERATION_INVERT = VS::MATERIAL_STENCIL_OP_INVERT,
+		STENCIL_OPERATION_COUNT = VS::MATERIAL_STENCIL_OP_COUNT
+	};
+
+	enum StencilOption {
+		STENCIL_OP_OPTION_SFAIL = VS::MATERIAL_STENCIL_OP_OPTION_SFAIL,
+		STENCIL_OP_OPTION_DPFAIL = VS::MATERIAL_STENCIL_OP_OPTION_DPFAIL,
+		STENCIL_OP_OPTION_DPPASS = VS::MATERIAL_STENCIL_OP_OPTION_DPPASS,
+		STENCIL_OP_OPTION_COUNT = VS::MATERIAL_STENCIL_OP_OPTION_COUNT
+	};
+
 
 protected:
 	RID material;
@@ -119,11 +160,21 @@ VARIANT_ENUM_CAST( Material::DepthDrawMode );
 VARIANT_ENUM_CAST( Material::BlendMode );
 VARIANT_ENUM_CAST( Material::DepthTestMode);
 
+VARIANT_ENUM_CAST(Material::ColorMaskBit);
+
+VARIANT_ENUM_CAST( Material::StencilComparison );
+VARIANT_ENUM_CAST( Material::StencilOperation );
+VARIANT_ENUM_CAST( Material::StencilOption );
+
 
 class SinglePassMaterial : public Material {
 	OBJ_TYPE(SinglePassMaterial, Material);
 	//REVERSE_GET_PROPERTY_LIST
 protected:
+	bool _set(const StringName& p_name, const Variant& p_value);
+	bool _get(const StringName& p_name, Variant &r_ret) const;
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+
 	static void _bind_methods();
 
 private:
@@ -132,6 +183,16 @@ private:
 	float line_width;
 	DepthDrawMode depth_draw_mode;
 	DepthTestMode depth_test_mode;
+
+	// Color Mask
+	bool color_mask_bit[VS::MATERIAL_COLOR_MASK_BIT_COUNT];
+
+	// Stencil
+	uint8_t stencil_reference_value;
+	uint8_t stencil_read_mask;
+	uint8_t stencil_write_mask;
+	StencilComparison stencil_comparison;
+	StencilOperation stencil_options[STENCIL_OP_OPTION_COUNT];
 public:
 	void set_flag(Flag p_flag, bool p_enabled);
 	bool get_flag(Flag p_flag) const;
@@ -144,6 +205,24 @@ public:
 
 	void set_depth_test_mode(DepthTestMode p_depth_test_mode);
 	DepthTestMode get_depth_test_mode() const;
+
+	void set_color_mask_bit(ColorMaskBit p_bit, bool p_enabled);
+	bool get_color_mask_bit(ColorMaskBit p_bit) const;
+
+	void set_stencil_reference_value(const uint8_t p_reference_value);
+	uint8_t get_stencil_reference_value() const;
+
+	void set_stencil_read_mask(const uint8_t p_read_mask);
+	uint8_t get_stencil_read_mask() const;
+
+	void set_stencil_write_mask(const uint8_t p_read_mask);
+	uint8_t get_stencil_write_mask() const;
+
+	void set_stencil_comparison(StencilComparison p_comparison);
+	StencilComparison get_stencil_comparison() const;
+
+	void set_stencil_option(StencilOption p_option, StencilOperation p_operation);
+	StencilOperation get_stencil_option(StencilOption p_option) const;
 
 	void set_line_width(float p_width);
 	float get_line_width() const;
@@ -300,6 +379,16 @@ class MultiPassMaterial : public Material {
 		float line_width;
 		DepthDrawMode depth_draw_mode;
 		DepthTestMode depth_test_mode;
+
+		// Color Mask
+		bool color_mask_bit[VS::MATERIAL_COLOR_MASK_BIT_COUNT];
+
+		// Stencil
+		uint8_t stencil_reference_value;
+		uint8_t stencil_read_mask;
+		uint8_t stencil_write_mask;
+		StencilComparison stencil_comparison;
+		StencilOperation stencil_options[STENCIL_OP_OPTION_COUNT];
 	};
 
 
@@ -346,6 +435,24 @@ public:
 
 	void set_pass_depth_test_mode(const int p_pass_index, DepthTestMode p_depth_test_mode);
 	DepthTestMode get_pass_depth_test_mode(const int p_pass_index) const;
+
+	void set_pass_color_mask_bit(const int p_pass_index, ColorMaskBit p_bit, bool p_enabled);
+	bool get_pass_color_mask_bit(const int p_pass_index, ColorMaskBit p_bit) const;
+
+	void set_pass_stencil_reference_value(const int p_pass_index, const uint8_t p_reference_value);
+	uint8_t get_pass_stencil_reference_value(const int p_pass_index) const;
+
+	void set_pass_stencil_read_mask(const int p_pass_index, const uint8_t p_read_mask);
+	uint8_t get_pass_stencil_read_mask(const int p_pass_index) const;
+
+	void set_pass_stencil_write_mask(const int p_pass_index, const uint8_t p_read_mask);
+	uint8_t get_pass_stencil_write_mask(const int p_pass_index) const;
+
+	void set_pass_stencil_comparison(const int p_pass_index, StencilComparison p_comparison);
+	StencilComparison get_pass_stencil_comparison(const int p_pass_index) const;
+
+	void set_pass_stencil_option(const int p_pass_index, StencilOption p_option, StencilOperation p_operation);
+	StencilOperation get_pass_stencil_option(const int p_pass_index, StencilOption p_option) const;
 
 	void set_pass_line_width(const int p_pass_index, float p_width);
 	float get_pass_line_width(const int p_pass_index) const;

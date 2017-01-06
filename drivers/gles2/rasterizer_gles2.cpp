@@ -59,6 +59,7 @@
 #define _GL_RG8_EXT                 0x822B
 
 #define _DEPTH_COMPONENT24_OES                 0x81A6
+#define _DEPTH24_STENCIL8_OES                  0x88F0
 
 #ifdef GLEW_ENABLED
 #define _glClearDepth glClearDepth
@@ -1807,6 +1808,154 @@ bool RasterizerGLES2::material_get_flag(RID p_material,const int p_pass_index,VS
 	return pass->flags[p_flag];
 
 
+}
+
+void RasterizerGLES2::material_set_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit, bool p_enabled) {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+
+	pass->color_bits[p_color_bit] = p_enabled;
+}
+
+bool RasterizerGLES2::material_get_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit) const {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, false);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, false);
+
+	return pass->color_bits[p_color_bit];
+}
+
+void RasterizerGLES2::material_set_alpha_test_comparison(RID p_material, int p_pass_index, VS::MaterialAlphaTestComparison p_alpha_test_comparison) {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+
+	pass->alpha_test_comparison = p_alpha_test_comparison;
+}
+
+VS::MaterialAlphaTestComparison RasterizerGLES2::material_get_alpha_test_comparison(RID p_material, int p_pass_index) const {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, VS::MATERIAL_ALPHA_TEST_COMPARISON_NEVER);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, VS::MATERIAL_ALPHA_TEST_COMPARISON_NEVER);
+
+	return pass->alpha_test_comparison;
+}
+
+void RasterizerGLES2::material_set_alpha_test_value(RID p_material, int p_pass_index, float p_value) {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+
+	pass->alpha_test_value = p_value;
+}
+
+float RasterizerGLES2::material_get_alpha_test_value(RID p_material, int p_pass_index) const {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, false);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, false);
+
+	return pass->alpha_test_value;
+}
+
+void RasterizerGLES2::material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value) {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+
+	pass->stencil_reference_value = p_reference_value;
+}
+
+uint8_t RasterizerGLES2::material_get_stencil_reference_value(RID p_material, const int p_pass_index) const {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, 0xff);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, 0xff);
+
+	return pass->stencil_reference_value;
+}
+
+void RasterizerGLES2::material_set_stencil_read_mask(RID p_material, const int p_pass_index, uint8_t p_read_mask) {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+
+	pass->stencil_read_mask = p_read_mask;
+}
+
+uint8_t RasterizerGLES2::material_get_stencil_read_mask(RID p_material, const int p_pass_index) const {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, 0xff);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, 0xff);
+
+	return pass->stencil_read_mask;
+}
+
+void RasterizerGLES2::material_set_stencil_write_mask(RID p_material, const int p_pass_index, uint8_t p_write_mask) {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+
+	pass->stencil_write_mask = p_write_mask;
+}
+
+uint8_t RasterizerGLES2::material_get_stencil_write_mask(RID p_material, const int p_pass_index) const {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, 0xff);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, 0xff);
+
+	return pass->stencil_write_mask;
+}
+
+void RasterizerGLES2::material_set_stencil_comparison(RID p_material, const int p_pass_index, VS::MaterialStencilComparison p_comparison) {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+	ERR_FAIL_COND(p_comparison >= VS::MATERIAL_STENCIL_COMPARISON_COUNT);
+
+	pass->stencil_comparision_function = p_comparison;
+}
+
+VS::MaterialStencilComparison RasterizerGLES2::material_get_stencil_comparison(RID p_material, const int p_pass_index) const {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, VS::MATERIAL_STENCIL_COMPARISON_NEVER);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, VS::MATERIAL_STENCIL_COMPARISON_NEVER);
+
+	return pass->stencil_comparision_function;
+}
+
+void RasterizerGLES2::material_set_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option, VS::MaterialStencilOperation p_operation) {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND(!pass);
+	ERR_FAIL_COND(p_option >= VS::MATERIAL_STENCIL_OP_OPTION_COUNT);
+	ERR_FAIL_COND(p_operation >= VS::MATERIAL_STENCIL_OP_COUNT);
+
+	pass->stencil_options[p_option] = p_operation;
+}
+
+VS::MaterialStencilOperation RasterizerGLES2::material_get_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option) const {
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, VS::MATERIAL_STENCIL_OP_KEEP);
+	Material::Pass *pass = &material->passes[p_pass_index];
+	ERR_FAIL_COND_V(!pass, VS::MATERIAL_STENCIL_OP_KEEP);
+	ERR_FAIL_COND_V(p_option >= VS::MATERIAL_STENCIL_OP_OPTION_COUNT, VS::MATERIAL_STENCIL_OP_KEEP);
+
+	return pass->stencil_options[p_option];
 }
 
 void RasterizerGLES2::material_set_depth_draw_mode(RID p_material,const int p_pass_index,VS::MaterialDepthDrawMode p_mode) {
@@ -4425,9 +4574,15 @@ void RasterizerGLES2::render_target_set_size(RID p_render_target,int p_width,int
 		glGenRenderbuffers(1, &rt->depth);
 		glBindRenderbuffer(GL_RENDERBUFFER, rt->depth );
 
-		glRenderbufferStorage(GL_RENDERBUFFER, use_depth24?_DEPTH_COMPONENT24_OES:GL_DEPTH_COMPONENT16, rt->width,rt->height);
+		if (use_packed_depth_stencil)
+			glRenderbufferStorage(GL_RENDERBUFFER, _DEPTH24_STENCIL8_OES, rt->width, rt->height);
+		else
+			glRenderbufferStorage(GL_RENDERBUFFER, use_depth24?_DEPTH_COMPONENT24_OES:GL_DEPTH_COMPONENT16, rt->width,rt->height);
 
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->depth);
+
+		if (use_packed_depth_stencil)
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rt->depth);
 	}
 
 	//color
@@ -5466,32 +5621,22 @@ bool RasterizerGLES2::_setup_material_pass(const Material::Pass *p_material_pass
 		glEnable(GL_CULL_FACE);
 	}
 
-	switch (p_material_pass->depth_test_mode) {
-		case VS::MATERIAL_DEPTH_TEST_MODE_NEVER:
-			glDepthFunc(GL_NEVER);
-			break;
-		case VS::MATERIAL_DEPTH_TEST_MODE_LESS:
-			glDepthFunc(GL_LESS);
-			break;
-		case VS::MATERIAL_DEPTH_TEST_MODE_EQUAL:
-			glDepthFunc(GL_EQUAL);
-			break;
-		case VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL:
-			glDepthFunc(GL_LEQUAL);
-			break;
-		case VS::MATERIAL_DEPTH_TEST_MODE_GREATER:
-			glDepthFunc(GL_GREATER);
-			break;
-		case VS::MATERIAL_DEPTH_TEST_MODE_NOTEQUAL:
-			glDepthFunc(GL_NOTEQUAL);
-			break;
-		case VS::MATERIAL_DEPTH_TEST_MODE_GEQUAL:
-			glDepthFunc(GL_GEQUAL);
-			break;
-		case VS::MATERIAL_DEPTH_TEST_MODE_ALWAYS:
-			glDepthFunc(GL_ALWAYS);
-			break;
-	}
+	// Depth Func
+	glDepthFunc(get_gl_depth_test_mode(p_material_pass->depth_test_mode));
+
+	// Color Mask
+	glColorMask(p_material_pass->color_bits[VS::MATERIAL_COLOR_MASK_BIT_R], p_material_pass->color_bits[VS::MATERIAL_COLOR_MASK_BIT_G], p_material_pass->color_bits[VS::MATERIAL_COLOR_MASK_BIT_B], p_material_pass->color_bits[VS::MATERIAL_COLOR_MASK_BIT_A]);
+
+	// Alpha Func
+	set_alpha_function(p_material_pass->alpha_test_comparison, p_material_pass->alpha_test_value);
+
+	// Stencil Setup
+	set_stencil_operations(
+		p_material_pass->stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_SFAIL],
+		p_material_pass->stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_DPFAIL],
+		p_material_pass->stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_DPPASS]);
+	set_stencil_comparison(p_material_pass->stencil_comparision_function, p_material_pass->stencil_reference_value, p_material_pass->stencil_read_mask);
+	set_stencil_mask(p_material_pass->stencil_write_mask);
 
 	//glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 
@@ -6737,6 +6882,7 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 
 	bool prev_blend=false;
 	glDisable(GL_BLEND);
+	glEnable(GL_STENCIL_TEST);
 	for (int i=0;i<p_render_list->element_count;i++) {
 
 		RenderList::Element *e = p_render_list->elements[i];
@@ -7174,6 +7320,7 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 
 	//print_line("shaderchanges: "+itos(p_alpha_pass)+": "+itos(_rinfo.shader_change_count));
 
+	glDisable(GL_STENCIL_TEST);
 
 	if (current_rt && current_rt_vflip) {
 		glFrontFace(GL_CW);
@@ -7620,14 +7767,16 @@ void RasterizerGLES2::end_scene() {
 
 	bool draw_tex_background=false;
 
+	set_stencil_mask(0xff);
+
 	if (current_debug==VS::SCENARIO_DEBUG_OVERDRAW) {
 
 		glClearColor(0,0,0,1);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 	} else if (current_rt && current_rt_transparent) {
 
 		glClearColor(0,0,0,0);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	} else if (current_env) {
 
@@ -7650,7 +7799,7 @@ void RasterizerGLES2::end_scene() {
 				float a = use_fb ? float(current_env->bg_param[VS::ENV_BG_PARAM_GLOW]) : 1.0;
 				glClearColor(bgcolor.r,bgcolor.g,bgcolor.b,a);
 				_glClearDepth(1.0);
-				glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+				glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 			} break;
 			case VS::ENV_BG_TEXTURE:
@@ -7666,7 +7815,7 @@ void RasterizerGLES2::end_scene() {
 
 		Color c = _convert_color(Color(0.3,0.3,0.3));
 		glClearColor(c.r,c.g,c.b,0.0);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 	}
 
 	glDisable(GL_SCISSOR_TEST);
@@ -7886,6 +8035,8 @@ void RasterizerGLES2::end_scene() {
 		using_canvas_bg=false;
 		glColorMask(1,1,1,1); //don't touch alpha
 	}
+
+	get_stencil_bits();
 
 }
 void RasterizerGLES2::end_shadow_map() {
@@ -8377,6 +8528,7 @@ void RasterizerGLES2::canvas_begin() {
 
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
 	glDisable(GL_SCISSOR_TEST);
 #ifdef GLEW_ENABLED
 	glDisable(GL_POINT_SPRITE);
@@ -8422,6 +8574,7 @@ void RasterizerGLES2::canvas_begin() {
 
 	canvas_opacity=1.0;
 	canvas_blend_mode=VS::MATERIAL_BLEND_MODE_MIX;
+	canvas_mask_depth=0x00;
 	canvas_texscreen_used=false;
 	uses_texpixel_size=false;
 
@@ -9787,6 +9940,15 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 	bool reset_modulate=false;
 	bool prev_distance_field=false;
 
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+
+	set_stencil_mask(0xFF);
+	glClear(GL_STENCIL_BUFFER_BIT);
+
+	glDepthMask(false);
+	glDepthFunc(GL_ALWAYS);
+
 	while(p_item_list) {
 
 		CanvasItem *ci=p_item_list;
@@ -9859,6 +10021,17 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 			}
 		}
 
+		if (ci->mask && ci->stencil_id > 0x00) {
+			set_stencil_mask(0xFF);
+			set_stencil_comparison(VS::MATERIAL_STENCIL_COMPARISON_EQUAL, ci->stencil_id-1, 0xFF);
+			set_stencil_operations(VS::MATERIAL_STENCIL_OP_KEEP, VS::MATERIAL_STENCIL_OP_KEEP, VS::MATERIAL_STENCIL_OP_INCREMENT_SATURATE);
+		}
+		else {
+			set_stencil_mask(0x00);
+			set_stencil_comparison(VS::MATERIAL_STENCIL_COMPARISON_EQUAL, ci->stencil_id, 0xFF);
+			set_stencil_operations(VS::MATERIAL_STENCIL_OP_KEEP, VS::MATERIAL_STENCIL_OP_KEEP, VS::MATERIAL_STENCIL_OP_KEEP);
+		}
+
 		if (ci->copy_back_buffer && framebuffer.active && framebuffer.scale==1) {
 
 			Rect2 rect;
@@ -9892,9 +10065,6 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 			canvas_texscreen_used=true;
 			glActiveTexture(GL_TEXTURE0);
 		}
-
-
-
 
 		//begin rect
 		CanvasItem *material_owner = ci->material_owner?ci->material_owner:ci;
@@ -9946,14 +10116,10 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 			reset_modulate=false;
 		}
 
-
-
-		canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,ci->final_transform);
-		canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Matrix32());
-
+		canvas_begin_rect(ci->final_transform);
 
 		bool reclip=false;
-
+		/*
 		if (ci==p_item_list || ci->blend_mode!=canvas_blend_mode) {
 
 			switch(ci->blend_mode) {
@@ -9992,7 +10158,7 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 
 			canvas_blend_mode=ci->blend_mode;
 		}
-
+		*/
 		canvas_opacity = ci->final_opacity;
 
 
@@ -10061,8 +10227,7 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 							_canvas_item_setup_shader_uniforms(material,shader_cache);
 						}
 
-						canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,ci->final_transform);
-						canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Matrix32());
+						canvas_begin_rect(ci->final_transform);
 						canvas_shader.set_uniform(CanvasShaderGLES2::PROJECTION_MATRIX,canvas_transform);
 						if (canvas_use_modulate)
 							canvas_shader.set_uniform(CanvasShaderGLES2::MODULATE,canvas_modulate);
@@ -10128,8 +10293,7 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 					_canvas_item_setup_shader_uniforms(material,shader_cache);
 				}
 
-				canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,ci->final_transform);
-				canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Matrix32());
+				canvas_begin_rect(ci->final_transform);
 				if (canvas_use_modulate)
 					canvas_shader.set_uniform(CanvasShaderGLES2::MODULATE,canvas_modulate);
 
@@ -10182,6 +10346,9 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 	if (current_clip) {
 		glDisable(GL_SCISSOR_TEST);
 	}
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
 
 }
 
@@ -10859,13 +11026,17 @@ void RasterizerGLES2::_update_framebuffer() {
 	glGenRenderbuffers(1, &framebuffer.depth);
 	glBindRenderbuffer(GL_RENDERBUFFER, framebuffer.depth );
 
-	glRenderbufferStorage(GL_RENDERBUFFER, use_depth24?_DEPTH_COMPONENT24_OES:GL_DEPTH_COMPONENT16, framebuffer.width,framebuffer.height);
+	if (use_packed_depth_stencil)
+		glRenderbufferStorage(GL_RENDERBUFFER, _DEPTH24_STENCIL8_OES, framebuffer.width, framebuffer.height);
+	else
+		glRenderbufferStorage(GL_RENDERBUFFER, use_depth24?_DEPTH_COMPONENT24_OES:GL_DEPTH_COMPONENT16, framebuffer.width,framebuffer.height);
 
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, framebuffer.depth);
+	if (use_packed_depth_stencil)
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, framebuffer.depth);
 
 #endif
 	//color
-
 //	GLuint format_rgba = use_fp16_fb?_GL_RGBA16F_EXT:GL_RGBA;
 	GLuint format_rgba = GL_RGBA;
 	GLuint format_type = use_fp16_fb?_GL_HALF_FLOAT_OES:GL_UNSIGNED_BYTE;
@@ -10935,13 +11106,18 @@ void RasterizerGLES2::_update_framebuffer() {
 		//ms depth
 		glGenTextures(1, &framebuffer.ms_depth);
 		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_depth);
-		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaa_multisamples, GL_DEPTH_COMPONENT24, framebuffer.width, framebuffer.height, 0);
+		if (use_packed_depth_stencil)
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaa_multisamples, _DEPTH24_STENCIL8_OES, framebuffer.width, framebuffer.height, 0);
+		else
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaa_multisamples, use_depth24 ? _DEPTH_COMPONENT24_OES : GL_DEPTH_COMPONENT16, framebuffer.width, framebuffer.height, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_color, 0);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_depth, 0);
+		if (use_packed_depth_stencil)
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_depth, 0);
 	#
 		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -11353,6 +11529,7 @@ void RasterizerGLES2::init() {
 	pvr_supported=false;
 	etc_supported=false;
 	use_depth24 =true;
+	use_packed_depth_stencil = true;
 	s3tc_supported = true;
 	atitc_supported = false;
 //	use_texture_instancing=false;
@@ -11399,6 +11576,7 @@ void RasterizerGLES2::init() {
 	pvr_srgb_supported=extensions.has("GL_EXT_pvrtc_sRGB");
 	etc_supported=extensions.has("GL_OES_compressed_ETC1_RGB8_texture");
 	use_depth24 = extensions.has("GL_OES_depth24");
+	use_packed_depth_stencil = extensions.has("GL_OES_packed_depth_stencil");
 	s3tc_supported = extensions.has("GL_EXT_texture_compression_dxt1") || extensions.has("GL_EXT_texture_compression_s3tc") || extensions.has("WEBGL_compressed_texture_s3tc");
 	use_half_float = false;
 	atitc_supported=extensions.has("GL_AMD_compressed_ATC_texture");
@@ -11535,6 +11713,8 @@ void RasterizerGLES2::init() {
 #endif
 
 	shader_time_rollback = GLOBAL_DEF("rasterizer/shader_time_rollback",300);
+
+	stencil_index = 0x00;
 
 	using_canvas_bg=false;
 	_update_framebuffer();
@@ -11844,6 +12024,26 @@ int RasterizerGLES2::RenderList::max_elements=RenderList::DEFAULT_MAX_ELEMENTS;
 void RasterizerGLES2::set_force_16_bits_fbo(bool p_force) {
 
 	use_16bits_fbo=p_force;
+}
+
+void RasterizerGLES2::set_stencil_operations(
+	const VS::MaterialStencilOperation p_stencil_option_sfail,
+	const VS::MaterialStencilOperation p_stencil_option_dpfail,
+	const VS::MaterialStencilOperation p_stencil_option_dppass) {
+
+	glStencilOp(get_gl_stencil_op(p_stencil_option_sfail), get_gl_stencil_op(p_stencil_option_dpfail), get_gl_stencil_op(p_stencil_option_dppass));
+};
+
+void RasterizerGLES2::set_stencil_comparison(const VS::MaterialStencilComparison p_comparison, const uint8_t p_ref, const uint8_t p_mask) {
+	glStencilFunc(get_gl_stencil_comparison(p_comparison), static_cast<GLuint>(p_ref), static_cast<GLuint>(p_mask));
+};
+
+void RasterizerGLES2::set_stencil_mask(const uint8_t p_mask) {
+	glStencilMask(static_cast<GLuint>(p_mask));
+};
+
+void RasterizerGLES2::set_alpha_function(const VS::MaterialAlphaTestComparison p_comparison, const float p_value) {
+	glAlphaFunc(get_gl_alpha_test_comparison(p_comparison), p_value);
 }
 
 RasterizerGLES2::RasterizerGLES2(bool p_compress_arrays,bool p_keep_ram_copy,bool p_default_fragment_lighting,bool p_use_reload_hooks) {
