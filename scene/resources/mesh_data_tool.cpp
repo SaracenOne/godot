@@ -154,8 +154,8 @@ Error MeshDataTool::append_from_surface(const Ref<Mesh>& p_mesh,int p_surface,
 		if (ta.ptr())
 			v.tangent=Plane(ta[i*4+0],ta[i*4+1],ta[i*4+2],ta[i*4+3]);
 		if (uv.ptr())
-		if (use_uv_scale)
-			v.uv = p_min+(uv[i]*p_max)*(Vector2(1.0, 1.0)-p_min);
+			if (use_uv_scale)
+				v.uv = p_min+(uv[i]*p_max)*(Vector2(1.0, 1.0)-p_min);
 			else
 				v.uv=uv[i];
 		if (uv2.ptr())
