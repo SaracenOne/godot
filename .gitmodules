@@ -7,3 +7,6 @@
 [submodule "modules/leg_ik"]
 	path = modules/leg_ik
 	url = https://github.com/SaracenOne/leg_ik.git
+[submodule "modules/tga"]
+	path = modules/tga
+	url = https://github.com/SaracenOne/tga
