@@ -209,6 +209,14 @@ public:
 	int get_height() const; ///< Get image height
 	int get_mipmaps() const;
 
+	_FORCE_INLINE_ DVector<uint8_t>::Write Image::get_write_buffer() {
+		DVector<uint8_t>::Write wp = data.write();
+	}
+
+	_FORCE_INLINE_ DVector<uint8_t>::Read Image::get_read_buffer() {
+		DVector<uint8_t>::Read rp = data.read();
+	}
+
 	/**
 	 * Get a pixel from the image. for grayscale or indexed formats, use Color::gray to obtain the actual
 	 * value.
