@@ -7728,6 +7728,7 @@ void RasterizerGLES2::end_scene() {
 
 	if (use_fb) {
 
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.fbo);
 		glViewport( 0,0,viewport.width / framebuffer.scale, viewport.height / framebuffer.scale );
 		glScissor(  0,0,viewport.width / framebuffer.scale, viewport.height / framebuffer.scale );
 
