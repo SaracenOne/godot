@@ -31,7 +31,7 @@
 //
 // C++ Implementation: context_gl_x11
 //
-// Description: 
+// Description:
 //
 //
 // Author: Juan Linietsky <reduzio@gmail.com>, (C) 2008
@@ -66,10 +66,14 @@
 typedef HGLRC (APIENTRY* PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC, HGLRC, const int*);
 typedef BOOL(WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC) (HDC, const int*, const FLOAT *, UINT, int *, UINT *);
 
+
 void ContextGL_Win::release_current() {
 
+
 	wglMakeCurrent(hDC,NULL);
+
 }
+
 
 void ContextGL_Win::make_current() {
 
@@ -142,8 +146,8 @@ Error ContextGL_Win::initialize() {
 		0,// Reserved
 		0, 0, 0	// Layer Masks Ignored
 	};
-	
-	if (!(hDC = GetDC(hWnd))) {
+
+	if (!(hDC=GetDC(hWnd))) {
 		MessageBox(NULL,"Can't Create A GL Device Context.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return ERR_CANT_CREATE;								// Return FALSE
 	}
@@ -151,9 +155,7 @@ Error ContextGL_Win::initialize() {
 	if (multisample_supported == true)
 	{
 		pixel_format = multisample_format;
-	}
-	else
-	{
+	} else {
 		if (!(pixel_format = ChoosePixelFormat(hDC, &pfd)))	// Did Windows Find A Matching Pixel Format?
 		{
 			MessageBox(NULL, "Can't Find A Suitable pixel_format.", "ERROR", MB_OK | MB_ICONEXCLAMATION);
@@ -161,7 +163,7 @@ Error ContextGL_Win::initialize() {
 		}
 	}
 
-	if(!SetPixelFormat(hDC, pixel_format, &pfd))		// Are We Able To Set The Pixel Format?
+	if(!SetPixelFormat(hDC,pixel_format,&pfd))		// Are We Able To Set The Pixel Format?
 	{
 		MessageBox(NULL,"Can't Set The pixel_format.","ERROR",MB_OK|MB_ICONEXCLAMATION);
 		return ERR_CANT_CREATE;								// Return FALSE
@@ -232,6 +234,7 @@ int ContextGL_Win::test_multisample_support(int p_samples) {
 
 			return p_samples;
 		}
+
 	}
 
 	return 0;

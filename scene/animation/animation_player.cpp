@@ -1205,7 +1205,6 @@ void AnimationPlayer::_node_removed(Node *p_node) {
 }
 
 void AnimationPlayer::_mesh_changed(Node *p_node) {
-
 	clear_caches();
 }
 

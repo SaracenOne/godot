@@ -157,7 +157,6 @@ public:
 	void set_room_cull_enabled(bool p_room_cull_enabled);
 	bool is_room_cull_enabled() const;
 
-
 	Camera();
 	~Camera();
 

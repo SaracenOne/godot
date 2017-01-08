@@ -78,17 +78,17 @@ class Variant {
 public:
 
 	enum Type {
-	
-		NIL,		
-		
-		// atomic types 		
+
+		NIL,
+
+		// atomic types
 		BOOL,
 		INT,
 		REAL,
 		STRING,
-		
+
 		// math types
-		
+
 		VECTOR2,		// 5
 		RECT2,
 		VECTOR3,
@@ -98,17 +98,17 @@ public:
 		_AABB, //sorry naming convention fail :( not like it's used often
 		MATRIX3,
 		TRANSFORM,
-		
-		// misc types		
+
+		// misc types
 		COLOR,
 		IMAGE,			// 15
 		NODE_PATH,
 		_RID,
-		OBJECT,		
+		OBJECT,
 		INPUT_EVENT,
 		DICTIONARY,		// 20
 		ARRAY,
-			
+
 		// arrays
 		RAW_ARRAY,
 		INT_ARRAY,
@@ -117,10 +117,10 @@ public:
 		VECTOR2_ARRAY,
 		VECTOR3_ARRAY,
 		COLOR_ARRAY,
-			
+
 		VARIANT_MAX
-		
-	};	
+
+	};
 
 private:
 
@@ -128,7 +128,7 @@ private:
 	friend class _VariantCall;
 	// Variant takes 20 bytes when real_t is float, and 36 if double
 	// it only allocates extra memory for aabb/matrix.
-	
+
 	Type type;
 
 	struct ObjData {
@@ -136,7 +136,7 @@ private:
 		Object *obj;
 		RefPtr ref;
 	};
-	
+
 
 	_FORCE_INLINE_ ObjData& _get_obj();
 	_FORCE_INLINE_ const ObjData& _get_obj() const;
@@ -163,7 +163,6 @@ private:
 
 	DataUnion &_data;
 
-
 	void reference(const Variant& p_variant);
 	void clear();
 public:
@@ -177,7 +176,7 @@ public:
 
 	template<class T>
 	static Type get_type_for() {
-		
+
 		GetSimpleType<T> t;
 		Variant v(t.type);
 		Type r = v.get_type();
@@ -235,7 +234,7 @@ public:
 
 	operator Dictionary() const;
 	operator Array() const;
-	
+
 	operator DVector<uint8_t>() const;
 	operator DVector<int>() const;
 	operator DVector<real_t>() const;
@@ -264,7 +263,7 @@ public:
 
 	operator IP_Address() const;
 
-	
+
 	Variant(bool p_bool);
 	Variant(signed int p_int); // real one
 	Variant(unsigned int p_int);
@@ -290,8 +289,8 @@ public:
 	Variant(const Vector3& p_vector3);
 	Variant(const Plane& p_plane);
 	Variant(const AABB& p_aabb);
-	Variant(const Quat& p_quat);	
-	Variant(const Matrix3& p_transform);	
+	Variant(const Quat& p_quat);
+	Variant(const Matrix3& p_transform);
 	Variant(const Matrix32& p_transform);
 	Variant(const Transform& p_transform);
 	Variant(const Color& p_color);
@@ -299,10 +298,10 @@ public:
 	Variant(const NodePath& p_path);
 	Variant(const RefPtr& p_resource);
 	Variant(const RID& p_rid);
-	Variant(const Object* p_object);	
+	Variant(const Object* p_object);
 	Variant(const InputEvent& p_input_event);
 	Variant(const Dictionary& p_dictionary);
-	
+
 	Variant(const Array& p_array);
 	Variant(const DVector<Plane>& p_array); // helper
 	Variant(const DVector<uint8_t>& p_raw_array);
@@ -313,7 +312,7 @@ public:
 	Variant(const DVector<Color>& p_color_array);
 	Variant(const DVector<Face3>& p_face_array);
 
-	
+
 	Variant(const Vector<Variant>& p_array);
 	Variant(const Vector<uint8_t>& p_raw_array);
 	Variant(const Vector<int>& p_int_array);
@@ -446,10 +445,8 @@ public:
 
 	void operator=(const Variant& p_variant); // only this is enough for all the other types
 	Variant(const Variant& p_variant);
-
-	_FORCE_INLINE_ Variant() : VARIANT_ALLOCATE_DATA() { type = NIL; }
-
-	_FORCE_INLINE_ ~Variant() { if (type != Variant::NIL) clear(); VARIANT_FREE_DATA(); }
+	_FORCE_INLINE_ Variant() : VARIANT_ALLOCATE_DATA() { type=NIL; }
+	_FORCE_INLINE_ ~Variant() { if (type!=Variant::NIL) clear(); VARIANT_FREE_DATA(); }
 
 };
 

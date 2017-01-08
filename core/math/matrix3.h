@@ -50,20 +50,20 @@ GD_ALIGN16(class) Matrix3{
 public:
 
 	Vector3 elements[3];
-			
+
 	_FORCE_INLINE_ const Vector3& operator[](int axis) const {
-	
+
 		return elements[axis];
 	}
 	_FORCE_INLINE_ Vector3& operator[](int axis) {
-	
+
 		return elements[axis];
 	}
 
-	void invert(); 
+	void invert();
 	void transpose();
-	
-	Matrix3 inverse() const; 
+
+	Matrix3 inverse() const;
 	Matrix3 transposed() const;
 
 	_FORCE_INLINE_ float determinant() const;
@@ -101,7 +101,7 @@ public:
 	_FORCE_INLINE_ real_t tdotz(const Vector3& v) const {
 		return elements[0][2] * v[0] + elements[1][2] * v[1] + elements[2][2] * v[2];
 	}
-	
+
 	bool operator==(const Matrix3& p_matrix) const;
 	bool operator!=(const Matrix3& p_matrix) const;
 
@@ -128,7 +128,7 @@ public:
 	}
 	_FORCE_INLINE_ Vector3 get_column(int i) const {
 
-		return Vector3(elements[0][i], elements[1][i], elements[2][i]);
+		return Vector3(elements[0][i],elements[1][i],elements[2][i]);
 	}
 
 	_FORCE_INLINE_ Vector3 get_row(int i) const {
@@ -444,7 +444,7 @@ _FORCE_INLINE_ Matrix3 Matrix3::operator*(const Matrix3& p_matrix) const {
 	return Matrix3(
 		p_matrix.tdotx(elements[0]), p_matrix.tdoty(elements[0]), p_matrix.tdotz(elements[0]),
 		p_matrix.tdotx(elements[1]), p_matrix.tdoty(elements[1]), p_matrix.tdotz(elements[1]),
-		p_matrix.tdotx(elements[2]), p_matrix.tdoty(elements[2]), p_matrix.tdotz(elements[2]));
+		p_matrix.tdotx(elements[2]), p_matrix.tdoty(elements[2]), p_matrix.tdotz(elements[2]) );
 #endif
 }
 
@@ -457,7 +457,7 @@ Vector3 Matrix3::xform(const Vector3& p_vector) const {
 		elements[0].dot(p_vector),
 		elements[1].dot(p_vector),
 		elements[2].dot(p_vector)
-		);
+	);
 #endif
 }
 

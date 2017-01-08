@@ -457,7 +457,6 @@ public:
 	FUNC2(camera_set_room_cull_enabled,RID,bool);
 	FUNC1RC(bool, camera_is_room_cull_enabled, RID);
 
-
 	/* VIEWPORT API */
 
 	FUNC0R(RID,viewport_create);

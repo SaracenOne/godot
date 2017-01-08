@@ -93,7 +93,6 @@ private:
 	float sky_light_energy;
 
 
-
 	void _update_lightmaps();
 
 	Array _get_lightmap_data() const;

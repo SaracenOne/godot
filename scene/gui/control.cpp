@@ -1278,9 +1278,7 @@ void Control::_size_changed() {
 	bool pos_changed = new_pos_cache != data.pos_cache;
 	bool size_changed = new_size_cache != data.size_cache;
 
-
 	data.scale_rotate_pivot_changed = false;
-
 	data.pos_cache=new_pos_cache;
 	data.size_cache=new_size_cache;
 
@@ -1296,7 +1294,6 @@ void Control::_size_changed() {
 	if (pos_changed && !size_changed) {
 		_update_canvas_item_transform(); //move because it won't be updated
 	}
-
 }
 
 float Control::_get_parent_range(int p_idx) const {
@@ -2007,7 +2004,6 @@ Control::CursorShape Control::get_cursor_shape(const Point2& p_pos) const {
 }
 
 Matrix32 Control::get_transform() const {
- 
 	Vector2 pos_point = get_pos() + get_size() * get_pivot();
 	Vector2 pivot_point = get_pos() + get_size() * get_pivot();
 	Vector2 scale_point = get_scale() * get_size() * get_pivot();
@@ -2489,12 +2485,10 @@ void Control::set_pivot(const Size2& p_pivot)
 	}
 }
 
-
 Size2 Control::get_pivot() const
 {
 	return data.pivot;
 }
-
 
 void Control::_bind_methods() {
 

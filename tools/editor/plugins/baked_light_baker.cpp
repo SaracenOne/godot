@@ -988,7 +988,7 @@ void BakedLightBaker::_plot_light(ThreadStack& thread_stack,const Vector3& p_plo
 }
 
 
-float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_ignore_list, bool p_bake_direct, const Vector3& p_begin, const Vector3& p_end, float p_rest, const Color& p_light, float *p_att_curve, float p_att_pos, int p_att_curve_len, int p_bounces, bool p_first_bounce, bool p_only_dist) {
+float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_ignore_list, bool p_bake_direct,const Vector3& p_begin, const Vector3& p_end,float p_rest,const Color& p_light,float *p_att_curve,float p_att_pos,int p_att_curve_len,int p_bounces,bool p_first_bounce,bool p_only_dist) {
 
 
 	uint32_t* stack = thread_stack.ray_stack;
@@ -1026,7 +1026,7 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 	int level=0;
 	//AABB ray_aabb;
 	//ray_aabb.pos=p_begin;
-	//ray_aabb.expand_to(end);
+	//ray_aabb.expand_to(p_end);
 
 
 	bstack[0]=bvh;
@@ -1086,8 +1086,7 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 							stack[level]=VISIT_LEFT_BIT;
 						}
 					}	
-				}
-				else {
+				} else {
 					stack[level] = VISIT_DONE_BIT;
 				}
 
@@ -1146,6 +1145,7 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 		bool passthrough = false;
 
 
+
 		//ok...
 		Color diffuse_at_point(0.8,0.8,0.8);
 		Color specular_at_point(0.0,0.0,0.0);
@@ -1158,8 +1158,7 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 
 				if (triangle->material->skip == true)
 					passthrough = true;
-			}
-			else {
+			} else {
 				if (n.dot(r_normal)>0)
 					return -1;
 			}
@@ -1168,8 +1167,7 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 
 			diffuse_at_point = triangle->material->diffuse.get_color(uv);
 			specular_at_point = triangle->material->specular.get_color(uv);
-		}
-		else {
+		} else {
 			if (n.dot(r_normal)>0)
 				return -1;
 		}
@@ -1208,12 +1206,10 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 
 		float ret=1e6;
 
-		if (passthrough == true && triangle_id !=-1)
-		{
+		if (passthrough == true && triangle_id !=-1) {
 			p_ignore_list->push_back(triangle_id);
 			ret=_throw_ray(thread_stack,p_ignore_list,p_bake_direct,r_point,p_end,p_rest,p_light,p_att_curve,p_att_pos,p_att_curve_len,p_bounces,p_first_bounce,p_only_dist);
-		}
-		else if (p_bounces>0 ) {
+		} else if (p_bounces>0 ) {
 
 
 			p_rest-=dist;
@@ -1290,22 +1286,21 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 			if (!p_first_bounce || p_bake_direct) {
 
 
-				float r = plot_size * cell_size * 2;
-				if (dist < r) {
+				float r = plot_size * cell_size*2;
+				if (dist<r) {
 					//avoid accumulaiton of light on corners
 					//plot_light=plot_light.linear_interpolate(Color(0,0,0,0),1.0-sd/plot_size*plot_size);
 					skip = true;
 
-				}
-				else {
+				} else {
 
 
-					Vector3 c1 = r_normal.cross(n).normalized();
-					Vector3 c2 = r_normal.cross(c1).normalized();
-					double r1 = double(rand()) / RAND_MAX;
-					double r2 = double(rand()) / RAND_MAX;
-					double r3 = double(rand()) / RAND_MAX;
-					Vector3 rn = ((c1*(r1 - 0.5)) + (c2*(r2 - 0.5)) + (r_normal*r3*0.25)).normalized();
+					Vector3 c1=r_normal.cross(n).normalized();
+					Vector3 c2=r_normal.cross(c1).normalized();
+					double r1 = double(rand())/RAND_MAX;
+					double r2 = double(rand())/RAND_MAX;
+					double r3 = double(rand())/RAND_MAX;
+					Vector3 rn = ((c1*(r1-0.5)) + (c2*(r2-0.5)) + (r_normal*r3*0.25)).normalized();
 					Vector<int> ignore_list;
 					float d = _throw_ray(thread_stack, &ignore_list, p_bake_direct, r_point, r_point + rn*p_rest, p_rest, diffuse_at_point, p_att_curve, p_att_pos, p_att_curve_len, p_bounces - 1, false, true);
 					r = plot_size*cell_size*ao_radius;
@@ -1314,8 +1309,7 @@ float BakedLightBaker::_throw_ray(ThreadStack& thread_stack, Vector<int> *p_igno
 						//plot_light=plot_light.linear_interpolate(Color(0,0,0,0),1.0-sd/plot_size*plot_size);
 						skip = true;
 
-					}
-					else {
+					} else {
 						//plot_light=Color(0,0,0,0);
 					}
 				}
@@ -1644,6 +1638,8 @@ double BakedLightBaker::get_modifier(int p_light_idx) const {
 }
 
 void BakedLightBaker::throw_rays(ThreadStack& thread_stack,int p_amount) {
+
+
 
 	for(int i=0;i<lights.size();i++) {
 

@@ -1079,8 +1079,6 @@ public:
 
 	Rasterizer();
 	virtual ~Rasterizer() {}
-
-	virtual int get_stencil_bits()=0;
 };
 
 

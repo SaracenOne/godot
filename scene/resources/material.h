@@ -65,7 +65,6 @@ public:
 		BLEND_MODE_ADD = VS::MATERIAL_BLEND_MODE_ADD,
 		BLEND_MODE_SUB = VS::MATERIAL_BLEND_MODE_SUB,
 		BLEND_MODE_PREMULT_ALPHA = VS::MATERIAL_BLEND_MODE_PREMULT_ALPHA,
-		BLEND_MODE_NO_BLEND = VS::MATERIAL_BLEND_MODE_NO_BLEND,
 
 	};
 
@@ -133,20 +132,20 @@ protected:
 	static void _bind_methods();
 
 public:
-	virtual void set_flag(Flag p_flag,bool p_enabled) = 0;
-	virtual bool get_flag(Flag p_flag) const = 0;
+	virtual void set_flag(Flag p_flag,bool p_enabled)=0;
+	virtual bool get_flag(Flag p_flag) const=0;
 
-	virtual void set_blend_mode(BlendMode p_blend_mode) = 0;
-	virtual BlendMode get_blend_mode() const = 0;
+	virtual void set_blend_mode(BlendMode p_blend_mode)=0;
+	virtual BlendMode get_blend_mode() const=0;
 
-	virtual void set_depth_draw_mode(DepthDrawMode p_depth_draw_mode) = 0;
-	virtual DepthDrawMode get_depth_draw_mode() const = 0;
+	virtual void set_depth_draw_mode(DepthDrawMode p_depth_draw_mode)=0;
+	virtual DepthDrawMode get_depth_draw_mode() const=0;
 
-	virtual void set_depth_test_mode(DepthTestMode p_depth_test_mode) = 0;
-	virtual DepthTestMode get_depth_test_mode() const = 0;
+	virtual void set_depth_test_mode(DepthTestMode p_depth_test_mode)=0;
+	virtual DepthTestMode get_depth_test_mode() const=0;
 
-	virtual void set_line_width(float p_width) = 0;
-	virtual float get_line_width() const = 0;
+	virtual void set_line_width(float p_width)=0;
+	virtual float get_line_width() const=0;
 
 	virtual RID get_rid() const;
 

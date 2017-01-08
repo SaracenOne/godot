@@ -5268,13 +5268,11 @@ void RasterizerGLES2::_add_geometry( const Geometry* p_geometry, const InstanceD
 
 							if (!pass->shader_cache->valid)
 								pass->shader_cache = NULL;
-						}
-						else {
+						} else {
 							pass->shader = RID();
 						}
 
-					}
-					else {
+					} else {
 						pass->shader_cache = NULL;
 					}
 
@@ -5388,8 +5386,7 @@ void RasterizerGLES2::_add_geometry( const Geometry* p_geometry, const InstanceD
 
 					ec = render_list->add_element();
 					memcpy(ec, e, sizeof(RenderList::Element));
-				}
-				else {
+				} else {
 
 					ec = e;
 					duplicate = true;
@@ -5423,8 +5420,7 @@ void RasterizerGLES2::_add_geometry( const Geometry* p_geometry, const InstanceD
 
 					ec = render_list->add_element();
 					memcpy(ec, e, sizeof(RenderList::Element));
-				}
-				else {
+				} else {
 
 					duplicate = true;
 					ec = e;
@@ -5437,10 +5433,12 @@ void RasterizerGLES2::_add_geometry( const Geometry* p_geometry, const InstanceD
 			}
 
 
-
 		}
 
+
 		DEBUG_TEST_ERROR("Add Geometry");
+
+
 	}
 }
 
@@ -5546,40 +5544,39 @@ void RasterizerGLES2::_set_cull(bool p_front,bool p_reverse_cull) {
 _FORCE_INLINE_ void RasterizerGLES2::_update_material_pass_shader_params(Material::Pass *p_material_pass) const {
 
 	Map<StringName, Material::Pass::UniformData> old_mparams = p_material_pass->shader_params;
-	Map<StringName, Material::Pass::UniformData> &mparams = p_material_pass->shader_params;
+	Map<StringName, Material::Pass::UniformData> &mparams=p_material_pass->shader_params;
 	mparams.clear();
-	int idx = 0;
-	for (Map<StringName, ShaderLanguage::Uniform>::Element *E = p_material_pass->shader_cache->uniforms.front(); E; E = E->next()) {
+	int idx=0;
+	for(Map<StringName,ShaderLanguage::Uniform>::Element *E=p_material_pass->shader_cache->uniforms.front();E;E=E->next()) {
 
 		Material::Pass::UniformData ud;
 
-		bool keep = true; //keep material value
+		bool keep=true; //keep material value
 
-		Map<StringName, Material::Pass::UniformData>::Element *OLD = old_mparams.find(E->key());
+		Map<StringName,Material::Pass::UniformData>::Element *OLD=old_mparams.find(E->key());
 		bool has_old = OLD;
-		bool old_inuse = has_old && old_mparams[E->key()].inuse;
+		bool old_inuse=has_old && old_mparams[E->key()].inuse;
 
-		ud.istexture = (E->get().type == ShaderLanguage::TYPE_TEXTURE || E->get().type == ShaderLanguage::TYPE_CUBEMAP);
+		ud.istexture=(E->get().type==ShaderLanguage::TYPE_TEXTURE || E->get().type==ShaderLanguage::TYPE_CUBEMAP);
 
 		if (!has_old || !old_inuse) {
-			keep = false;
+			keep=false;
 		}
-		else if (OLD->get().value.get_type() != E->value().default_value.get_type()) {
+		else if (OLD->get().value.get_type()!=E->value().default_value.get_type()) {
 
-			if (OLD->get().value.get_type() == Variant::INT && E->get().type == ShaderLanguage::TYPE_FLOAT) {
+			if (OLD->get().value.get_type()==Variant::INT && E->get().type==ShaderLanguage::TYPE_FLOAT) {
 				//handle common mistake using shaders (feeding ints instead of float)
-				OLD->get().value = float(OLD->get().value);
-				keep = true;
-			}
-			else if (!ud.istexture && E->value().default_value.get_type() != Variant::NIL) {
+				OLD->get().value=float(OLD->get().value);
+				keep=true;
+			} else if (!ud.istexture && E->value().default_value.get_type()!=Variant::NIL) {
 
 				keep=false;
 			}
 			//type changed between old and new
 			/*	if (old_mparams[E->key()].value.get_type()==Variant::OBJECT) {
 				if (E->value().default_value.get_type()!=Variant::_RID) //hackfor textures
-				keep=false;
-				} else if (!old_mparams[E->key()].value.is_num() || !E->value().default_value.get_type())
+					keep=false;
+			} else if (!old_mparams[E->key()].value.is_num() || !E->value().default_value.get_type())
 				keep=false;*/
 
 			//value is invalid because type differs and default is not null
@@ -5591,10 +5588,9 @@ _FORCE_INLINE_ void RasterizerGLES2::_update_material_pass_shader_params(Materia
 			ud.value=old_mparams[E->key()].value;
 
 			//print_line("KEEP: "+String(E->key()));
-		}
-		else {
+		} else {
 			if (ud.istexture && p_material_pass->shader_cache->default_textures.has(E->key()))
-				ud.value = p_material_pass->shader_cache->default_textures[E->key()];
+				ud.value=p_material_pass->shader_cache->default_textures[E->key()];
 			else
 				ud.value=E->value().default_value;
 			old_inuse=false; //if reverted to default, obviously did not work
@@ -5610,7 +5606,8 @@ _FORCE_INLINE_ void RasterizerGLES2::_update_material_pass_shader_params(Materia
 		mparams[E->key()]=ud;
 	}
 
-	p_material_pass->shader_version = p_material_pass->shader_cache->version;
+	p_material_pass->shader_version=p_material_pass->shader_cache->version;
+
 }
 
 bool RasterizerGLES2::_setup_material_pass(const Material::Pass *p_material_pass,bool p_opaque_pass) {
@@ -7707,7 +7704,6 @@ void RasterizerGLES2::end_scene() {
 	glDisable(GL_SCISSOR_TEST);
 
 	bool use_fb=false;
-	bool use_msaa=false;
 
 	if (framebuffer.active) {
 
@@ -7727,27 +7723,10 @@ void RasterizerGLES2::end_scene() {
 				}
 			}
 		}
-
-		if (framebuffer.ms_active==true) {
-			use_fb = true;
-		}
 	}
 
 
 	if (use_fb) {
-
-		if (msaa_multisamples > 1 && framebuffer.ms_active == true) {
-			use_msaa = true;
-		}
-
-		if (use_msaa) {
-			glEnable(GL_MULTISAMPLE);
-			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.ms_fbo);
-		}
-		else {
-			glDisable(GL_MULTISAMPLE);
-			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.fbo);
-		}
 
 		glViewport( 0,0,viewport.width / framebuffer.scale, viewport.height / framebuffer.scale );
 		glScissor(  0,0,viewport.width / framebuffer.scale, viewport.height / framebuffer.scale );
@@ -7888,14 +7867,7 @@ void RasterizerGLES2::end_scene() {
 
 	if (use_fb) {
 
-		// If we're using MSAA, blit the multisampled framebuffer into the main one
-		if (use_msaa) {
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.fbo);
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer.ms_fbo);
-			glBlitFramebuffer(0, 0, framebuffer.width, framebuffer.height, 0, 0, framebuffer.width, framebuffer.height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-			glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.fbo);
-		}
 
 		for(int i=0;i<VS::ARRAY_MAX;i++) {
 			glDisableVertexAttribArray(i);
@@ -7960,7 +7932,7 @@ void RasterizerGLES2::end_scene() {
 		copy_shader.set_conditional(CopyShaderGLES2::USE_SRGB,current_env && current_env->fx_enabled[VS::ENV_FX_SRGB]);
 		copy_shader.set_conditional(CopyShaderGLES2::USE_GLOW,current_env && current_env->fx_enabled[VS::ENV_FX_GLOW]);
 		copy_shader.set_conditional(CopyShaderGLES2::USE_HDR,current_env && current_env->fx_enabled[VS::ENV_FX_HDR]);
-		copy_shader.set_conditional(CopyShaderGLES2::USE_NO_ALPHA,(current_rt && current_rt_transparent) ? false : true);
+		copy_shader.set_conditional(CopyShaderGLES2::USE_NO_ALPHA,true);
 		copy_shader.set_conditional(CopyShaderGLES2::USE_FXAA,current_env && current_env->fx_enabled[VS::ENV_FX_FXAA]);
 
 		copy_shader.bind();
@@ -8035,8 +8007,6 @@ void RasterizerGLES2::end_scene() {
 		using_canvas_bg=false;
 		glColorMask(1,1,1,1); //don't touch alpha
 	}
-
-	get_stencil_bits();
 
 }
 void RasterizerGLES2::end_shadow_map() {
@@ -10066,6 +10036,9 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 			glActiveTexture(GL_TEXTURE0);
 		}
 
+
+
+
 		//begin rect
 		CanvasItem *material_owner = ci->material_owner?ci->material_owner:ci;
 		CanvasItemMaterial *material = material_owner->material;
@@ -10116,10 +10089,14 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 			reset_modulate=false;
 		}
 
-		canvas_begin_rect(ci->final_transform);
+
+
+		canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,ci->final_transform);
+		canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Matrix32());
+
 
 		bool reclip=false;
-		/*
+
 		if (ci==p_item_list || ci->blend_mode!=canvas_blend_mode) {
 
 			switch(ci->blend_mode) {
@@ -10158,7 +10135,7 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 
 			canvas_blend_mode=ci->blend_mode;
 		}
-		*/
+
 		canvas_opacity = ci->final_opacity;
 
 
@@ -10227,7 +10204,8 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 							_canvas_item_setup_shader_uniforms(material,shader_cache);
 						}
 
-						canvas_begin_rect(ci->final_transform);
+						canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,ci->final_transform);
+						canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Matrix32());
 						canvas_shader.set_uniform(CanvasShaderGLES2::PROJECTION_MATRIX,canvas_transform);
 						if (canvas_use_modulate)
 							canvas_shader.set_uniform(CanvasShaderGLES2::MODULATE,canvas_modulate);
@@ -10293,7 +10271,8 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 					_canvas_item_setup_shader_uniforms(material,shader_cache);
 				}
 
-				canvas_begin_rect(ci->final_transform);
+				canvas_shader.set_uniform(CanvasShaderGLES2::MODELVIEW_MATRIX,ci->final_transform);
+				canvas_shader.set_uniform(CanvasShaderGLES2::EXTRA_MATRIX,Matrix32());
 				if (canvas_use_modulate)
 					canvas_shader.set_uniform(CanvasShaderGLES2::MODULATE,canvas_modulate);
 
@@ -10932,22 +10911,15 @@ void RasterizerGLES2::_update_framebuffer() {
 		return;
 
 	int scale = GLOBAL_DEF("rasterizer/framebuffer_shrink",1);
-
 	if (scale<1)
 		scale=1;
-
-	msaa_multisamples = GLOBAL_DEF("rasterizer/multisamples",1);
 
 	int dwidth = OS::get_singleton()->get_video_mode().width/scale;
 	int dheight = OS::get_singleton()->get_video_mode().height/scale;
 
-	if (framebuffer.fbo && dwidth == framebuffer.width && dheight == framebuffer.height) {
-		if (msaa_multisamples == msaa_multisamples_prev) {
-			return;
-		}
-	}
+	if (framebuffer.fbo && dwidth==framebuffer.width && dheight==framebuffer.height)
+		return;
 
-	msaa_multisamples_prev = msaa_multisamples;
 
 	bool use_fbo=true;
 
@@ -10983,18 +10955,10 @@ void RasterizerGLES2::_update_framebuffer() {
 		framebuffer.fbo=0;
 	}
 
-	if (framebuffer.ms_fbo != 0) {
-		glDeleteFramebuffers(1, &framebuffer.ms_fbo);
-		glDeleteRenderbuffers(1, &framebuffer.ms_depth);
-		glDeleteTextures(1, &framebuffer.ms_color);
-	}
-
 #ifdef TOOLS_ENABLED
 	framebuffer.active=use_fbo;
-	framebuffer.ms_active = use_fbo;
 #else
 	framebuffer.active=use_fbo && !low_memory_2d;
-	framebuffer.ms_active = use_fbo && !low_memory_2d;
 #endif
 	framebuffer.width=dwidth;
 	framebuffer.height=dheight;
@@ -11037,6 +11001,7 @@ void RasterizerGLES2::_update_framebuffer() {
 
 #endif
 	//color
+
 //	GLuint format_rgba = use_fp16_fb?_GL_RGBA16F_EXT:GL_RGBA;
 	GLuint format_rgba = GL_RGBA;
 	GLuint format_type = use_fp16_fb?_GL_HALF_FLOAT_OES:GL_UNSIGNED_BYTE;
@@ -11086,57 +11051,6 @@ void RasterizerGLES2::_update_framebuffer() {
 		framebuffer.active=false;
 		//print_line("**************** NO FAMEBUFFEEEERRRR????");
 		WARN_PRINT(String("Could not create framebuffer!!, code: "+itos(status)).ascii().get_data());
-	}
-
-
-	//ms
-	if (msaa_multisamples > 1 && framebuffer.ms_active) {
-		glGenFramebuffers(1, &framebuffer.ms_fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer.ms_fbo);
-
-		//ms color
-		glGenTextures(1, &framebuffer.ms_color);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_color);
-		glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaa_multisamples, format_rgba, framebuffer.width, framebuffer.height, GL_FALSE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		//ms depth
-		glGenTextures(1, &framebuffer.ms_depth);
-		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_depth);
-		if (use_packed_depth_stencil)
-			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaa_multisamples, _DEPTH24_STENCIL8_OES, framebuffer.width, framebuffer.height, 0);
-		else
-			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaa_multisamples, use_depth24 ? _DEPTH_COMPONENT24_OES : GL_DEPTH_COMPONENT16, framebuffer.width, framebuffer.height, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_color, 0);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_depth, 0);
-		if (use_packed_depth_stencil)
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, framebuffer.ms_depth, 0);
-	#
-		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		if (status != GL_FRAMEBUFFER_COMPLETE) {
-
-			glDeleteFramebuffers(1, &framebuffer.ms_fbo);
-
-			glDeleteRenderbuffers(1, &framebuffer.ms_depth);
-			glDeleteTextures(1, &framebuffer.ms_color);
-
-			framebuffer.ms_fbo = 0;
-			framebuffer.ms_active = false;
-			WARN_PRINT("Could not create multisampled framebuffer!!");
-		}
-
-	}
-	else {
-		framebuffer.ms_active = false;
 	}
 
 	//sample
@@ -11955,13 +11869,7 @@ void RasterizerGLES2::reload_vram() {
 		}
 
 		framebuffer.luminance.clear();
-	}
 
-	if (framebuffer.ms_fbo != 0) {
-
-		framebuffer.ms_fbo = 0;
-		framebuffer.ms_depth = 0;
-		framebuffer.ms_color = 0;
 	}
 
 	for(int i=0;i<near_shadow_buffers.size();i++) {
@@ -12079,9 +11987,6 @@ RasterizerGLES2::RasterizerGLES2(bool p_compress_arrays,bool p_keep_ram_copy,boo
 	use_shadow_mapping=true;
 	use_fast_texture_filter=!bool(GLOBAL_DEF("rasterizer/trilinear_mipmap_filter",true));
 	low_memory_2d=bool(GLOBAL_DEF("rasterizer/low_memory_2d_mode",false));
-
-	msaa_multisamples = int(GLOBAL_DEF("rasterizer/multisamples", 1));
-
 	skel_default.resize(1024*4);
 	for(int i=0;i<1024/3;i++) {
 

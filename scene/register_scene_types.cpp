@@ -138,7 +138,6 @@
 #include "scene/resources/dynamic_font_stb.h"
 
 #include "scene/resources/morph_data.h"
-
 #include "scene/main/timer.h"
 
 #include "scene/audio/stream_player.h"

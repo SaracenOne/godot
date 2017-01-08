@@ -614,8 +614,7 @@ Error ResourceInteractiveLoaderBinary::parse_variant(Variant& r_v)  {
 
 #endif
 
-			}
-			else {
+			} else {
 				ERR_EXPLAIN("Vector3 size is NOT 16!");
 				ERR_FAIL_V(ERR_UNAVAILABLE);
 			}

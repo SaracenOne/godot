@@ -2978,8 +2978,8 @@ Ref<FixedMaterial> SpatialEditorGizmos::create_line_material(const Color& p_base
 
 	Ref<FixedMaterial> line_material = Ref<FixedMaterial>( memnew( FixedMaterial ));
 	line_material->set_flag(Material::FLAG_UNSHADED, true);
-	line_material->set_line_width(1.0);
-	line_material->set_fixed_flag(FixedMaterial::FLAG_USE_ALPHA, false);
+	line_material->set_line_width(3.0);
+	line_material->set_fixed_flag(FixedMaterial::FLAG_USE_ALPHA, true);
 	line_material->set_fixed_flag(FixedMaterial::FLAG_USE_COLOR_ARRAY, true);
 	line_material->set_parameter(FixedMaterial::PARAM_DIFFUSE,p_base_color);
 

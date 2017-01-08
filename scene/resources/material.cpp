@@ -51,7 +51,6 @@ static const Material::Flag _flag_indices[Material::FLAG_MAX]={
 	Material::FLAG_LIGHTMAP_ON_UV2,
 	Material::FLAG_COLOR_ARRAY_SRGB,
 	Material::FLAG_SKIP_SHADOW_CASTING,
-
 };
 
 static const char*_color_mask_bit_names[Material::COLOR_MASK_BIT_COUNT] = {

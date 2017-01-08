@@ -1079,8 +1079,7 @@ void OS_Windows::initialize(const VideoMode& p_desired,int p_video_driver,int p_
 	gl_context->set_active_hwnd(hWnd);
 	gl_context->initialize();
 	int multisamples = gl_context->test_multisample_support(video_mode.multisamples);
-	if (multisamples > 0)
-	{
+	if (multisamples > 0) {
 		gl_context->shutdown();
 		DestroyWindow(hWnd);
 		hWnd = 0;
@@ -1095,7 +1094,6 @@ void OS_Windows::initialize(const VideoMode& p_desired,int p_video_driver,int p_
 		gl_context->set_active_hwnd(hWnd);
 		gl_context->initialize();
 	}
-
 
 	rasterizer = memnew( RasterizerGLES2 );
 #else
@@ -1737,7 +1735,6 @@ int OS_Windows::get_multisamples() {
 	return video_mode.multisamples;
 }
 
-
 void OS_Windows::print_error(const char* p_function, const char* p_file, int p_line, const char* p_code, const char* p_rationale, ErrorType p_type) {
 
 	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -1993,14 +1990,11 @@ void OS_Windows::set_cursor_shape(CursorShape p_shape) {
 		IDC_HELP
 	};
 
-	current_cursor = LoadCursor(hInstance, win_cursors[p_shape]);
+	current_cursor = LoadCursor(hInstance,win_cursors[p_shape]);
 
-	if(mouse_mode == MOUSE_MODE_VISIBLE)
-	{
+	if(mouse_mode == MOUSE_MODE_VISIBLE) {
 		SetCursor(current_cursor);
-	}
-	else
-	{
+	} else {
 		SetCursor(NULL);
 	}
 	cursor_shape=p_shape;

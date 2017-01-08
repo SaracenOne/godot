@@ -110,7 +110,6 @@ public:
 
 	AudioStreamPlaybackOGGVorbis();
 	~AudioStreamPlaybackOGGVorbis();
-
 	Dictionary get_stream_metadata(const String& p_file);
 };
 
@@ -121,7 +120,6 @@ class AudioStreamOGGVorbis : public AudioStream {
 
 	String file;
 protected:
-
 	static void _bind_methods();
 public:
 
@@ -134,7 +132,6 @@ public:
 	Dictionary get_stream_metadata();
 
 	void set_file(const String& p_file) { file = p_file; }
-
 };
 
 class ResourceFormatLoaderAudioStreamOGGVorbis : public ResourceFormatLoader {

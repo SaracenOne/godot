@@ -104,11 +104,11 @@ public:
 	_FORCE_INLINE_ Quat operator-() const;
 	_FORCE_INLINE_ Quat operator*(const real_t& s) const;
 	_FORCE_INLINE_ Quat operator/(const real_t& s) const;
-	
+
 
 	_FORCE_INLINE_ bool operator==(const Quat& p_quat) const;
 	_FORCE_INLINE_ bool operator!=(const Quat& p_quat) const;
-	
+
 	operator String() const;
 
 	_FORCE_INLINE_ void set(real_t p_x, real_t p_y, real_t p_z, real_t p_w) {
@@ -125,24 +125,23 @@ public:
 		real_t  d = v0.dot(v1);
 
 		if (d < -1.0 + CMP_EPSILON) {
-			x = 0;
-			y = 1;
-			z = 0;
-			w = 0;
-		}
-		else {
+			x=0;
+			y=1;
+			z=0;
+			w=0;
+		} else {
 
 			real_t  s = Math::sqrt((1.0f + d) * 2.0f);
 			real_t rs = 1.0f / s;
 
-			x = c.x*rs;
-			y = c.y*rs;
-			z = c.z*rs;
-			w = s * 0.5;
+			x=c.x*rs;
+			y=c.y*rs;
+			z=c.z*rs;
+			w=s * 0.5;
 		}
 	}
 
-	inline Quat() { x = y = z = 0; w = 1; }
+	inline Quat() {x=y=z=0; w=1; }
 
 #if defined(USE_SSE) || defined(USE_NEON)
 	// Set Vector 
@@ -241,7 +240,7 @@ Quat Quat::operator+(const Quat& q2) const {
 	return Quat(vaddq_f32(vec128, q2.vec128));
 #else	
 	const Quat& q1 = *this;
-	return Quat(q1.x + q2.x, q1.y + q2.y, q1.z + q2.z, q1.w + q2.w);
+	return Quat( q1.x+q2.x, q1.y+q2.y, q1.z+q2.z, q1.w+q2.w );
 #endif
 }
 
@@ -252,7 +251,7 @@ Quat Quat::operator-(const Quat& q2) const {
 	return Quat(vsubq_f32(vec128, q2.vec128));
 #else	
 	const Quat& q1 = *this;
-	return Quat(q1.x - q2.x, q1.y - q2.y, q1.z - q2.z, q1.w - q2.w);
+	return Quat( q1.x-q2.x, q1.y-q2.y, q1.z-q2.z, q1.w-q2.w);
 #endif
 }
 
@@ -263,7 +262,7 @@ Quat Quat::operator-() const {
 	return Quat((SimdFloat4)veorq_s32((int32x4_t)vec128, (int32x4_t)vMzeroMask));
 #else	
 	const Quat& q2 = *this;
-	return Quat(-q2.x, -q2.y, -q2.z, -q2.w);
+	return Quat( -q2.x, -q2.y,  -q2.z,  -q2.w);
 #endif
 }
 

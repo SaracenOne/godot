@@ -502,6 +502,7 @@ void RigidBody::_direct_state_changed(Object *p_state) {
 	}
 
 
+
 	state=NULL;
 }
 

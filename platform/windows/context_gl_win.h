@@ -30,7 +30,7 @@
 //
 // C++ Interface: context_gl_x11
 //
-// Description: 
+// Description:
 //
 //
 // Author: Juan Linietsky <reduzio@gmail.com>, (C) 2008
@@ -58,7 +58,6 @@ class ContextGL_Win : public ContextGL {
 	unsigned int pixel_format;
 	HWND hWnd;
 	bool opengl_3_context;
-
 	bool multisample_supported;
 	int multisample_format;
 	bool use_vsync;
@@ -67,9 +66,11 @@ class ContextGL_Win : public ContextGL {
 	PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 public:
 
+
 	virtual void release_current();
+
 	virtual void make_current();
-	
+
 	virtual int get_window_width();
 	virtual int get_window_height();
 	virtual void swap_buffers();
