@@ -620,7 +620,7 @@ void Vector3::fast_normalize() {
 
 void Vector3::normalize() {
 
-	real_t l=length();
+	real_t l=length_squared();
 	if (l==0) {
 		x=y=z=0;
 	} else {
