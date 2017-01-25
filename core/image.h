@@ -209,12 +209,14 @@ public:
 	int get_height() const; ///< Get image height
 	int get_mipmaps() const;
 
-	_FORCE_INLINE_ DVector<uint8_t>::Write Image::get_write_buffer() {
+	_FORCE_INLINE_ DVector<uint8_t>::Write get_write_buffer() {
 		DVector<uint8_t>::Write wp = data.write();
+		return wp;
 	}
 
-	_FORCE_INLINE_ DVector<uint8_t>::Read Image::get_read_buffer() {
+	_FORCE_INLINE_ DVector<uint8_t>::Read get_read_buffer() {
 		DVector<uint8_t>::Read rp = data.read();
+		return rp;
 	}
 
 	/**

@@ -1800,7 +1800,7 @@ public:
 	void reload_vram();
 
 	virtual bool has_feature(VS::Features p_feature) const;
-	
+
 	virtual void restore_framebuffer();
 
 	virtual void set_swap_buffers_active(const bool p_active);
@@ -1823,7 +1823,7 @@ public:
 	RasterizerGLES2(bool p_compress_arrays=false,bool p_keep_ram_copy=true,bool p_default_fragment_lighting=true,bool p_use_reload_hooks=false);
 	virtual ~RasterizerGLES2();
 
-	_FORCE_INLINE_ static GLenum RasterizerGLES2::get_gl_depth_test_mode(const VS::MaterialDepthTestMode p_depth_test_mode){
+	_FORCE_INLINE_ static GLenum get_gl_depth_test_mode(const VS::MaterialDepthTestMode p_depth_test_mode){
 		switch (p_depth_test_mode){
 			case VS::MATERIAL_DEPTH_TEST_MODE_NEVER:
 				return GL_NEVER;
@@ -1846,7 +1846,7 @@ public:
 		};
 	};
 
-	_FORCE_INLINE_ static GLenum RasterizerGLES2::get_gl_alpha_test_comparison(const VS::MaterialAlphaTestComparison p_comparison) {
+	_FORCE_INLINE_ static GLenum get_gl_alpha_test_comparison(const VS::MaterialAlphaTestComparison p_comparison) {
 		switch (p_comparison){
 			case VS::MATERIAL_ALPHA_TEST_COMPARISON_ALWAYS:
 				return GL_ALWAYS;
@@ -1869,7 +1869,7 @@ public:
 		};
 	};
 
-	_FORCE_INLINE_ static GLenum RasterizerGLES2::get_gl_stencil_op(const VS::MaterialStencilOperation p_stencil_op) {
+	_FORCE_INLINE_ static GLenum get_gl_stencil_op(const VS::MaterialStencilOperation p_stencil_op) {
 		switch (p_stencil_op){
 			case VS::MATERIAL_STENCIL_OP_KEEP:
 				return GL_KEEP;
@@ -1892,7 +1892,7 @@ public:
 		};
 	};
 
-	_FORCE_INLINE_ static GLenum RasterizerGLES2::get_gl_stencil_comparison(const VS::MaterialStencilComparison p_comparison) {
+	_FORCE_INLINE_ static GLenum get_gl_stencil_comparison(const VS::MaterialStencilComparison p_comparison) {
 		switch (p_comparison){
 			case VS::MATERIAL_STENCIL_COMPARISON_NEVER:
 				return GL_NEVER;
