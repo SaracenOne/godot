@@ -339,7 +339,7 @@ Dictionary AudioStreamPlaybackOGGVorbis::get_stream_metadata(const String& p_fil
 		return dictionary;
 	}
 
-	Dictionary();
+	return Dictionary();
 }
 
 Error AudioStreamPlaybackOGGVorbis::_load_stream()  {
