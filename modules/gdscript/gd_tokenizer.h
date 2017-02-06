@@ -125,6 +125,8 @@ public:
 		TK_COLON,
 		TK_NEWLINE,
 		TK_CONST_PI,
+		TK_CONST_INF,
+		TK_CONST_NAN,
 		TK_ERROR,
 		TK_EOF,
 		TK_CURSOR, //used for code completion

@@ -323,6 +323,16 @@ void GDScriptLanguage::get_public_constants(List<Pair<String,Variant> > *p_const
 	pi.first="PI";
 	pi.second=Math_PI;
 	p_constants->push_back(pi);
+
+	Pair<String, Variant> infinity;
+	infinity.first = "inf";
+	infinity.second = Math_Inf;
+	p_constants->push_back(infinity);
+
+	Pair<String, Variant> nan;
+	nan.first = "nan";
+	nan.second = Math_NaN;
+	p_constants->push_back(nan);
 }
 
 String GDScriptLanguage::make_function(const String& p_class,const String& p_name,const StringArray& p_args) const {
