@@ -27,7 +27,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 #ifndef MORPH_DATA_H
-#define MOPRH_DATA_H
+#define MORPH_DATA_H
 
 #include "scene/resources/mesh.h"
 
@@ -45,7 +45,7 @@ public:
 		MORPH_MODE_RELATIVE,
 		MORPH_MODE_NORMALIZED
 	};
-	
+
 	enum MorphArrayType {
 
 		MORPH_ARRAY_VERTEX=VisualServer::MORPH_ARRAY_VERTEX,
@@ -109,4 +109,4 @@ public:
 };
 
 
-#endif // MOPRH_DATA_H
+#endif // MORPH_DATA_H
