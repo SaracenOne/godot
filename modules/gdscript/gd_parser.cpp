@@ -288,7 +288,7 @@ GDParser::Node* GDParser::_parse_expression(Node *p_parent,bool p_static,bool p_
 
 			//constant defined by tokenizer
 			ConstantNode *constant = alloc_node<ConstantNode>();
-			constant->value = Math_Inf;
+			constant->value = Math_INF;
 			tokenizer->advance();
 			expr = constant;
 		}
@@ -296,7 +296,7 @@ GDParser::Node* GDParser::_parse_expression(Node *p_parent,bool p_static,bool p_
 
 			//constant defined by tokenizer
 			ConstantNode *constant = alloc_node<ConstantNode>();
-			constant->value = Math_NaN;
+			constant->value = Math_NAN;
 			tokenizer->advance();
 			expr = constant;
 		} else if (tokenizer->get_token()==GDTokenizer::TK_PR_PRELOAD) {

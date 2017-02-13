@@ -325,13 +325,13 @@ void GDScriptLanguage::get_public_constants(List<Pair<String,Variant> > *p_const
 	p_constants->push_back(pi);
 
 	Pair<String, Variant> infinity;
-	infinity.first = "inf";
-	infinity.second = Math_Inf;
+	infinity.first = "INF";
+	infinity.second = Math_INF;
 	p_constants->push_back(infinity);
 
 	Pair<String, Variant> nan;
-	nan.first = "nan";
-	nan.second = Math_NaN;
+	nan.first = "NAN";
+	nan.second = Math_NAN;
 	p_constants->push_back(nan);
 }
 

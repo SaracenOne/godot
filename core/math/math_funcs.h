@@ -181,7 +181,7 @@ public:
 #define Math_PI 3.14159265358979323846
 #define Math_SQRT12 0.7071067811865475244008443621048490
 
-#define Math_Inf INFINITY
-#define Math_NaN NAN
+#define Math_INF INFINITY
+#define Math_NAN NAN
 
 #endif // MATH_FUNCS_H
