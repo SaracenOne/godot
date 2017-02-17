@@ -37,13 +37,6 @@
 */
 
 
-#if DEFAULT_ALIGNMENT == 1
-#define DVECTOR_DATA_OFFSET		(sizeof(int))
-#else
-#define DVECTOR_DATA_OFFSET		((sizeof(int)/DEFAULT_ALIGNMENT + 1) * DEFAULT_ALIGNMENT)
-#endif
-
-
 extern Mutex* dvector_lock;
 
 template<class T>
@@ -85,11 +78,11 @@ class DVector {
 
 		*rc=1;
 
-		T * dst = (T*)(rc + (DVECTOR_DATA_OFFSET / sizeof(int)));
-		
-		T * src = (T*)((uint8_t*)(lock.data()) + DVECTOR_DATA_OFFSET);
+		T * dst = (T*)(rc + 1 );
 
-		int count = (mem.get_size() - DVECTOR_DATA_OFFSET) / sizeof(T);
+		T * src =(T*) ((int*)lock.data() + 1 );
+
+		int count = (mem.get_size() - sizeof(int)) / sizeof(T);
 
 		for (int i=0;i<count;i++) {
 
@@ -157,8 +150,8 @@ class DVector {
 		if (*rc==0) {
 			// no one else using it, destruct
 
-			T * t= (T*)((uint8_t*)(rc)+DVECTOR_DATA_OFFSET);
-			int count = (mem.get_size() - DVECTOR_DATA_OFFSET) / sizeof(T);
+			T * t= (T*)(rc+1);
+			int count = (mem.get_size() - sizeof(int)) / sizeof(T);
 
 			for (int i=0;i<count;i++) {
 
@@ -209,7 +202,7 @@ public:
 		Read r;
 		if (mem.is_valid()) {
 			r.lock = MID_Lock( mem );
-			r.mem = (const T*)((uint8_t*)(r.lock.data())+DVECTOR_DATA_OFFSET);
+			r.mem = (const T*)((int*)r.lock.data()+1);
 		}
 		return r;
 	}
@@ -219,7 +212,7 @@ public:
 		if (mem.is_valid()) {
 			copy_on_write();
 			w.lock = MID_Lock( mem );
-			w.mem = (T*)((uint8_t*)(w.lock.data())+DVECTOR_DATA_OFFSET);
+			w.mem = (T*)((int*)w.lock.data()+1);
 		}
 		return w;
 	}
@@ -332,7 +325,7 @@ public:
 template<class T>
 int DVector<T>::size() const {
 
-	return mem.is_valid() ? ((mem.get_size() - DVECTOR_DATA_OFFSET) / sizeof(T) ) : 0;
+	return mem.is_valid() ? ((mem.get_size() - sizeof(int)) / sizeof(T) ) : 0;
 }
 
 template<class T>
@@ -407,14 +400,14 @@ Error DVector<T>::resize(int p_size) {
 
 		if (oldsize==0) {
 
-			mem = dynalloc( p_size * sizeof(T) + DVECTOR_DATA_OFFSET );
+			mem = dynalloc( p_size * sizeof(T) + sizeof(int) );
 			lock=MID_Lock(mem);
 			int *rc = ((int*)lock.data());
 			*rc=1;
 
 		} else {
 
-			if (dynrealloc( mem, p_size * sizeof(T) + DVECTOR_DATA_OFFSET )!=OK ) {
+			if (dynrealloc( mem, p_size * sizeof(T) + sizeof(int) )!=OK ) {
 
 				ERR_FAIL_V(ERR_OUT_OF_MEMORY); // out of memory
 			}
@@ -425,7 +418,7 @@ Error DVector<T>::resize(int p_size) {
 
 
 
-		T *t = (T*)((uint8_t*)(lock.data()) + DVECTOR_DATA_OFFSET);
+		T *t = (T*)((int*)lock.data() + 1);
 
 		for (int i=oldsize;i<p_size;i++) {
 
@@ -440,7 +433,7 @@ Error DVector<T>::resize(int p_size) {
 		MID_Lock lock(mem);
 
 
-		T *t = (T*)((uint8_t*)(lock.data()) + DVECTOR_DATA_OFFSET);
+		T *t = (T*)((int*)lock.data() + 1);
 
 		for (int i=p_size;i<oldsize;i++) {
 
@@ -449,7 +442,7 @@ Error DVector<T>::resize(int p_size) {
 
 		lock = MID_Lock(); // clear
 
-		if (dynrealloc( mem, p_size * sizeof(T) + DVECTOR_DATA_OFFSET )!=OK ) {
+		if (dynrealloc( mem, p_size * sizeof(T) + sizeof(int) )!=OK ) {
 
 			ERR_FAIL_V(ERR_OUT_OF_MEMORY); // wtf error
 		}

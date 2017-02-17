@@ -75,8 +75,6 @@ CommandQueueMT::SyncSemaphore* CommandQueueMT::_alloc_sync_sem() {
 
 CommandQueueMT::CommandQueueMT(bool p_sync){
 
-	command_mem = (uint8_t *)memalloc(COMMAND_MEM_SIZE);
-
 	read_ptr=0;
 	write_ptr=0;
 	mutex = Mutex::create();
@@ -104,8 +102,6 @@ CommandQueueMT::~CommandQueueMT() {
 
 		memdelete(sync_sems[i].sem);
 	}
-
-	memdelete(command_mem);
 }
 
 

@@ -410,7 +410,7 @@ public:
 };
 
 
-void test_vec(const Plane& p_vec) {
+void test_vec(Plane p_vec) {
 
 
 	CameraMatrix cm;

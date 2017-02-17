@@ -81,55 +81,50 @@ public:
 
 
 	/* Heap / Heapsort functions */
-	
-	inline void push_heap(int p_first,int p_hole_idx,int p_top_index, const T& p_value,T* p_array) const {
-  
-		T value_copy = p_value;
+
+	inline void push_heap(int p_first,int p_hole_idx,int p_top_index,T p_value,T* p_array) const {
 
 		int parent = (p_hole_idx - 1) / 2;
-		while (p_hole_idx > p_top_index && compare(p_array[p_first + parent], value_copy)) {
-		
+		while (p_hole_idx > p_top_index && compare(p_array[p_first + parent], p_value)) {
+
 			p_array[p_first + p_hole_idx] = p_array[p_first + parent];
 			p_hole_idx = parent;
 			parent = (p_hole_idx - 1) / 2;
 		}
-		p_array[p_first + p_hole_idx] = value_copy;
-	}  
-	
-	inline void pop_heap(int p_first, int p_last, int p_result, const T& p_value, T* p_array) const {
-	
-		T value_copy = p_value;
+		p_array[p_first + p_hole_idx] = p_value;
+	}
+
+	inline void pop_heap(int p_first, int p_last, int p_result, T p_value, T* p_array) const {
 
 		p_array[p_result]=p_array[p_first];
-		adjust_heap(p_first, 0, p_last - p_first, value_copy, p_array);
+		adjust_heap(p_first,0,p_last-p_first,p_value,p_array);
 	}
 	inline void pop_heap(int p_first,int p_last,T* p_array) const {
-	
+
 	 	pop_heap(p_first,p_last-1,p_last-1,p_array[p_last-1],p_array);
 	}
-	
-	inline void adjust_heap(int p_first,int p_hole_idx,int p_len, const T& p_value,T* p_array) const {
-	
-		T value_copy = p_value;
+
+	inline void adjust_heap(int p_first,int p_hole_idx,int p_len,T p_value,T* p_array) const {
+
 
 		int top_index = p_hole_idx;
 		int second_child = 2 * p_hole_idx + 2;
-		
+
 		while (second_child < p_len) {
-	
+
 			if (compare(p_array[p_first + second_child],p_array[p_first + (second_child - 1)]))
 				second_child--;
-				
+
 			p_array[p_first + p_hole_idx] = p_array[p_first + second_child];
 			p_hole_idx = second_child;
 			second_child = 2 * (second_child + 1);
 		}
-		
+
 		if (second_child == p_len) {
 			p_array[p_first + p_hole_idx] = p_array[p_first + (second_child - 1)];
 			p_hole_idx = second_child - 1;
 		}
-		push_heap(p_first, p_hole_idx, top_index, value_copy, p_array);
+		push_heap(p_first, p_hole_idx, top_index, p_value,p_array);
 	}
 
 	inline void sort_heap(int p_first,int p_last,T* p_array) const {
@@ -171,15 +166,13 @@ public:
 				pop_heap(p_first,p_middle,i,p_array[i],p_array);
 	}
 
-	inline int partitioner(int p_first, int p_last, const T& p_pivot, T* p_array) const {
-	
-		T value_copy = p_pivot;
+	inline int partitioner(int p_first, int p_last, T p_pivot, T* p_array) const {
 
 		while (true) {
-			while (compare(p_array[p_first], value_copy))
+			while (compare(p_array[p_first],p_pivot))
 				p_first++;
 			p_last--;
-			while (compare(value_copy, p_array[p_last]))
+			while (compare(p_pivot,p_array[p_last]))
 				p_last--;
 
 			if (!(p_first < p_last))
@@ -251,17 +244,15 @@ public:
 		insertion_sort(p_first,p_last,p_array);
 	}
 
-	inline void unguarded_linear_insert(int p_last, const T& p_value,T* p_array) const {
-	
-		T value_copy = p_value;
+	inline void unguarded_linear_insert(int p_last,T p_value,T* p_array) const {
 
 		int next = p_last-1;
-		while (compare(value_copy, p_array[next])) {
+		while (compare(p_value,p_array[next])) {
 			p_array[p_last]=p_array[next];
 			p_last = next;
 			next--;
 		}
-		p_array[p_last] = value_copy;
+		p_array[p_last] = p_value;
 	}
 
 	inline void linear_insert(int p_first,int p_last,T*p_array) const {
