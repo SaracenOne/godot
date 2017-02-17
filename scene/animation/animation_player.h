@@ -48,6 +48,7 @@ public:
 	enum AnimationProcessMode {
 		ANIMATION_PROCESS_FIXED,
 		ANIMATION_PROCESS_IDLE,
+		ANIMATION_PROCESS_MANUAL
 	};
 
 private:
