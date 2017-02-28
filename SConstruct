@@ -154,6 +154,7 @@ opts.Add('builtin_libvpx', "Use the builtin libvpx library (yes/no)", 'yes')
 opts.Add('builtin_libwebp', "Use the builtin libwebp library (yes/no)", 'yes')
 opts.Add('builtin_openssl', "Use the builtin openssl library (yes/no)", 'yes')
 opts.Add('builtin_opus', "Use the builtin opus library (yes/no)", 'yes')
+opts.Add('builtin_recast', "Use the builtin recast library (yes/no)", 'yes')
 opts.Add('builtin_squish', "Use the builtin squish library (yes/no)", 'yes')
 opts.Add('builtin_zlib', "Use the builtin zlib library (yes/no)", 'yes')
 

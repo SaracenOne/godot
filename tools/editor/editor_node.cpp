@@ -99,6 +99,7 @@
 #include "plugins/light_occluder_2d_editor_plugin.h"
 #include "plugins/color_ramp_editor_plugin.h"
 #include "plugins/collision_shape_2d_editor_plugin.h"
+#include "plugins/navigation_mesh_editor_plugin.h"
 #include "main/input_default.h"
 // end
 #include "tools/editor/editor_settings.h"
@@ -6586,6 +6587,8 @@ EditorNode::EditorNode() {
 	add_editor_plugin( memnew( TextureEditorPlugin(this) ) );
 	add_editor_plugin( memnew( MaterialEditorPlugin(this) ) );
 	add_editor_plugin( memnew( MeshEditorPlugin(this) ) );
+	add_editor_plugin( memnew( NavigationMeshEditorPlugin(this) ) );
+
 
 	for(int i=0;i<EditorPlugins::get_plugin_count();i++)
 		add_editor_plugin( EditorPlugins::create(i,this) );
