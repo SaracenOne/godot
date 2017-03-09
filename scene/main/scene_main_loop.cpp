@@ -1702,6 +1702,7 @@ void SceneTree::set_network_peer(const Ref<NetworkedMultiplayerPeer>& p_network_
 		path_get_cache.clear();
 		path_send_cache.clear();
 		last_send_cache_id=1;
+		rpc_id=-1;
 	}
 
 	ERR_EXPLAIN("Supplied NetworkedNetworkPeer must be connecting or connected.");
@@ -1715,6 +1716,8 @@ void SceneTree::set_network_peer(const Ref<NetworkedMultiplayerPeer>& p_network_
 		network_peer->connect("connection_succeeded",this,"_connected_to_server");
 		network_peer->connect("connection_failed",this,"_connection_failed");
 		network_peer->connect("server_disconnected",this,"_server_disconnected");
+
+		rpc_id=get_network_unique_id();
 	}
 }
 
@@ -1729,6 +1732,12 @@ int SceneTree::get_network_unique_id() const {
 
 	ERR_FAIL_COND_V(!network_peer.is_valid(),0);
 	return network_peer->get_unique_id();
+}
+
+int SceneTree::get_rpc_id() const {
+
+	ERR_FAIL_COND_V(!network_peer.is_valid(), 0);
+	return rpc_id;
 }
 
 void SceneTree::set_refuse_new_network_connections(bool p_refuse) {
@@ -2142,7 +2151,9 @@ void SceneTree::_network_poll() {
 			ERR_PRINT("Error getting packet!");
 		}
 
+		rpc_id = sender; // Cache the sender id
 		_network_process_packet(sender,packet,len);
+		rpc_id = get_network_unique_id(); // Restore the local id
 
 		if (!network_peer.is_valid()) {
 			break; //it's also possible that a packet or RPC caused a disconnection, so also check here
@@ -2220,6 +2231,7 @@ void SceneTree::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("set_network_peer","peer:NetworkedMultiplayerPeer"),&SceneTree::set_network_peer);
 	ObjectTypeDB::bind_method(_MD("is_network_server"),&SceneTree::is_network_server);
 	ObjectTypeDB::bind_method(_MD("get_network_unique_id"),&SceneTree::get_network_unique_id);
+	ObjectTypeDB::bind_method(_MD("get_rpc_id"), &SceneTree::get_rpc_id);
 	ObjectTypeDB::bind_method(_MD("set_refuse_new_network_connections","refuse"),&SceneTree::set_refuse_new_network_connections);
 	ObjectTypeDB::bind_method(_MD("is_refusing_new_network_connections"),&SceneTree::is_refusing_new_network_connections);
 	ObjectTypeDB::bind_method(_MD("_network_peer_connected"),&SceneTree::_network_peer_connected);
@@ -2309,6 +2321,8 @@ SceneTree::SceneTree() {
 	}
 
 	root->set_physics_object_picking(GLOBAL_DEF("physics/enable_object_picking",true));
+
+	rpc_id=-1;
 
 #ifdef TOOLS_ENABLED
 	edited_scene_root=NULL;

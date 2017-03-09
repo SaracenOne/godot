@@ -187,6 +187,7 @@ private:
 	};
 
 	Ref<NetworkedMultiplayerPeer> network_peer;
+	int rpc_id;
 
 	Set<int> connected_peers;
 	void _network_peer_connected(int p_id);
@@ -426,6 +427,7 @@ public:
 	void set_network_peer(const Ref<NetworkedMultiplayerPeer>& p_network_peer);
 	bool is_network_server() const;
 	int get_network_unique_id() const;
+	int get_rpc_id() const;
 
 	void set_refuse_new_network_connections(bool p_refuse);
 	bool is_refusing_new_network_connections() const;
