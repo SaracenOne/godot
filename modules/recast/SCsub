@@ -25,14 +25,14 @@ if (env['builtin_recast'] != 'no'):
     env.Append(CPPPATH=[thirdparty_dir, thirdparty_dir + "/Include"])
 
     # also requires recast headers
-    if (env['builtin_recast'] != 'no'):
-        env.Append(CPPPATH=["#thirdparty/recastnavigation/Recast"])
-
+    env.Append(CPPPATH=["#thirdparty/recastnavigation/Recast"])
+    # and macro
+    env.Append(CCFLAGS=['-DRECAST_ENABLED'])
+    # and library
     lib = env.Library("recast_builtin", thirdparty_sources)
     env.Append(LIBS=[lib])
 
 # Godot source files
 env.add_source_files(env.modules_sources, "*.cpp")
-env.Append(CCFLAGS=['-DRECAST_ENABLED'])
 
 Export('env')
