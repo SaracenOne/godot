@@ -98,10 +98,6 @@ class RasterizerDummy : public Rasterizer {
 			// Color Mask
 			bool color_bits[VS::MATERIAL_COLOR_MASK_BIT_COUNT];
 
-			// Alpha Test
-			VS::MaterialAlphaTestComparison alpha_test_comparison;
-			float alpha_test_value;
-
 			// Stencil
 			uint8_t stencil_reference_value;
 			uint8_t stencil_read_mask;
@@ -142,9 +138,6 @@ class RasterizerDummy : public Rasterizer {
 
 				for (int i = 0; i<VS::MATERIAL_COLOR_MASK_BIT_COUNT; i++)
 					color_bits[i] = true;
-
-				alpha_test_comparison = VS::MATERIAL_ALPHA_TEST_COMPARISON_ALWAYS;
-				alpha_test_value = 0.0;
 
 				stencil_reference_value = 0xff;
 				stencil_read_mask = 0xff;
@@ -514,11 +507,6 @@ public:
 
 	virtual void material_set_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit, bool p_enabled);
 	virtual bool material_get_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit) const;
-
-	virtual void material_set_alpha_test_comparison(RID p_material, int p_pass, VS::MaterialAlphaTestComparison p_alpha_test_comparison);
-	virtual VS::MaterialAlphaTestComparison material_get_alpha_test_comparison(RID p_material, int p_pass) const;
-	virtual void material_set_alpha_test_value(RID p_material, int p_pass, float p_value);
-	virtual float material_get_alpha_test_value(RID p_material, int p_pass) const;
 
 	virtual void material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value);
 	virtual uint8_t material_get_stencil_reference_value(RID p_material, const int p_pass_index) const;

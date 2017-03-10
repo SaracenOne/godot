@@ -1507,6 +1507,9 @@ void RasterizerGLES2::shader_set_mode(RID p_shader,VS::ShaderMode p_mode) {
 			case VS::SHADER_CANVAS_ITEM: {
 				canvas_shader.free_custom_shader(shader->custom_code_id);
 			} break;
+			case VS::SHADER_POST_PROCESS: {
+				//postprocess_shader.free_custom_shader(shader->custom_code_id);
+			} break;
 		}
 
 		shader->custom_code_id=0;
@@ -1520,6 +1523,9 @@ void RasterizerGLES2::shader_set_mode(RID p_shader,VS::ShaderMode p_mode) {
 		} break;
 		case VS::SHADER_CANVAS_ITEM: {
 			shader->custom_code_id=canvas_shader.create_custom_shader();
+		} break;
+		case VS::SHADER_POST_PROCESS: {
+			//shader->custom_code_id = postprocess_shader.create_custom_shader();
 		} break;
 	}
 	_shader_make_dirty(shader);
@@ -1617,6 +1623,7 @@ void RasterizerGLES2::shader_get_param_list(RID p_shader, List<PropertyInfo> *p_
 			case ShaderLanguage::TYPE_FLOAT:
 			case ShaderLanguage::TYPE_VEC2:
 			case ShaderLanguage::TYPE_VEC3:
+			case ShaderLanguage::TYPE_MAT2:
 			case ShaderLanguage::TYPE_MAT3:
 			case ShaderLanguage::TYPE_MAT4:
 			case ShaderLanguage::TYPE_VEC4:
@@ -1826,42 +1833,6 @@ bool RasterizerGLES2::material_get_color_mask_bit(RID p_material, const int p_pa
 	ERR_FAIL_COND_V(!pass, false);
 
 	return pass->color_bits[p_color_bit];
-}
-
-void RasterizerGLES2::material_set_alpha_test_comparison(RID p_material, int p_pass_index, VS::MaterialAlphaTestComparison p_alpha_test_comparison) {
-	Material *material = material_owner.get(p_material);
-	ERR_FAIL_COND(!material);
-	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND(!pass);
-
-	pass->alpha_test_comparison = p_alpha_test_comparison;
-}
-
-VS::MaterialAlphaTestComparison RasterizerGLES2::material_get_alpha_test_comparison(RID p_material, int p_pass_index) const {
-	Material *material = material_owner.get(p_material);
-	ERR_FAIL_COND_V(!material, VS::MATERIAL_ALPHA_TEST_COMPARISON_NEVER);
-	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND_V(!pass, VS::MATERIAL_ALPHA_TEST_COMPARISON_NEVER);
-
-	return pass->alpha_test_comparison;
-}
-
-void RasterizerGLES2::material_set_alpha_test_value(RID p_material, int p_pass_index, float p_value) {
-	Material *material = material_owner.get(p_material);
-	ERR_FAIL_COND(!material);
-	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND(!pass);
-
-	pass->alpha_test_value = p_value;
-}
-
-float RasterizerGLES2::material_get_alpha_test_value(RID p_material, int p_pass_index) const {
-	Material *material = material_owner.get(p_material);
-	ERR_FAIL_COND_V(!material, false);
-	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND_V(!pass, false);
-
-	return pass->alpha_test_value;
 }
 
 void RasterizerGLES2::material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value) {
@@ -3113,7 +3084,7 @@ int RasterizerGLES2::mesh_get_morph_target_count(RID p_mesh) const{
 
 void RasterizerGLES2::mesh_set_morph_target_mode(RID p_mesh,VS::MorphTargetMode p_mode) {
 
-	ERR_FAIL_INDEX(p_mode,2);
+	ERR_FAIL_INDEX(p_mode, VS::MORPH_MODE_COUNT);
 	Mesh *mesh = mesh_owner.get( p_mesh );
 	ERR_FAIL_COND(!mesh);
 
@@ -4138,14 +4109,14 @@ void RasterizerGLES2::light_set_color(RID p_light,VS::LightColor p_type, const C
 
 	Light *light = light_owner.get(p_light);
 	ERR_FAIL_COND(!light);
-	ERR_FAIL_INDEX( p_type, 3 );
+	ERR_FAIL_INDEX( p_type, VS::LIGHT_COLOR_COUNT );
 	light->colors[p_type]=p_color;
 }
 Color RasterizerGLES2::light_get_color(RID p_light,VS::LightColor p_type) const {
 
 	Light *light = light_owner.get(p_light);
 	ERR_FAIL_COND_V(!light, Color());
-	ERR_FAIL_INDEX_V( p_type, 3, Color() );
+	ERR_FAIL_INDEX_V( p_type, VS::LIGHT_COLOR_COUNT, Color() );
 	return light->colors[p_type];
 }
 
@@ -5624,9 +5595,6 @@ bool RasterizerGLES2::_setup_material_pass(const Material::Pass *p_material_pass
 	// Color Mask
 	glColorMask(p_material_pass->color_bits[VS::MATERIAL_COLOR_MASK_BIT_R], p_material_pass->color_bits[VS::MATERIAL_COLOR_MASK_BIT_G], p_material_pass->color_bits[VS::MATERIAL_COLOR_MASK_BIT_B], p_material_pass->color_bits[VS::MATERIAL_COLOR_MASK_BIT_A]);
 
-	// Alpha Func
-	set_alpha_function(p_material_pass->alpha_test_comparison, p_material_pass->alpha_test_value);
-
 	// Stencil Setup
 	set_stencil_operations(
 		p_material_pass->stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_SFAIL],
@@ -7028,7 +6996,15 @@ void RasterizerGLES2::_render_list_forward(RenderList *p_render_list,const Trans
 						}
 
 					} break;
-
+					default: {
+						glBlendEquation(GL_FUNC_ADD);
+						if (current_rt && current_rt_transparent) {
+							glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+						}
+						else {
+							glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+						}
+					} break;
 				}
 
 				current_blend_mode=desired_blend_mode;
@@ -7789,7 +7765,9 @@ void RasterizerGLES2::end_scene() {
 				glClear(GL_DEPTH_BUFFER_BIT);
 				draw_tex_background=true;
 			} break;
-
+			default: {
+				glClear(GL_DEPTH_BUFFER_BIT);;
+			} break;
 		}
 	} else {
 
@@ -8598,7 +8576,15 @@ void RasterizerGLES2::canvas_set_blend_mode(VS::MaterialBlendMode p_mode) {
 			glBlendEquation(GL_FUNC_ADD);
 			glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
 		} break;
-
+		default: {
+			glBlendEquation(GL_FUNC_ADD);
+			if (current_rt && current_rt_transparent) {
+				glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+			}
+			else {
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			}
+		} break;
 	}
 
 	canvas_blend_mode=p_mode;
@@ -10131,7 +10117,15 @@ void RasterizerGLES2::canvas_render_items(CanvasItem *p_item_list,int p_z,const 
 					glBlendEquation(GL_FUNC_ADD);
 					glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
 				} break;
-
+				default: {
+					glBlendEquation(GL_FUNC_ADD);
+					if (current_rt && current_rt_transparent) {
+						glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+					}
+					else {
+						glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					}
+				} break;
 			}
 
 			canvas_blend_mode=ci->blend_mode;
@@ -10552,6 +10546,9 @@ void RasterizerGLES2::free(const RID& p_rid) {
 		switch(shader->mode) {
 			case VS::SHADER_MATERIAL: {
 				material_shader.free_custom_shader(shader->custom_code_id);
+			} break;
+			case VS::SHADER_CANVAS_ITEM: {
+				canvas_shader.free_custom_shader(shader->custom_code_id);
 			} break;
 			case VS::SHADER_POST_PROCESS: {
 				//postprocess_shader.free_custom_shader(shader->custom_code_id);
@@ -11950,10 +11947,6 @@ void RasterizerGLES2::set_stencil_comparison(const VS::MaterialStencilComparison
 void RasterizerGLES2::set_stencil_mask(const uint8_t p_mask) {
 	glStencilMask(static_cast<GLuint>(p_mask));
 };
-
-void RasterizerGLES2::set_alpha_function(const VS::MaterialAlphaTestComparison p_comparison, const float p_value) {
-	glAlphaFunc(get_gl_alpha_test_comparison(p_comparison), p_value);
-}
 
 RasterizerGLES2::RasterizerGLES2(bool p_compress_arrays,bool p_keep_ram_copy,bool p_default_fragment_lighting,bool p_use_reload_hooks) {
 

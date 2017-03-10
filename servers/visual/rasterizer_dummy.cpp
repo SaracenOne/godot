@@ -336,42 +336,6 @@ bool RasterizerDummy::material_get_color_mask_bit(RID p_material, const int p_pa
 	return pass->color_bits[p_color_bit];
 }
 
-void RasterizerDummy::material_set_alpha_test_comparison(RID p_material, int p_pass_index, VS::MaterialAlphaTestComparison p_alpha_test_comparison) {
-	Material *material = material_owner.get(p_material);
-	ERR_FAIL_COND(!material);
-	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND(!pass);
-
-	pass->alpha_test_comparison = p_alpha_test_comparison;
-}
-
-VS::MaterialAlphaTestComparison RasterizerDummy::material_get_alpha_test_comparison(RID p_material, int p_pass_index) const {
-	Material *material = material_owner.get(p_material);
-	ERR_FAIL_COND_V(!material, VS::MATERIAL_ALPHA_TEST_COMPARISON_NEVER);
-	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND_V(!pass, VS::MATERIAL_ALPHA_TEST_COMPARISON_NEVER);
-
-	return pass->alpha_test_comparison;
-}
-
-void RasterizerDummy::material_set_alpha_test_value(RID p_material, int p_pass_index, float p_value) {
-	Material *material = material_owner.get(p_material);
-	ERR_FAIL_COND(!material);
-	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND(!pass);
-
-	pass->alpha_test_value = p_value;
-}
-
-float RasterizerDummy::material_get_alpha_test_value(RID p_material, int p_pass_index) const {
-	Material *material = material_owner.get(p_material);
-	ERR_FAIL_COND_V(!material, false);
-	Material::Pass *pass = &material->passes[p_pass_index];
-	ERR_FAIL_COND_V(!pass, false);
-
-	return pass->alpha_test_value;
-}
-
 void RasterizerDummy::material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value) {
 	Material *material = material_owner.get(p_material);
 	ERR_FAIL_COND(!material);

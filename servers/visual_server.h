@@ -222,18 +222,6 @@ public:
 	virtual void material_set_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit, bool p_enabled)=0;
 	virtual bool material_get_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit) const = 0;
 
-	enum MaterialAlphaTestComparison {
-		MATERIAL_ALPHA_TEST_COMPARISON_NEVER = 0,
-		MATERIAL_ALPHA_TEST_COMPARISON_ALWAYS,
-		MATERIAL_ALPHA_TEST_COMPARISON_LESS,
-		MATERIAL_ALPHA_TEST_COMPARISON_EQUAL,
-		MATERIAL_ALPHA_TEST_COMPARISON_LEQUAL,
-		MATERIAL_ALPHA_TEST_COMPARISON_GREATER,
-		MATERIAL_ALPHA_TEST_COMPARISON_NOTEQUAL,
-		MATERIAL_ALPHA_TEST_COMPARISON_GEQUAL,
-		MATERIAL_ALPHA_TEST_COMPARISON_COUNT
-	};
-
 	virtual void material_set_stencil_reference_value(RID p_material, int p_pass, uint8_t p_reference_value)=0;
 	virtual uint8_t material_get_stencil_reference_value(RID p_material, int p_pass) const=0;
 	virtual void material_set_stencil_read_mask(RID p_material, int p_pass, uint8_t p_read_mask)=0;
@@ -442,6 +430,7 @@ public:
 	enum MorphTargetMode {
 		MORPH_MODE_NORMALIZED,
 		MORPH_MODE_RELATIVE,
+		MORPH_MODE_COUNT,
 	};
 
 	virtual void mesh_set_morph_target_mode(RID p_mesh,MorphTargetMode p_mode)=0;
@@ -586,7 +575,8 @@ public:
 
 	enum LightColor {
 		LIGHT_COLOR_DIFFUSE,
-		LIGHT_COLOR_SPECULAR
+		LIGHT_COLOR_SPECULAR,
+		LIGHT_COLOR_COUNT
 	};
 
 	enum LightParam {
@@ -1309,7 +1299,6 @@ VARIANT_ENUM_CAST( VisualServer::MaterialBlendMode );
 VARIANT_ENUM_CAST( VisualServer::MaterialDepthDrawMode );
 VARIANT_ENUM_CAST( VisualServer::MaterialDepthTestMode );
 VARIANT_ENUM_CAST( VisualServer::MaterialColorMaskBit );
-VARIANT_ENUM_CAST( VisualServer::MaterialAlphaTestComparison );
 VARIANT_ENUM_CAST( VisualServer::MaterialStencilOperationOption );
 VARIANT_ENUM_CAST( VisualServer::MaterialStencilOperation );
 VARIANT_ENUM_CAST( VisualServer::MaterialStencilComparison );

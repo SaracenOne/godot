@@ -252,10 +252,6 @@ class RasterizerGLES2 : public Rasterizer {
 			// Color Mask
 			bool color_bits[VS::MATERIAL_COLOR_MASK_BIT_COUNT];
 
-			// Alpha Test
-			VS::MaterialAlphaTestComparison alpha_test_comparison;
-			float alpha_test_value;
-
 			// Stencil
 			uint8_t stencil_reference_value;
 			uint8_t stencil_read_mask;
@@ -296,9 +292,6 @@ class RasterizerGLES2 : public Rasterizer {
 
 				for (int i = 0; i<VS::MATERIAL_COLOR_MASK_BIT_COUNT; i++)
 					color_bits[i] = true;
-
-				alpha_test_comparison = VS::MATERIAL_ALPHA_TEST_COMPARISON_ALWAYS;
-				alpha_test_value = 0.0;
 
 				stencil_reference_value = 0xff;
 				stencil_read_mask = 0xff;
@@ -1440,11 +1433,6 @@ public:
 	virtual void material_set_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit, bool p_enabled);
 	virtual bool material_get_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit) const;
 
-	virtual void material_set_alpha_test_comparison(RID p_material, int p_pass, VS::MaterialAlphaTestComparison p_alpha_test_comparison);
-	virtual VS::MaterialAlphaTestComparison material_get_alpha_test_comparison(RID p_material, int p_pass) const;
-	virtual void material_set_alpha_test_value(RID p_material, int p_pass, float p_value);
-	virtual float material_get_alpha_test_value(RID p_material, int p_pass) const;
-
 	virtual void material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value);
 	virtual uint8_t material_get_stencil_reference_value(RID p_material, const int p_pass_index) const;
 
@@ -1818,7 +1806,6 @@ public:
 		const uint8_t p_ref,
 		const uint8_t p_mask);
 	virtual void set_stencil_mask(const uint8_t p_mask);
-	virtual void set_alpha_function(const VS::MaterialAlphaTestComparison p_comparison, const float p_value);
 
 	RasterizerGLES2(bool p_compress_arrays=false,bool p_keep_ram_copy=true,bool p_default_fragment_lighting=true,bool p_use_reload_hooks=false);
 	virtual ~RasterizerGLES2();
@@ -1843,29 +1830,6 @@ public:
 				return GL_ALWAYS;
 			default:
 				GL_NEVER;
-		};
-	};
-
-	_FORCE_INLINE_ static GLenum get_gl_alpha_test_comparison(const VS::MaterialAlphaTestComparison p_comparison) {
-		switch (p_comparison){
-			case VS::MATERIAL_ALPHA_TEST_COMPARISON_ALWAYS:
-				return GL_ALWAYS;
-			case VS::MATERIAL_ALPHA_TEST_COMPARISON_NEVER:
-				return GL_NEVER;
-			case VS::MATERIAL_ALPHA_TEST_COMPARISON_LESS:
-				return GL_LESS;
-			case VS::MATERIAL_ALPHA_TEST_COMPARISON_EQUAL:
-				return GL_EQUAL;
-			case VS::MATERIAL_ALPHA_TEST_COMPARISON_LEQUAL:
-				return GL_LEQUAL;
-			case VS::MATERIAL_ALPHA_TEST_COMPARISON_GREATER:
-				return GL_GREATER;
-			case VS::MATERIAL_ALPHA_TEST_COMPARISON_NOTEQUAL:
-				return GL_NOTEQUAL;
-			case VS::MATERIAL_ALPHA_TEST_COMPARISON_GEQUAL:
-				return GL_GEQUAL;
-			default:
-				return GL_ALWAYS;
 		};
 	};
 

@@ -233,11 +233,6 @@ public:
 	virtual void material_set_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit, bool p_enabled)=0;
 	virtual bool material_get_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit) const=0;
 
-	virtual void material_set_alpha_test_comparison(RID p_material, int p_pass, VS::MaterialAlphaTestComparison p_alpha_test_comparison)=0;
-	virtual VS::MaterialAlphaTestComparison material_get_alpha_test_comparison(RID p_material, int p_pass) const=0;
-	virtual void material_set_alpha_test_value(RID p_material, int p_pass, float p_value)=0;
-	virtual float material_get_alpha_test_value(RID p_material, int p_pass) const=0;
-
 	virtual void material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value)=0;
 	virtual uint8_t material_get_stencil_reference_value(RID p_material, const int p_pass_index) const=0;
 
