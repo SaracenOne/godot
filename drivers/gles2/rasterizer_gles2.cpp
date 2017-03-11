@@ -38,8 +38,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "scene/resources/morph_data.h"
-
 #ifdef GLEW_ENABLED
 #define   _GL_HALF_FLOAT_OES      0x140B
 #else
@@ -2049,11 +2047,6 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 	int index_array_len=0;
 	int array_len=0;
 
-	Vector<int> morph_array_len_array;
-	Vector<uint32_t> morph_array_formats;
-	morph_array_len_array.resize(p_blend_shapes.size());
-	morph_array_formats.resize(p_blend_shapes.size());
-
 	for(int i=0;i<p_arrays.size();i++) {
 
 		if (p_arrays[i].get_type()==Variant::NIL)
@@ -2085,15 +2078,9 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 
 				if (arr[j].get_type()!=Variant::NIL)
 					bsformat|=(1<<j);
-
-				if (j==VS::MORPH_ARRAY_INDEX) {
-
-					morph_array_len_array[i]=IntArray(arr[j]).size();
-				}
 			}
-			morph_array_formats[i] = bsformat;
 
-			//ERR_FAIL_COND( (bsformat)!=(format&(VS::ARRAY_FORMAT_BONES-1)));
+			ERR_FAIL_COND( (bsformat)!=(format&(VS::ARRAY_FORMAT_BONES-1)));
 		}
 	}
 
@@ -2335,107 +2322,19 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 
 			surface->morph_targets_local = memnew_arr(Surface::MorphTarget,mesh->morph_target_count);
 			for(int i=0;i<mesh->morph_target_count;i++) {
+				Array new_blend_shape = _extract_minimal_blend_arrays_from_basis(surface, i, p_arrays, p_blend_shapes[i],mesh->morph_target_mode,(use_VBO && use_half_float));
+				
+				if(new_blend_shape.size() > 0) {
+					surface->morph_targets_local[i].array=memnew_arr(uint8_t,surface->morph_targets_local[i].morph_stride * surface->morph_targets_local[i].morph_index_count);
+					surface->morph_targets_local[i].index_array=memnew_arr(uint8_t,surface->morph_targets_local[i].morph_index_count * surface->morph_targets_local[i].morph_index_count);
 
-				surface->morph_targets_local[i].morph_array_len=0;
-				surface->morph_targets_local[i].morph_stride=0;
-
-				surface->morph_targets_local[i].configured_format=0;
-
-				surface->morph_targets_local[i].array=0;
-				surface->morph_targets_local[i].index_array=0;
-
-				int total_morph_elem_size=0;
-				int morph_length = morph_array_len_array[i];
-
-				int morph_index_size=0;
-
-				for (int j=0;j<VS::MORPH_ARRAY_MAX;j++) {
-					Surface::ArrayData&adm=surface->morph_targets_local[i].morph_array[j];
-					adm.size=0;
-					adm.ofs=0;
-					int morph_elem_size=0;
-					int morph_elem_count=0;
-					bool valid_local=true;
-					GLenum datatype;
-					bool normalize=false;
-					bool bind=false;
-
-					if (!(morph_array_formats[i]&(1<<j))) // no array
-					{
-						morph_length = 0;
-						continue;
-					}
-
-
-					switch(j) {
-						case VS::MORPH_ARRAY_VERTEX: {
-
-							if (use_VBO && use_half_float) {
-								morph_elem_size=3*sizeof(int16_t); // vertex
-								datatype=_GL_HALF_FLOAT_OES;
-							} else {
-
-								morph_elem_size=3*sizeof(GLfloat); // vertex
-								datatype=GL_FLOAT;
-							}
-							bind=true;
-							morph_elem_count=3;
-
-						} break;
-						case VS::MORPH_ARRAY_INDEX: {
-
-							if (morph_length<=0) {
-								continue;
-							}
-							/* determine wether using 16 or 32 bits indices */
-							if (array_len>(1<<16)) {
-
-								morph_elem_size=4;
-								morph_index_size=4;
-								datatype=GL_UNSIGNED_INT;
-							} else {
-								morph_elem_size=2;
-								morph_index_size=2;
-								datatype=GL_UNSIGNED_SHORT;
-							}
-
-							surface->morph_targets_local[i].morph_array_len=morph_length; // only way it can exist
-							adm.ofs=0;
-							adm.size=morph_elem_size;
-							adm.count=1;
-							continue;
-						} break;
-						default: {
-							ERR_FAIL( );
-						}
-					}
-
-					adm.ofs=total_morph_elem_size;
-					adm.size=morph_elem_size;
-					adm.datatype=datatype;
-					adm.normalize=normalize;
-					adm.bind=bind;
-					adm.count=morph_elem_count;
-					total_morph_elem_size+=morph_elem_size;
-					if (valid_local) {
-						surface->morph_targets_local[i].morph_stride+=morph_elem_size;
-						surface->morph_format|=(1<<i);
-					}
-				}
-
-				if(morph_length > 0)
-				{
-					surface->morph_targets_local[i].array=memnew_arr(uint8_t,surface->morph_targets_local[i].morph_stride * surface->morph_targets_local[i].morph_array_len);
-					surface->morph_targets_local[i].index_array=memnew_arr(uint8_t,surface->morph_targets_local[i].morph_array_len * morph_index_size);
-
-					_surface_set_morph_arrays(
+					_surface_set_blend_arrays(
 						&surface->morph_targets_local[i],
 						surface->morph_targets_local[i].array,
 						surface->morph_targets_local[i].index_array,
-						p_blend_shapes[i]);
+						new_blend_shape);
 
 					surface->morph_targets_local[i].configured_format=surface->morph_format;
-
 					surface->morph_targets_active.push_back(i);
 				}
 			}
@@ -2466,6 +2365,100 @@ void RasterizerGLES2::mesh_add_surface(RID p_mesh,VS::PrimitiveType p_primitive,
 
 	mesh->surfaces.push_back(surface);
 
+}
+
+Array RasterizerGLES2::_extract_minimal_blend_arrays_from_basis(Surface *p_surface,
+	const int p_index,
+	const Array &p_basis_arrays,
+	const Array &p_blend_arrays,
+	const VS::MorphTargetMode p_morph_target_mode,
+	const bool p_compressed_verticies)
+{
+	p_surface->morph_targets_local[p_index].morph_vertex_size = 0;
+
+	p_surface->morph_targets_local[p_index].morph_index_size = 0;
+	p_surface->morph_targets_local[p_index].morph_index_count = 0;
+
+	p_surface->morph_targets_local[p_index].morph_stride = 0;
+
+	p_surface->morph_targets_local[p_index].configured_format = 0;
+
+	p_surface->morph_targets_local[p_index].array = 0;
+	p_surface->morph_targets_local[p_index].index_array = 0;
+
+	int blend_array_count = p_blend_arrays.size();
+	int blend_base_format = 0;
+
+	// Calculate the properties of the original blend arrays
+	for (int i=0;i<blend_array_count;i++) {
+		switch(i) {
+			case VS::ARRAY_VERTEX: {
+				if (Vector3Array(p_blend_arrays[i]).size() <= 0)
+					continue;
+				blend_base_format |=VS::ARRAY_VERTEX;
+			} break;
+			case VS::ARRAY_INDEX: {
+				if (IntArray(p_blend_arrays[i]).size() <= 0)
+					continue;
+				blend_base_format |=VS::ARRAY_INDEX;
+			} break;
+			default: {
+				continue;
+			}
+		}
+	}
+
+	if (!blend_base_format&VS::ARRAY_VERTEX)
+		return Array();
+	//
+
+	Vector3Array blend_vertex_array = Vector3Array(p_blend_arrays[VS::ARRAY_VERTEX]);
+	Vector3Array basis_vertex_array = Vector3Array(p_basis_arrays[VS::ARRAY_VERTEX]);
+
+	// Store verticies with offset to basis
+	Vector3Array new_vertex_array;
+	IntArray new_index_array;
+
+	for (int i = 0; i < blend_vertex_array.size(); i++) {
+		Vector3 vec = blend_vertex_array[i] - basis_vertex_array[i];
+		if (blend_vertex_array[i].distance_to(basis_vertex_array[i]) > CMP_EPSILON) {
+			new_vertex_array.append(blend_vertex_array[i] - basis_vertex_array[i]);
+			new_index_array.append(i);
+		}
+	}
+
+	if (new_index_array.size() > 0) {
+		p_surface->morph_format |= VS::MORPH_ARRAY_VERTEX|VS::MORPH_ARRAY_INDEX;
+
+		// Calculate vertex size
+		if (p_compressed_verticies) {
+			p_surface->morph_targets_local[p_index].morph_vertex_size = 3 * sizeof(int16_t);
+		} else {
+			p_surface->morph_targets_local[p_index].morph_vertex_size = 3 * sizeof(GLfloat);
+		}
+		p_surface->morph_targets_local[p_index].morph_stride += p_surface->morph_targets_local[p_index].morph_vertex_size;
+
+
+		// Calculate index size
+		int new_index_array_count = new_index_array.size();
+		if (new_index_array_count > (1 << 16)) {
+			p_surface->morph_targets_local[p_index].morph_index_size = 4;
+		} else {
+			p_surface->morph_targets_local[p_index].morph_index_size = 2;
+		}
+
+		// Vertex count
+		p_surface->morph_targets_local[p_index].morph_index_count = new_index_array_count;
+
+		// Create the new arrays
+		Array new_blend_arrays;
+		new_blend_arrays.append(new_vertex_array);
+		new_blend_arrays.append(new_index_array);
+
+		return new_blend_arrays;
+	} else {
+		return Array();
+	}
 }
 
 Error RasterizerGLES2::_surface_set_arrays(Surface *p_surface, uint8_t *p_mem,uint8_t *p_index_mem,const Array& p_arrays,bool p_main) {
@@ -2903,128 +2896,70 @@ Error RasterizerGLES2::_surface_set_arrays(Surface *p_surface, uint8_t *p_mem,ui
 	return OK;
 }
 
-Error RasterizerGLES2::_surface_set_morph_arrays(Surface::MorphTarget *p_surface_morph_target, uint8_t *p_mem,uint8_t *p_index_mem,const Array& p_arrays)  {
+Error RasterizerGLES2::_surface_set_blend_arrays(Surface::MorphTarget *p_surface_morph_target, uint8_t *p_mem, uint8_t *p_index_mem,const Array& p_arrays)  {
 
 	uint32_t stride = p_surface_morph_target->morph_stride;
+	uint32_t index_count = p_surface_morph_target->morph_index_count;
 
 	for(int ai=0;ai<VS::MORPH_ARRAY_MAX;ai++) {
 		if (ai>=p_arrays.size())
 			break;
 		if (p_arrays[ai].get_type()==Variant::NIL)
 			continue;
-		Surface::ArrayData &a=p_surface_morph_target->morph_array[ai];
 
 		switch(ai) {
-
-
-		case MorphData::MORPH_ARRAY_VERTEX: {
-
+			case VS::MORPH_ARRAY_VERTEX: {
 				ERR_FAIL_COND_V( p_arrays[ai].get_type() != Variant::VECTOR3_ARRAY, ERR_INVALID_PARAMETER );
 
 				DVector<Vector3> array = p_arrays[ai];
-				ERR_FAIL_COND_V( array.size() != p_surface_morph_target->morph_array_len, ERR_INVALID_PARAMETER );
-
+				ERR_FAIL_COND_V( array.size() != p_surface_morph_target->morph_index_count, ERR_INVALID_PARAMETER );
 
 				DVector<Vector3>::Read read = array.read();
 				const Vector3* src=read.ptr();
 
-				if (p_surface_morph_target->morph_array[VS::MORPH_ARRAY_VERTEX].datatype==_GL_HALF_FLOAT_OES) {
-
-					for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
-
-
+				int vertex_size = p_surface_morph_target->morph_vertex_size;
+				if (p_surface_morph_target->morph_vertex_size == 2) {
+					for (int i=0;i<p_surface_morph_target->morph_index_count;i++) {
 						uint16_t vector[3]={ make_half_float(src[i].x), make_half_float(src[i].y), make_half_float(src[i].z) };
-
-						copymem(&p_mem[a.ofs+i*stride], vector, a.size);
+						copymem(&p_mem[i*stride], vector, vertex_size);
 					}
-
-
 				} else {
-					for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
-
-
+					for (int i=0;i<p_surface_morph_target->morph_index_count;i++) {
 						GLfloat vector[3]={ src[i].x, src[i].y, src[i].z };
-
-						copymem(&p_mem[a.ofs+i*stride], vector, a.size);
+						copymem(&p_mem[i*stride], vector, vertex_size);
 					}
 				}
 
 			} break;
-			/*case MorphData::MORPH_ARRAY_NORMAL: {
-
-				ERR_FAIL_COND_V( p_arrays[ai].get_type() != Variant::VECTOR3_ARRAY, ERR_INVALID_PARAMETER );
-
-				DVector<Vector3> array = p_arrays[ai];
-				ERR_FAIL_COND_V( array.size() != p_surface_morph_target->morph_array_len, ERR_INVALID_PARAMETER );
-
-
-				DVector<Vector3>::Read read = array.read();
-				const Vector3* src=read.ptr();
-
-				// setting vertices means regenerating the AABB
-
-				if (p_surface_morph_target->morph_array[VS::MORPH_ARRAY_NORMAL].datatype==GL_BYTE) {
-
-					for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
-
-						GLbyte vector[4]={
-							CLAMP(src[i].x*127,-128,127),
-							CLAMP(src[i].y*127,-128,127),
-							CLAMP(src[i].z*127,-128,127),
-							0,
-						};
-
-						copymem(&p_mem[a.ofs+i*stride], vector, a.size);
-
-					}
-
-				} else {
-					for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
-
-
-						GLfloat vector[3]={ src[i].x, src[i].y, src[i].z };
-						copymem(&p_mem[a.ofs+i*stride], vector, a.size);
-
-					}
-				}
-
-
-			} break;*/
 			case VS::MORPH_ARRAY_INDEX: {
 
-				ERR_FAIL_COND_V( p_surface_morph_target->morph_array_len<=0, ERR_INVALID_DATA );
+				ERR_FAIL_COND_V( p_surface_morph_target->morph_index_count <=0, ERR_INVALID_DATA );
 				ERR_FAIL_COND_V( p_arrays[ai].get_type() != Variant::INT_ARRAY, ERR_INVALID_PARAMETER );
 
 				DVector<int> indices = p_arrays[ai];
 				ERR_FAIL_COND_V( indices.size() == 0, ERR_INVALID_PARAMETER );
-				ERR_FAIL_COND_V( indices.size() != p_surface_morph_target->morph_array_len, ERR_INVALID_PARAMETER );
+				ERR_FAIL_COND_V( indices.size() != p_surface_morph_target->morph_index_count, ERR_INVALID_PARAMETER );
 
 				/* determine wether using 16 or 32 bits indices */
 
 				DVector<int>::Read read = indices.read();
 				const int *src=read.ptr();
 
-				for (int i=0;i<p_surface_morph_target->morph_array_len;i++) {
-
-
-					if (a.size==2) {
+				int index_size = p_surface_morph_target->morph_index_size;
+				for (int i=0;i<p_surface_morph_target->morph_index_count;i++) {
+					if (index_size ==2) {
 						uint16_t v=src[i];
-
-						copymem(&p_index_mem[i*a.size], &v, a.size);
+						copymem(&p_index_mem[i*index_size], &v, index_size);
 					} else {
 						uint32_t v=src[i];
-
-						copymem(&p_index_mem[i*a.size], &v, a.size);
+						copymem(&p_index_mem[i*index_size], &v, index_size);
 					}
 				}
-
-
 			} break;
-
-
-			default: { ERR_FAIL_V(ERR_INVALID_PARAMETER);}
+			default: {
+				ERR_FAIL_V(ERR_INVALID_PARAMETER);
+			}
 		}
-
 		p_surface_morph_target->configured_format|=(1<<ai);
 	}
 
@@ -6099,12 +6034,12 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Skeleto
 					//copy all first
 					float coef=1.0;
 
-					for(int i=0;i<surf->morph_target_count;i++) {
-						if (surf->mesh->morph_target_mode==VS::MORPH_MODE_NORMALIZED)
-							coef-=p_morphs[i];
+					//for(int i=0;i<surf->morph_target_count;i++) {
+						//if (surf->mesh->morph_target_mode==VS::MORPH_MODE_NORMALIZED)
+							//coef-=p_morphs[i];
 						//ERR_FAIL_COND_V( surf->morph_format != surf->morph_targets_local[i].configured_format, ERR_INVALID_DATA );
 
-					}
+//					}
 
 					int16_t coeffp = CLAMP(coef*255,0,255);
 
@@ -6191,7 +6126,7 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Skeleto
 
 					for(int j=0;j<surf->morph_targets_active.size();j++) {
 						uint8_t morph_track = surf->morph_targets_active[j];
-						if(surf->morph_targets_local[morph_track].morph_array_len > 0 && p_morphs[morph_track] > 0.0f) {
+						if(surf->morph_targets_local[morph_track].morph_index_count > 0 && p_morphs[morph_track] > 0.0f) {
 							for(int i=0;i<1;i++) {
 
 								const Surface::ArrayData& ad=surf->array[i];
@@ -6202,12 +6137,12 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Skeleto
 								int src_stride=surf->morph_targets_local[morph_track].morph_stride;
 								int dst_stride=skeleton_valid?surf->stride:surf->local_stride;
 
-								int count = surf->morph_targets_local[morph_track].morph_array_len;
+								int count = surf->morph_targets_local[morph_track].morph_index_count;
 
-								const uint8_t *morph=			surf->morph_targets_local[morph_track].array;
+								const uint8_t *morph_verticies=	surf->morph_targets_local[morph_track].array;
 								const uint8_t *morph_indices=	surf->morph_targets_local[morph_track].index_array;
 
-								int index_size = surf->morph_targets_local[morph_track].morph_array[VS::MORPH_ARRAY_INDEX].size;
+								int index_size = surf->morph_targets_local[morph_track].morph_index_size;
 
 								float w = p_morphs[morph_track];
 
@@ -6219,7 +6154,7 @@ Error RasterizerGLES2::_setup_geometry(const Geometry *p_geometry, const Skeleto
 											int out_index = 0;
 											copymem(&out_index, &morph_indices[k * index_size], index_size);
 
-											const float *src_morph = (const float*)&morph[ofs+k*src_stride];
+											const float *src_morph = (const float*)&morph_verticies[ofs+k*src_stride];
 											float *dst = (float*)&base[ofs+out_index*dst_stride];
 
 											dst[0]+= src_morph[0]*w;

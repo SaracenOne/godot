@@ -137,7 +137,6 @@
 #include "scene/resources/dynamic_font.h"
 #include "scene/resources/dynamic_font_stb.h"
 
-#include "scene/resources/morph_data.h"
 #include "scene/main/timer.h"
 
 #include "scene/audio/stream_player.h"
@@ -480,9 +479,6 @@ void register_scene_types() {
 
 #endif
 	ObjectTypeDB::register_type<MeshLibrary>();
-	ObjectTypeDB::register_type<MorphDataBuffer>();
-	ObjectTypeDB::register_type<MorphData>();
-
 	AcceptDialog::set_swap_ok_cancel( GLOBAL_DEF("display/swap_ok_cancel",bool(OS::get_singleton()->get_swap_ok_cancel())) );
 
 	ObjectTypeDB::register_type<SamplePlayer>();
@@ -563,8 +559,6 @@ void register_scene_types() {
 	ObjectTypeDB::add_compatibility_type("UnshadedMaterial","FixedMaterial");
 	ObjectTypeDB::register_type<MultiMesh>();
 	ObjectTypeDB::register_type<MeshLibrary>();
-	ObjectTypeDB::register_type<MorphDataBuffer>();
-	ObjectTypeDB::register_type<MorphData>();
 
 	OS::get_singleton()->yield(); //may take time to init
 

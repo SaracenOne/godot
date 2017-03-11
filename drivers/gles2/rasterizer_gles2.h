@@ -284,11 +284,11 @@ class RasterizerGLES2 : public Rasterizer {
 					flags[i] = false;
 				flags[VS::MATERIAL_FLAG_VISIBLE] = true;
 
-				line_width = 1;
-				has_alpha = false;
-				depth_draw_mode = VS::MATERIAL_DEPTH_DRAW_OPAQUE_ONLY;
-				depth_test_mode = VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL;
-				blend_mode = VS::MATERIAL_BLEND_MODE_MIX;
+				line_width=1;
+				has_alpha=false;
+				depth_draw_mode=VS::MATERIAL_DEPTH_DRAW_OPAQUE_ONLY;
+				depth_test_mode=VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL;
+				blend_mode=VS::MATERIAL_BLEND_MODE_MIX;
 
 				for (int i = 0; i<VS::MATERIAL_COLOR_MASK_BIT_COUNT; i++)
 					color_bits[i] = true;
@@ -387,9 +387,12 @@ class RasterizerGLES2 : public Rasterizer {
 		//bool packed;
 
 		struct MorphTarget {
-			ArrayData morph_array[VS::MORPH_ARRAY_MAX];
-			int morph_array_len;
 			int morph_stride;
+
+			uint32_t morph_vertex_size;
+
+			uint32_t morph_index_count;
+			uint32_t morph_index_size;
 
 			uint32_t configured_format;
 			uint8_t *array;
@@ -477,8 +480,15 @@ class RasterizerGLES2 : public Rasterizer {
 	};
 	mutable RID_Owner<Mesh> mesh_owner;
 
+	static Array _extract_minimal_blend_arrays_from_basis(Surface *p_surface,
+		const int blend_index,
+		const Array &p_basis_arrays,
+		const Array &p_blend_arrays,
+		const VS::MorphTargetMode p_morph_target_mode,
+		const bool p_compressed_verticies);
+
 	Error _surface_set_arrays(Surface *p_surface, uint8_t *p_mem,uint8_t *p_index_mem,const Array& p_arrays,bool p_main);
-	Error _surface_set_morph_arrays(Surface::MorphTarget *p_surface_morph_target, uint8_t *p_mem,uint8_t *p_index_mem,const Array& p_arrays);
+	Error _surface_set_blend_arrays(Surface::MorphTarget *p_surface_blend_target, uint8_t *p_mem,uint8_t *p_index_mem,const Array& p_arrays);
 
 
 	struct MultiMesh;
@@ -1135,7 +1145,7 @@ class RasterizerGLES2 : public Rasterizer {
 	void _setup_skeleton(const Skeleton *p_skeleton);
 
 
-	Error _setup_geometry(const Geometry *p_geometry,const Skeleton *p_skeleton, const float *p_morphs);
+	Error _setup_geometry(const Geometry *p_geometry, const Skeleton *p_skeleton, const float *p_blends);
 	void _render(const Geometry *p_geometry, const Skeleton* p_skeleton, const GeometryOwner *p_owner,const Transform& p_xform);
 
 
@@ -1788,7 +1798,7 @@ public:
 	void reload_vram();
 
 	virtual bool has_feature(VS::Features p_feature) const;
-
+	
 	virtual void restore_framebuffer();
 
 	virtual void set_swap_buffers_active(const bool p_active);

@@ -1131,7 +1131,7 @@ void Collada::_parse_mesh_geometry(XMLParser& parser,String p_id,String p_name) 
 
 				meshdata.vertices[id]=vert;
 
-			} else if (section =="triangles" || section=="polylist" || section=="polygons" || section=="points") {
+			} else if (section =="triangles" || section=="polylist" || section=="polygons") {
 
 				bool polygons=(section=="polygons");
 				if (polygons) {
@@ -1178,7 +1178,6 @@ void Collada::_parse_mesh_geometry(XMLParser& parser,String p_id,String p_name) 
 						} else if (parser.get_node_name()=="p") { //indices
 
 							Vector<float> values = _read_float_array(parser);
-							int values_size = values.size();
 							if (polygons) {
 
 								prim.polygons.push_back(values.size()/prim.vertex_size);

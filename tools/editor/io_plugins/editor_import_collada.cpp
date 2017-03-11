@@ -37,7 +37,6 @@
 #include "scene/3d/mesh_instance.h"
 #include "scene/resources/animation.h"
 #include "scene/resources/packed_scene.h"
-#include "scene/resources/morph_data.h"
 #include "os/os.h"
 #include "tools/editor/editor_node.h"
 #include <iostream>
@@ -86,13 +85,11 @@ struct ColladaImport {
 	Error _create_scene(Collada::Node *p_node, Spatial *p_parent);
 	Error _create_resources(Collada::Node *p_node);
 	Error _create_material(const String& p_material);
-	Error _create_mesh_surfaces(bool p_optimize,Ref<Mesh>& p_mesh,const Map<String,Collada::NodeGeometry::Material>& p_material_map,const Collada::MeshData &meshdata,const Transform& p_local_xform,const Vector<int> &bone_remap, const Collada::SkinControllerData *p_skin_data, const Collada::MorphControllerData *p_morph_data,Vector<Ref<MorphData> > p_morph_meshes=Vector<Ref<MorphData> >());
+	Error _create_mesh_surfaces(bool p_optimize,Ref<Mesh>& p_mesh,const Map<String,Collada::NodeGeometry::Material>& p_material_map,const Collada::MeshData &meshdata,const Transform& p_local_xform,const Vector<int> &bone_remap, const Collada::SkinControllerData *p_skin_data, const Collada::MorphControllerData *p_morph_data,Vector<Ref<Mesh> > p_morph_meshes=Vector<Ref<Mesh> >());
 	Error load(const String& p_path, int p_flags, bool p_force_make_tangents=false);
 	void _fix_param_animation_tracks();
 	void create_animation(int p_clip,bool p_make_tracks_in_all_bones, bool p_import_value_tracks);
 	void create_animations(bool p_make_tracks_in_all_bones, bool p_import_value_tracks);
-
-	Error _create_morph_data(bool p_optimize, Ref<MorphData>& p_morph_data_out, const Collada::MeshData &morphmeshdata, const Collada::MeshData &meshdata, const Transform& p_local_xform, const Collada::MorphControllerData *p_morph_data);
 
 	Set<String> tracks_in_clips;
 	Vector<String> missing_textures;
@@ -600,7 +597,7 @@ static void _generate_tangents_and_binormals(const DVector<int>& p_indices,const
 	}
 }
 
-Error ColladaImport::_create_mesh_surfaces(bool p_optimize,Ref<Mesh>& p_mesh,const Map<String,Collada::NodeGeometry::Material>& p_material_map,const Collada::MeshData &meshdata,const Transform& p_local_xform,const Vector<int> &bone_remap, const Collada::SkinControllerData *skin_controller, const Collada::MorphControllerData *p_morph_data,Vector<Ref<MorphData> > p_morph_meshes) {
+Error ColladaImport::_create_mesh_surfaces(bool p_optimize,Ref<Mesh>& p_mesh,const Map<String,Collada::NodeGeometry::Material>& p_material_map,const Collada::MeshData &meshdata,const Transform& p_local_xform,const Vector<int> &bone_remap, const Collada::SkinControllerData *skin_controller, const Collada::MorphControllerData *p_morph_data,Vector<Ref<Mesh> > p_morph_meshes) {
 
 
 	bool local_xform_mirror=p_local_xform.basis.determinant() < 0;
@@ -1296,33 +1293,178 @@ Error ColladaImport::_create_mesh_surfaces(bool p_optimize,Ref<Mesh>& p_mesh,con
 			////////////////////////////
 			// THEN THE MORPH TARGETS //
 			////////////////////////////
-			for (int mi = 0; mi<p_morph_meshes.size(); mi++) {
+#if 0
+			if (p_morph_data) {
 
-				//	print_line("want surface "+itos(mi)+" has "+itos(p_morph_meshes[mi]->get_surface_count()));
-				Ref<MorphDataBuffer> morphDataSurface = p_morph_meshes.get(mi)->surface_morphs[surface];
+				//add morphie target
+				ERR_FAIL_COND_V( !p_morph_data->targets.has("MORPH_TARGET"), ERR_INVALID_DATA );
+				String mt = p_morph_data->targets["MORPH_TARGET"];
+				ERR_FAIL_COND_V( !p_morph_data->sources.has(mt), ERR_INVALID_DATA);
+				int morph_targets = p_morph_data->sources[mt].sarray.size();
+				mr.resize(morph_targets);
 
-				Array a;
-				a.resize(VS::MORPH_ARRAY_MAX);
+				for(int j=0;j<morph_targets;j++) {
 
-				DVector<Vector3> morph_verticies;
+					Array mrt;
+					mrt.resize(VS::ARRAY_MAX);
 
-				for (int j = 0; j < morphDataSurface->vertices.size(); j++)
-				{
-					Vector3 vertex = morphDataSurface->vertices[j];
-					morph_verticies.append(vertex);
+					String target = p_morph_data->sources[mt].sarray[j];
+					ERR_FAIL_COND_V( !collada.state.mesh_data_map.has(target), ERR_INVALID_DATA );
+					String name = collada.state.mesh_data_map[target].name;
+					Collada::MeshData &md = collada.state.mesh_data_map[target];
+
+					// collada in itself supports morphing everything. However, the spec is unclear and no examples or exporters that
+					// morph anything but "POSITIONS" seem to exit. Because of this, normals and binormals/tangents have to be regenerated here,
+					// which may result in inaccurate (but most of the time good enough) results.
+
+					DVector<Vector3> vertices;
+					vertices.resize(vlen);
+
+					ERR_FAIL_COND_V( md.vertices.size() != 1, ERR_INVALID_DATA);
+					String vertex_src_id=md.vertices.front()->key();
+					ERR_FAIL_COND_V(!md.vertices[vertex_src_id].sources.has("POSITION"),ERR_INVALID_DATA);
+					String position_src_id = md.vertices[vertex_src_id].sources["POSITION"];
+
+					ERR_FAIL_COND_V(!md.sources.has(position_src_id),ERR_INVALID_DATA);
+
+					const Collada::MeshData::Source *m=&md.sources[position_src_id];
+
+					ERR_FAIL_COND_V( m->array.size() != vertex_src->array.size(), ERR_INVALID_DATA);
+					int stride=m->stride;
+					if (stride==0)
+						stride=3;
+
+
+					//read vertices from morph target
+					DVector<Vector3>::Write vertw = vertices.write();
+
+					for(int m_i=0;m_i<m->array.size()/stride;m_i++) {
+
+						int pos = m_i*stride;
+						Vector3 vtx( m->array[pos+0], m->array[pos+1], m->array[pos+2] );
+
+#ifndef NO_UP_AXIS_SWAP
+						if (collada.state.up_axis==Vector3::AXIS_Z) {
+
+							SWAP( vtx.z, vtx.y );
+							vtx.z = -vtx.z;
+
+						}
+#endif
+
+						Collada::Vertex vertex;
+						vertex.vertex=vtx;
+						vertex.fix_unit_scale(collada);
+						vtx=vertex.vertex;
+
+						vtx = p_local_xform.xform(vtx);
+
+
+						if (vertex_map.has(m_i)) { //vertex may no longer be here, don't bother converting
+
+
+							for (Set<int> ::Element *E=vertex_map[m_i].front() ; E; E=E->next() ) {
+
+								vertw[E->get()]=vtx;
+							}
+						}
+					}
+
+
+					//vertices are in place, now generate everything else
+					vertw = DVector<Vector3>::Write();
+					DVector<Vector3> normals;
+					DVector<float> tangents;
+					print_line("vertex source id: "+vertex_src_id);
+					if(md.vertices[vertex_src_id].sources.has("NORMAL")){
+						//has normals
+						normals.resize(vlen);
+						//std::cout << "has normals" << std::endl;
+						String normal_src_id = md.vertices[vertex_src_id].sources["NORMAL"];
+						//std::cout << "normals source: "<< normal_src_id.utf8().get_data() <<std::endl;
+						ERR_FAIL_COND_V(!md.sources.has(normal_src_id),ERR_INVALID_DATA);
+
+						const Collada::MeshData::Source *m=&md.sources[normal_src_id];
+
+						ERR_FAIL_COND_V( m->array.size() != vertex_src->array.size(), ERR_INVALID_DATA);
+						int stride=m->stride;
+						if (stride==0)
+							stride=3;
+
+
+						//read normals from morph target
+						DVector<Vector3>::Write vertw = normals.write();
+
+						for(int m_i=0;m_i<m->array.size()/stride;m_i++) {
+
+							int pos = m_i*stride;
+							Vector3 vtx( m->array[pos+0], m->array[pos+1], m->array[pos+2] );
+
+	#ifndef NO_UP_AXIS_SWAP
+							if (collada.state.up_axis==Vector3::AXIS_Z) {
+
+								SWAP( vtx.z, vtx.y );
+								vtx.z = -vtx.z;
+
+							}
+	#endif
+
+							Collada::Vertex vertex;
+							vertex.vertex=vtx;
+							vertex.fix_unit_scale(collada);
+							vtx=vertex.vertex;
+
+							vtx = p_local_xform.xform(vtx);
+
+
+							if (vertex_map.has(m_i)) { //vertex may no longer be here, don't bother converting
+
+
+								for (Set<int> ::Element *E=vertex_map[m_i].front() ; E; E=E->next() ) {
+
+									vertw[E->get()]=vtx;
+								}
+							}
+						}
+
+						print_line("using built-in normals");
+					}else{
+						print_line("generating normals");
+						_generate_normals(index_array,vertices,normals);//no normals
+					}
+					if (final_tangent_array.size() && final_uv_array.size()) {
+
+						_generate_tangents_and_binormals(index_array,vertices,final_uv_array,normals,tangents);
+
+					}
+
+					mrt[Mesh::ARRAY_VERTEX]=vertices;
+
+					mrt[Mesh::ARRAY_NORMAL]=normals;
+					if (tangents.size())
+						mrt[Mesh::ARRAY_TANGENT]=tangents;
+					if (final_uv_array.size())
+						mrt[Mesh::ARRAY_TEX_UV]=final_uv_array;
+					if (final_uv2_array.size())
+						mrt[Mesh::ARRAY_TEX_UV2]=final_uv2_array;
+					if (final_color_array.size())
+						mrt[Mesh::ARRAY_COLOR]=final_color_array;
+
+					mr[j]=mrt;
+
 				}
 
-				DVector<int> morph_indexes;
+			}
 
-				for (int j = 0; j < morphDataSurface->indices.size(); j++)
-				{
-					int index = morphDataSurface->indices[j];
-					morph_indexes.append(index);
-				}
+#endif
+			for(int mi=0;mi<p_morph_meshes.size();mi++) {
 
-				a[VS::MORPH_ARRAY_VERTEX] = morph_verticies;
-				a[VS::MORPH_ARRAY_INDEX] = morph_indexes;
-
+			//	print_line("want surface "+itos(mi)+" has "+itos(p_morph_meshes[mi]->get_surface_count()));
+				Array a = p_morph_meshes[mi]->surface_get_arrays(surface);
+				a[Mesh::ARRAY_BONES]=Variant();
+				a[Mesh::ARRAY_WEIGHTS]=Variant();
+				a[Mesh::ARRAY_INDEX]=Variant();
+				//a.resize(Mesh::ARRAY_MAX); //no need for index
 				mr.push_back(a);
 			}
 
@@ -1455,7 +1597,7 @@ Error ColladaImport::_create_resources(Collada::Node *p_node) {
 			String meshid;
 			Transform apply_xform;
 			Vector<int> bone_remap;
-			Vector<Ref<MorphData> > morphs;
+			Vector<Ref<Mesh> > morphs;
 
 			print_line("mesh: "+String(mi->get_name()));
 
@@ -1545,19 +1687,17 @@ Error ColladaImport::_create_resources(Collada::Node *p_node) {
 						valid=true;
 						Vector<String> names = morph->sources[target].sarray;
 						for(int i=0;i<names.size();i++) {
-							{
-								String morphmeshid = names[i];
-								if (collada.state.mesh_data_map.has(morphmeshid)) {
-									const Collada::MeshData &morph_mesh_data = collada.state.mesh_data_map[morphmeshid];
-									const Collada::MeshData &mesh_data = collada.state.mesh_data_map[meshid];
-									Ref<MorphData> morph_data = Ref<MorphData>(memnew(MorphData));
-									Error err = _create_morph_data(true, morph_data, morph_mesh_data, mesh_data, apply_xform, morph);
-									ERR_FAIL_COND_V(err, err);
-									morphs.push_back(morph_data);
-								}
-								else {
-									valid = false;
-								}
+
+							String meshid=names[i];
+							if (collada.state.mesh_data_map.has(meshid)) {
+								Ref<Mesh> mesh=Ref<Mesh>(memnew( Mesh ));
+								const Collada::MeshData &meshdata = collada.state.mesh_data_map[meshid];
+								Error err = _create_mesh_surfaces(false,mesh,ng->material_map,meshdata,apply_xform,bone_remap,skin,NULL);
+								ERR_FAIL_COND_V(err,err);
+
+								morphs.push_back(mesh);
+							} else {
+								valid=false;
 							}
 						}
 					}
@@ -1590,7 +1730,7 @@ Error ColladaImport::_create_resources(Collada::Node *p_node) {
 					mesh=Ref<Mesh>(memnew( Mesh ));
 					const Collada::MeshData &meshdata = collada.state.mesh_data_map[meshid];
 					mesh->set_name( meshdata.name );
-					Error err = _create_mesh_surfaces(true,mesh,ng->material_map,meshdata,apply_xform,bone_remap,skin,morph,morphs);
+					Error err = _create_mesh_surfaces(morphs.size()==0,mesh,ng->material_map,meshdata,apply_xform,bone_remap,skin,morph,morphs);
 					ERR_FAIL_COND_V(err,err);
 
 					mesh_cache[meshid]=mesh;
@@ -2298,611 +2438,5 @@ Ref<Animation> EditorSceneImporterCollada::import_animation(const String& p_path
 
 EditorSceneImporterCollada::EditorSceneImporterCollada() {
 
-
-}
-
-Error ColladaImport::_create_morph_data(bool p_optimize, Ref<MorphData>& p_morph_data_out, const Collada::MeshData &morphmeshdata, const Collada::MeshData &meshdata, const Transform& p_local_xform, const Collada::MorphControllerData *p_morph_data) {
-
-
-	bool local_xform_mirror = p_local_xform.basis.determinant() < 0;
-
-	MorphData::MorphType morphType;
-
-	if (p_morph_data) {
-
-		//add morphie target
-		ERR_FAIL_COND_V(!p_morph_data->targets.has("MORPH_TARGET"), ERR_INVALID_DATA);
-		String mt = p_morph_data->targets["MORPH_TARGET"];
-		ERR_FAIL_COND_V(!p_morph_data->sources.has(mt), ERR_INVALID_DATA);
-		int morph_targets = p_morph_data->sources[mt].sarray.size();
-		for (int i = 0; i<morph_targets; i++) {
-
-			String target = p_morph_data->sources[mt].sarray[i];
-			ERR_FAIL_COND_V(!collada.state.mesh_data_map.has(target), ERR_INVALID_DATA);
-			String name = collada.state.mesh_data_map[target].name;
-
-			//p_mesh->add_morph_target(name);
-		}
-		if (p_morph_data->mode == "RELATIVE")
-			morphType = MorphData::MORPH_MODE_RELATIVE;
-		else if (p_morph_data->mode == "NORMALIZED")
-			morphType = MorphData::MORPH_MODE_NORMALIZED;
-	}
-
-	ERR_FAIL_COND_V(morphmeshdata.primitives.size() != meshdata.primitives.size(), ERR_INVALID_DATA);
-
-	int surface = 0;
-	int incrementing_offset = 0;
-	for (int p_i = 0; p_i < morphmeshdata.primitives.size(); p_i++) {
-
-		const Collada::MeshData::Primitives& p = morphmeshdata.primitives[p_i];
-		const Collada::MeshData::Primitives& p_basis = meshdata.primitives[p_i];
-
-		int p_size = p_basis.indices.size();
-		int p_basis_size = p_basis.indices.size();
-
-		/* VERTEX SOURCE */
-		ERR_FAIL_COND_V(!p.sources.has("VERTEX"), ERR_INVALID_DATA);
-		ERR_FAIL_COND_V(!p_basis.sources.has("VERTEX"), ERR_INVALID_DATA);
-
-		String vertex_src_id = p.sources["VERTEX"].source;
-		String vertex_src_id_basis = p_basis.sources["VERTEX"].source;
-
-		int vertex_ofs = p.sources["VERTEX"].offset;
-		int vertex_ofs_basis = p_basis.sources["VERTEX"].offset;
-
-		ERR_FAIL_COND_V(!morphmeshdata.vertices.has(vertex_src_id), ERR_INVALID_DATA);
-		ERR_FAIL_COND_V(!meshdata.vertices.has(vertex_src_id_basis), ERR_INVALID_DATA);
-
-		ERR_FAIL_COND_V(!morphmeshdata.vertices[vertex_src_id].sources.has("POSITION"), ERR_INVALID_DATA);
-		ERR_FAIL_COND_V(!meshdata.vertices[vertex_src_id_basis].sources.has("POSITION"), ERR_INVALID_DATA);
-
-		String position_src_id = morphmeshdata.vertices[vertex_src_id].sources["POSITION"];
-		String position_src_id_basis = meshdata.vertices[vertex_src_id_basis].sources["POSITION"];
-
-		ERR_FAIL_COND_V(!morphmeshdata.sources.has(position_src_id), ERR_INVALID_DATA);
-		ERR_FAIL_COND_V(!meshdata.sources.has(position_src_id_basis), ERR_INVALID_DATA);
-
-		const Collada::MeshData::Source *vertex_src = &morphmeshdata.sources[position_src_id];
-		const Collada::MeshData::Source *vertex_src_basis = &meshdata.sources[position_src_id_basis];
-
-		/* NORMAL SOURCE */
-
-		const Collada::MeshData::Source *normal_src = NULL;
-		const Collada::MeshData::Source *normal_src_basis = NULL;
-
-		int normal_ofs = 0;
-		int normal_ofs_basis = 0;
-
-
-		if (p.sources.has("NORMAL")) {
-
-			String normal_source_id = p.sources["NORMAL"].source;
-			String normal_source_id_basis = p_basis.sources["NORMAL"].source;
-
-			normal_ofs = p_basis.sources["NORMAL"].offset;
-			normal_ofs_basis = p.sources["NORMAL"].offset;
-
-			
-			ERR_FAIL_COND_V(!morphmeshdata.sources.has(normal_source_id), ERR_INVALID_DATA);
-			ERR_FAIL_COND_V(!meshdata.sources.has(normal_source_id_basis), ERR_INVALID_DATA);
-
-			normal_src = &morphmeshdata.sources[normal_source_id];
-			normal_src_basis = &meshdata.sources[normal_source_id_basis];
-		}
-
-		const Collada::MeshData::Source *binormal_src = NULL;
-		const Collada::MeshData::Source *binormal_src_basis = NULL;
-
-		int binormal_ofs = 0;
-
-		if (p.sources.has("TEXBINORMAL")) {
-
-			String binormal_source_id = p.sources["TEXBINORMAL"].source;
-			String binormal_source_id_basis = p_basis.sources["TEXBINORMAL"].source;
-
-			binormal_ofs = p.sources["TEXBINORMAL"].offset;
-
-			ERR_FAIL_COND_V(!morphmeshdata.sources.has(binormal_source_id), ERR_INVALID_DATA);
-			ERR_FAIL_COND_V(!meshdata.sources.has(binormal_source_id_basis), ERR_INVALID_DATA);
-
-			binormal_src = &morphmeshdata.sources[binormal_source_id];
-			binormal_src_basis = &meshdata.sources[binormal_source_id_basis];
-		}
-
-		const Collada::MeshData::Source *tangent_src = NULL;
-		const Collada::MeshData::Source *tangent_src_basis = NULL;
-
-		int tangent_ofs = 0;
-
-		if (p.sources.has("TEXTANGENT")) {
-
-			String tangent_source_id = p.sources["TEXTANGENT"].source;
-			String tangent_source_id_basis = p_basis.sources["TEXTANGENT"].source;
-
-			tangent_ofs = p.sources["TEXTANGENT"].offset;
-
-			ERR_FAIL_COND_V(!morphmeshdata.sources.has(tangent_source_id), ERR_INVALID_DATA);
-			ERR_FAIL_COND_V(!meshdata.sources.has(tangent_source_id_basis), ERR_INVALID_DATA);
-
-
-			tangent_src = &morphmeshdata.sources[tangent_source_id];
-			tangent_src_basis = &meshdata.sources[tangent_source_id_basis];
-
-		}
-
-		const Collada::MeshData::Source *uv_src = NULL;
-		const Collada::MeshData::Source *uv_src_basis = NULL;
-
-		int uv_ofs = 0;
-
-		if (p.sources.has("TEXCOORD0")) {
-
-			String uv_source_id = p.sources["TEXCOORD0"].source;
-			String uv_source_id_basis = p_basis.sources["TEXCOORD0"].source;
-
-			uv_ofs = p.sources["TEXCOORD0"].offset;
-
-			ERR_FAIL_COND_V(!morphmeshdata.sources.has(uv_source_id), ERR_INVALID_DATA);
-			ERR_FAIL_COND_V(!meshdata.sources.has(uv_source_id_basis), ERR_INVALID_DATA);
-
-			uv_src = &morphmeshdata.sources[uv_source_id];
-			uv_src_basis = &meshdata.sources[uv_source_id_basis];
-		}
-
-		const Collada::MeshData::Source *uv2_src = NULL;
-		const Collada::MeshData::Source *uv2_src_basis = NULL;
-
-		int uv2_ofs = 0;
-
-		if (p.sources.has("TEXCOORD1")) {
-
-			String uv2_source_id = p.sources["TEXCOORD1"].source;
-			String uv2_source_id_basis = p_basis.sources["TEXCOORD1"].source;
-
-			uv2_ofs = p.sources["TEXCOORD1"].offset;
-
-			ERR_FAIL_COND_V(!morphmeshdata.sources.has(uv2_source_id), ERR_INVALID_DATA);
-			ERR_FAIL_COND_V(!meshdata.sources.has(uv2_source_id_basis), ERR_INVALID_DATA);
-
-			uv2_src = &morphmeshdata.sources[uv2_source_id];
-			uv2_src_basis = &meshdata.sources[uv2_source_id_basis];
-		}
-
-
-		const Collada::MeshData::Source *color_src = NULL;
-		const Collada::MeshData::Source *color_src_basis = NULL;
-
-		int color_ofs = 0;
-
-		if (p.sources.has("COLOR")) {
-
-			String color_source_id = p.sources["COLOR"].source;
-			String color_source_id_basis = p_basis.sources["COLOR"].source;
-
-			color_ofs = p.sources["COLOR"].offset;
-
-			ERR_FAIL_COND_V(!morphmeshdata.sources.has(color_source_id), ERR_INVALID_DATA);
-			ERR_FAIL_COND_V(!meshdata.sources.has(color_source_id_basis), ERR_INVALID_DATA);
-
-			color_src = &morphmeshdata.sources[color_source_id];
-			color_src_basis = &meshdata.sources[color_source_id_basis];
-		}
-
-		Set<Collada::Vertex> vertex_set; //vertex set will be the vertices
-		Set<Collada::Vertex> vertex_set_basis; //vertex set will be the vertices
-		
-		List<int> indices_list; //indices will be the indices
-
-		Map<int, int> indices_list_basis; //indices will be the indices of the basis
-
-		/**************************/
-		/* CREATE PRIMITIVE ARRAY */
-		/**************************/
-
-		// The way collada uses indices is more optimal, and friendlier with 3D modelling sofware,
-		// because it can index everything, not only vertices (similar to how the WII works).
-		// This is, however, more incompatible with standard video cards, so arrays must be converted.
-		// Must convert to GL/DX format.
-
-		int index_count = 0;
-		int _prim_ofs = 0;
-		int vertidx = 0;
-		for (int p_i = 0; p_i<p_basis.count; p_i++) {
-
-
-			int amount;
-			int polygon_size = p_basis.polygons.size();
-			if (polygon_size) {
-
-				ERR_FAIL_INDEX_V(p_i, p_basis.polygons.size(), ERR_INVALID_DATA);
-				amount = p_basis.polygons[p_i];
-			} else {
-				amount=3; //triangles;
-			}
-
-			//COLLADA_PRINT("amount: "+itos(amount));
-
-			int prev2[2]={0,0};
-			int real_prev2[2]={0, 0};
-
-			for(int j=0;j<amount;j++) {
-
-				int src=_prim_ofs;
-
-				ERR_FAIL_INDEX_V(src, p_basis.indices.size(), ERR_INVALID_DATA);
-
-				Collada::Vertex vertex;
-				if (!p_optimize)
-					vertex.uid = vertidx++;
-
-				int vertex_index = p_basis.indices[src + vertex_ofs]; //used for index field (later used by controllers)
-				int vertex_pos = (vertex_src_basis->stride ? vertex_src_basis->stride : 3) * vertex_index;
-				ERR_FAIL_INDEX_V(vertex_pos, vertex_src_basis->array.size(), ERR_INVALID_DATA);
-				vertex.vertex = Vector3(vertex_src_basis->array[vertex_pos + 0], vertex_src_basis->array[vertex_pos + 1], vertex_src_basis->array[vertex_pos + 2]);
-
-
-				if (normal_src_basis) {
-
-
-
-					int normal_pos = (normal_src_basis->stride ? normal_src_basis->stride : 3) * p_basis.indices[src + normal_ofs];
-					ERR_FAIL_INDEX_V(normal_pos, normal_src_basis->array.size(), ERR_INVALID_DATA);
-					vertex.normal = Vector3(normal_src_basis->array[normal_pos + 0], normal_src_basis->array[normal_pos + 1], normal_src_basis->array[normal_pos + 2]);
-					vertex.normal=vertex.normal.snapped(0.001);
-
-					if (tangent_src_basis && binormal_src_basis) {
-
-						int binormal_pos = (binormal_src_basis->stride ? binormal_src_basis->stride : 3) * p_basis.indices[src + binormal_ofs];
-						ERR_FAIL_INDEX_V(binormal_pos, binormal_src_basis->array.size(), ERR_INVALID_DATA);
-						Vector3 binormal = Vector3(binormal_src_basis->array[binormal_pos + 0], binormal_src_basis->array[binormal_pos + 1], binormal_src_basis->array[binormal_pos + 2]);
-
-						int tangent_pos = (tangent_src_basis->stride ? tangent_src_basis->stride : 3) * p_basis.indices[src + tangent_ofs];
-						ERR_FAIL_INDEX_V(tangent_pos, tangent_src_basis->array.size(), ERR_INVALID_DATA);
-						Vector3 tangent = Vector3(tangent_src_basis->array[tangent_pos + 0], tangent_src_basis->array[tangent_pos + 1], tangent_src_basis->array[tangent_pos + 2]);
-
-						vertex.tangent.normal = tangent;
-						vertex.tangent.d = vertex.normal.cross(tangent).dot(binormal) > 0 ? 1 : -1;
-					}
-
-				}
-
-				if (uv_src_basis) {
-
-					int uv_pos = (uv_src_basis->stride ? uv_src_basis->stride : 2) * p_basis.indices[src + uv_ofs];
-					ERR_FAIL_INDEX_V(uv_pos, uv_src_basis->array.size(), ERR_INVALID_DATA);
-					vertex.uv = Vector3(uv_src_basis->array[uv_pos + 0], 1.0 - uv_src_basis->array[uv_pos + 1], 0);
-				}
-
-				if (uv2_src_basis) {
-
-					int uv2_pos = (uv2_src_basis->stride ? uv2_src_basis->stride : 2) * p_basis.indices[src + uv2_ofs];
-					ERR_FAIL_INDEX_V(uv2_pos, uv2_src_basis->array.size(), ERR_INVALID_DATA);
-					vertex.uv2 = Vector3(uv2_src_basis->array[uv2_pos + 0], 1.0 - uv2_src_basis->array[uv2_pos + 1], 0);
-				}
-
-				if (color_src_basis) {
-
-					int color_pos = (color_src_basis->stride ? color_src_basis->stride : 3) * p_basis.indices[src + color_ofs]; // colors are RGB in collada..
-					ERR_FAIL_INDEX_V(color_pos, color_src_basis->array.size(), ERR_INVALID_DATA);
-					vertex.color = Color(color_src_basis->array[color_pos + 0], color_src_basis->array[color_pos + 1], color_src_basis->array[color_pos + 2], (color_src_basis->stride>3) ? color_src_basis->array[color_pos + 3] : 1.0);
-
-				}
-
-#ifndef NO_UP_AXIS_SWAP
-				if (collada.state.up_axis==Vector3::AXIS_Z) {
-
-					SWAP( vertex.vertex.z, vertex.vertex.y );
-					vertex.vertex.z = -vertex.vertex.z;
-					SWAP( vertex.normal.z, vertex.normal.y );
-					vertex.normal.z = -vertex.normal.z;
-					SWAP( vertex.tangent.normal.z, vertex.tangent.normal.y );
-					vertex.tangent.normal.z = -vertex.tangent.normal.z;
-
-				}
-
-#endif
-
-				vertex.fix_unit_scale(collada);
-				int index=0;
-				int real_index = 0;
-				//COLLADA_PRINT("vertex: "+vertex.vertex);
-
-				if (vertex_set_basis.has(vertex)) {
-
-					index=vertex_set_basis.find(vertex)->get().idx;
-				} else {
-
-					index=vertex_set_basis.size();
-
-					vertex.idx=index;
-					vertex_set_basis.insert(vertex);
-				}
-
-				real_index = p_basis.indices[index_count + j];
-
-				//build triangles if needed
-				if (j==0) {
-					prev2[0]=index;
-					real_prev2[0]=real_index;
-				}
-
-				if (j>=2) {
-					//insert indices in reverse order (collada uses CCW as frontface)
-					if (local_xform_mirror) {
-
-						indices_list_basis.insert(real_prev2[0], prev2[0]);
-						indices_list_basis.insert(real_prev2[1], prev2[1]);
-						indices_list_basis.insert(real_index, index);
-
-					} else {
-						indices_list_basis.insert(real_prev2[0], prev2[0]);
-						indices_list_basis.insert(real_index, index);
-						indices_list_basis.insert(real_prev2[1], prev2[1]);
-					}
-				}
-
-				prev2[1]=index;
-				real_prev2[1]=real_index;
-				_prim_ofs+=p_basis.vertex_size;
-			}
-			index_count+=amount;
-		}
-
-		_prim_ofs = 0;
-		vertidx = 0;
-		index_count = 0;
-		for (int p_i = 0; p_i<p.indices.size(); p_i++) {
-
-
-			int amount;
-			if (p.polygons.size()) {
-
-				ERR_FAIL_INDEX_V(p_i, p.polygons.size(), ERR_INVALID_DATA);
-				amount = p.polygons[p_i];
-			}
-			else {
-				amount = 1; //points;
-			}
-
-			//COLLADA_PRINT("amount: "+itos(amount));
-
-			for (int j = 0; j<amount; j++) {
-
-				int src = _prim_ofs;
-				//_prim_ofs+=p.sources.size()
-
-				int indices_size = p.indices.size();
-				ERR_FAIL_INDEX_V(src, p.indices.size(), ERR_INVALID_DATA);
-
-				Collada::Vertex vertex;
-				vertex.uid = vertidx++; // All morph verticies have unique uids right now...
-
-				int vertex_pos = (vertex_src->stride ? vertex_src->stride : 3) * p_i + (incrementing_offset * 3);
-				ERR_FAIL_INDEX_V(vertex_pos, vertex_src->array.size(), ERR_INVALID_DATA);
-				vertex.vertex = Vector3(vertex_src->array[vertex_pos + 0], vertex_src->array[vertex_pos + 1], vertex_src->array[vertex_pos + 2]);
-
-
-				if (normal_src) {
-
-
-
-					int normal_pos = (normal_src->stride ? normal_src->stride : 3) * j;
-					ERR_FAIL_INDEX_V(normal_pos, normal_src->array.size(), ERR_INVALID_DATA);
-					vertex.normal = Vector3(normal_src->array[normal_pos + 0], normal_src->array[normal_pos + 1], normal_src->array[normal_pos + 2]);
-					vertex.normal = vertex.normal.snapped(0.001);
-				}
-
-#ifndef NO_UP_AXIS_SWAP
-				if (collada.state.up_axis == Vector3::AXIS_Z) {
-
-					SWAP(vertex.vertex.z, vertex.vertex.y);
-					vertex.vertex.z = -vertex.vertex.z;
-					SWAP(vertex.normal.z, vertex.normal.y);
-					vertex.normal.z = -vertex.normal.z;
-					SWAP(vertex.tangent.normal.z, vertex.tangent.normal.y);
-					vertex.tangent.normal.z = -vertex.tangent.normal.z;
-
-				}
-
-#endif
-
-				vertex.fix_unit_scale(collada);
-				int index = 0;
-
-				// Get the correct index
-				int raw_index = p.indices[(p_i * amount) + j];
-
-				index = indices_list_basis.find(raw_index)->get();
-
-				if (indices_list.find(index) == NULL)
-				{
-					vertex.idx = index_count;
-					vertex_set.insert(vertex);
-
-					indices_list.push_back(index);
-
-					index_count += 1;
-				}
-
-				_prim_ofs += p.vertex_size;
-			}
-		}
-
-
-
-		Vector<Collada::Vertex> vertex_array; //there we go, vertex array
-
-		int vertex_set_size = vertex_set.size();
-		vertex_array.resize(vertex_set_size);
-		for (Set<Collada::Vertex>::Element *F = vertex_set.front(); F; F = F->next()) {
-			unsigned int idx = F->get().idx;
-			vertex_array[idx] = F->get();
-		}
-
-		
-		DVector<int> index_array;
-		index_array.resize(indices_list.size());
-		DVector<int>::Write index_arrayw = index_array.write();
-
-		int iidx = 0;
-		for (List<int>::Element *F = indices_list.front(); F; F = F->next()) {
-
-			index_arrayw[iidx++] = F->get();
-		}
-
-		index_arrayw = DVector<int>::Write();
-
-		{
-
-			//find material
-			Mesh::PrimitiveType primitive = Mesh::PRIMITIVE_POINTS;
-
-
-			DVector<Vector3> final_vertex_array;
-			DVector<Vector3> final_normal_array;
-			DVector<Color> final_color_array;
-			DVector<Vector3> final_uv_array;
-			DVector<Vector3> final_uv2_array;
-
-			uint32_t final_format = 0;
-
-			//create format
-			final_format = Mesh::ARRAY_FORMAT_VERTEX | Mesh::ARRAY_FORMAT_INDEX;
-
-			//set arrays
-			int vlen = vertex_array.size();
-			{
-				//vertices
-				DVector<Vector3> varray;
-				varray.resize(vertex_array.size());
-
-				DVector<Vector3>::Write varrayw = varray.write();
-
-				for (int k = 0; k<vlen; k++)
-					varrayw[k] = vertex_array[k].vertex;
-
-				varrayw = DVector<Vector3>::Write();
-				final_vertex_array = varray;
-
-			}
-
-			if (uv_src) { //compute uv first, may be needed for computing tangent/bionrmal
-				bool uv_difference = false;
-
-				DVector<Vector3> uvarray;
-				uvarray.resize(vertex_array.size());
-				DVector<Vector3>::Write uvarrayw = uvarray.write();
-
-				for (int k = 0; k<vlen; k++) {
-					uvarrayw[k] = vertex_array[k].uv;
-					if (uvarrayw[k] != Vector3(0.0, 0.0, 0.0))
-						uv_difference = true;
-				}
-
-				uvarrayw = DVector<Vector3>::Write();
-
-				if (uv_difference) {
-					final_uv_array = uvarray;
-					final_format |= Mesh::ARRAY_FORMAT_TEX_UV;
-				}
-			}
-
-			if (uv2_src) { //compute uv2 first, may be needed for computing tangent/bionrmal
-				bool uv2_difference = false;
-
-				DVector<Vector3> uv2array;
-				uv2array.resize(vertex_array.size());
-				DVector<Vector3>::Write uv2arrayw = uv2array.write();
-
-				for (int k = 0; k<vlen; k++) {
-					uv2arrayw[k] = vertex_array[k].uv2;
-					if (uv2arrayw[k] != Vector3(0.0, 0.0, 0.0))
-						uv2_difference = true;
-				}
-
-				uv2arrayw = DVector<Vector3>::Write();
-
-				if (uv2_difference) {
-					final_uv2_array = uv2array;
-					final_format |= Mesh::ARRAY_FORMAT_TEX_UV2;
-				}
-			}
-
-			if (normal_src) {
-				bool normal_difference = false;
-
-				DVector<Vector3> narray;
-				narray.resize(vertex_array.size());
-				DVector<Vector3>::Write narrayw = narray.write();
-
-				for (int k = 0; k<vlen; k++) {
-					narrayw[k] = vertex_array[k].normal;
-					if (narrayw[k] != Vector3(0.0, 0.0, 0.0))
-						normal_difference = true;
-				}
-
-				narrayw = DVector<Vector3>::Write();
-
-				if (normal_difference) {
-					final_normal_array = narray;
-					final_format |= Mesh::ARRAY_FORMAT_NORMAL;
-				}
-			}
-
-			if (color_src) {
-				bool color_difference = false;
-
-				DVector<Color> colorarray;
-				colorarray.resize(vertex_array.size());
-				DVector<Color>::Write colorarrayw = colorarray.write();
-
-				for (int k = 0; k<vlen; k++) {
-					colorarrayw[k] = vertex_array[k].color;
-					if (colorarrayw[k] != Color(0.0, 0.0, 0.0, 0.0))
-						color_difference = true;
-				}
-
-				colorarrayw = DVector<Color>::Write();
-
-				if (color_difference) {
-					final_color_array = colorarray;
-					final_format |= Mesh::ARRAY_FORMAT_COLOR;
-				}
-			}
-
-			////////////////////////////
-			// THEN THE MORPH TARGETS //
-			////////////////////////////
-			p_morph_data_out->add_surface();
-			
-			p_morph_data_out->resize(surface, index_array.size());
-
-			int j;
-			for (j = 0; j < index_array.size(); j++) {
-				int index_array_val = index_array.get(j);
-				p_morph_data_out->set_index(surface, j, index_array_val);
-			}
-
-			for (j = 0; j < final_vertex_array.size(); j++) {
-				Vector3 vertex_array_val = final_vertex_array.get(j);
-				p_morph_data_out->set_vertex(surface, j, vertex_array_val);
-			}
-
-			for (j = 0; j < final_normal_array.size(); j++) {
-				Vector3 vertex_normal_array_val = final_normal_array.get(j);
-				p_morph_data_out->set_vertex_normal(surface, j, vertex_normal_array_val);
-			}
-
-			p_morph_data_out->set_morph_type(surface, morphType);
-
-			incrementing_offset += index_array.size();
-		}
-
-		surface++;
-	}
-
-
-	return OK;
 
 }
