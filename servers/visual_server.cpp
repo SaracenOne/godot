@@ -315,9 +315,9 @@ RID VisualServer::material_2d_get(bool p_shaded, bool p_transparent, bool p_cut_
 	fixed_material_set_flag(material_2d[version],FIXED_MATERIAL_FLAG_USE_ALPHA,p_transparent);
 	fixed_material_set_flag(material_2d[version],FIXED_MATERIAL_FLAG_USE_COLOR_ARRAY,true);
 	fixed_material_set_flag(material_2d[version],FIXED_MATERIAL_FLAG_DISCARD_ALPHA,p_cut_alpha);
-	material_set_flag(material_2d[version],0,MATERIAL_FLAG_UNSHADED,!p_shaded);
-	material_set_flag(material_2d[version],0,MATERIAL_FLAG_DOUBLE_SIDED,true);
-	material_set_depth_draw_mode(material_2d[version],0,p_opaque_prepass?MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA:MATERIAL_DEPTH_DRAW_OPAQUE_ONLY);
+	material_set_flag(material_2d[version],MATERIAL_FLAG_UNSHADED,!p_shaded);
+	material_set_flag(material_2d[version],MATERIAL_FLAG_DOUBLE_SIDED,true);
+	material_set_depth_draw_mode(material_2d[version],p_opaque_prepass?MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA:MATERIAL_DEPTH_DRAW_OPAQUE_ONLY);
 	fixed_material_set_texture(material_2d[version],FIXED_MATERIAL_PARAM_DIFFUSE,get_white_texture());
 	//material cut alpha?
 	return material_2d[version];
@@ -498,7 +498,7 @@ void VisualServer::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("viewport_set_rect"),&VisualServer::_viewport_set_rect);
 	ObjectTypeDB::bind_method(_MD("viewport_get_rect"),&VisualServer::_viewport_get_rect);
 	ObjectTypeDB::bind_method(_MD("viewport_attach_camera"),&VisualServer::viewport_attach_camera,DEFVAL(RID()));
-	ObjectTypeDB::bind_method(_MD("viewport_detach_camera"), &VisualServer::viewport_detach_camera, DEFVAL(RID()));
+	ObjectTypeDB::bind_method(_MD("viewport_detach_camera"),&VisualServer::viewport_detach_camera, DEFVAL(RID()));
 	ObjectTypeDB::bind_method(_MD("viewport_get_scenario"),&VisualServer::viewport_get_scenario);
 	ObjectTypeDB::bind_method(_MD("viewport_attach_canvas"),&VisualServer::viewport_attach_canvas);
 	ObjectTypeDB::bind_method(_MD("viewport_remove_canvas"),&VisualServer::viewport_remove_canvas);

@@ -359,7 +359,6 @@ void MeshInstance::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_morph_track_index", "name"), &MeshInstance::get_morph_track_index);
 	ObjectTypeDB::bind_method(_MD("get_morph_track_count"), &MeshInstance::get_morph_track_count);
 
-
 	ObjectTypeDB::bind_method(_MD("set_skeleton_path","skeleton_path:NodePath"),&MeshInstance::set_skeleton_path);
 	ObjectTypeDB::bind_method(_MD("get_skeleton_path:NodePath"),&MeshInstance::get_skeleton_path);
 	ObjectTypeDB::bind_method(_MD("get_aabb"),&MeshInstance::get_aabb);

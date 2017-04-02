@@ -241,92 +241,76 @@ class RasterizerGLES2 : public Rasterizer {
 	void _update_shader( Shader* p_shader) const;
 
 	struct Material {
-		struct Pass {
-			bool flags[VS::MATERIAL_FLAG_MAX];
 
-			VS::MaterialDepthTestMode depth_test_mode;
+		bool flags[VS::MATERIAL_FLAG_MAX];
 
-			VS::MaterialBlendMode blend_mode;
-			VS::MaterialDepthDrawMode depth_draw_mode;
+		VS::MaterialDepthTestMode depth_test_mode;
 
-			// Color Mask
-			bool color_bits[VS::MATERIAL_COLOR_MASK_BIT_COUNT];
+		VS::MaterialBlendMode blend_mode;
+		VS::MaterialDepthDrawMode depth_draw_mode;
 
-			// Stencil
-			uint8_t stencil_reference_value;
-			uint8_t stencil_read_mask;
-			uint8_t stencil_write_mask;
-			VS::MaterialStencilComparison stencil_comparision_function;
-			VS::MaterialStencilOperation stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_COUNT];
+		// Color Mask
+		bool color_bits[VS::MATERIAL_COLOR_MASK_BIT_COUNT];
 
-			float line_width;
-			bool has_alpha;
+		// Stencil
+		uint8_t stencil_reference_value;
+		uint8_t stencil_read_mask;
+		uint8_t stencil_write_mask;
+		VS::MaterialStencilComparison stencil_comparision_function;
+		VS::MaterialStencilOperation stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_COUNT];
 
-			mutable uint32_t shader_version;
+		float line_width;
+		bool has_alpha;
 
-			RID shader; // shader material
-			Shader *shader_cache;
+		mutable uint32_t shader_version;
 
-			struct UniformData {
+		RID shader; // shader material
+		Shader *shader_cache;
 
-				bool inuse;
-				bool istexture;
-				Variant value;
-				int index;
-			};
+		struct UniformData {
 
-			uint64_t last_pass;
-
-			mutable Map<StringName, UniformData> shader_params;
-
-			Pass() {
-				for (int i = 0; i<VS::MATERIAL_FLAG_MAX; i++)
-					flags[i] = false;
-				flags[VS::MATERIAL_FLAG_VISIBLE] = true;
-
-				line_width=1;
-				has_alpha=false;
-				depth_draw_mode=VS::MATERIAL_DEPTH_DRAW_OPAQUE_ONLY;
-				depth_test_mode=VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL;
-				blend_mode=VS::MATERIAL_BLEND_MODE_MIX;
-
-				for (int i = 0; i<VS::MATERIAL_COLOR_MASK_BIT_COUNT; i++)
-					color_bits[i] = true;
-
-				stencil_reference_value = 0xff;
-				stencil_read_mask = 0xff;
-				stencil_write_mask = 0xff;
-				stencil_comparision_function = VS::MATERIAL_STENCIL_COMPARISON_ALWAYS;
-				stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_SFAIL] = VS::MATERIAL_STENCIL_OP_KEEP;
-				stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_DPFAIL] = VS::MATERIAL_STENCIL_OP_KEEP;
-				stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_DPPASS] = VS::MATERIAL_STENCIL_OP_KEEP;
-
-				shader_version = 0;
-				shader_cache = NULL;
-				last_pass = 0;
-			}
+			bool inuse;
+			bool istexture;
+			Variant value;			
+			int index;
 		};
 
-		Vector<Pass> passes;
+		mutable Map<StringName,UniformData> shader_params;
 
-		void set_pass_count(const int p_pass_count) {
-			int original_size = passes.size();
-			passes.resize(p_pass_count);
-			if (original_size > p_pass_count || original_size < p_pass_count) {
-				passes.resize(p_pass_count);
-				if (original_size > p_pass_count) {
-					for (int i = original_size; i < p_pass_count; i++) {
-						passes[i] = Pass();
-					}
-				}
-			}
-		}
+		uint64_t last_pass;
+
 
 		Material() {
+
+			for(int i=0;i<VS::MATERIAL_FLAG_MAX;i++)
+				flags[i]=false;
+			flags[VS::MATERIAL_FLAG_VISIBLE]=true;
+
+			line_width=1;
+			has_alpha=false;
+			depth_draw_mode=VS::MATERIAL_DEPTH_DRAW_OPAQUE_ONLY;
+			depth_test_mode=VS::MATERIAL_DEPTH_TEST_MODE_LEQUAL;
+			blend_mode=VS::MATERIAL_BLEND_MODE_MIX;
+
+			for (int i = 0; i<VS::MATERIAL_COLOR_MASK_BIT_COUNT; i++)
+				color_bits[i] = true;
+
+			stencil_reference_value = 0xff;
+			stencil_read_mask = 0xff;
+			stencil_write_mask = 0xff;
+			stencil_comparision_function = VS::MATERIAL_STENCIL_COMPARISON_ALWAYS;
+			stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_SFAIL] = VS::MATERIAL_STENCIL_OP_KEEP;
+			stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_DPFAIL] = VS::MATERIAL_STENCIL_OP_KEEP;
+			stencil_options[VS::MATERIAL_STENCIL_OP_OPTION_DPPASS] = VS::MATERIAL_STENCIL_OP_KEEP;
+
+			last_pass = 0;
+			shader_version=0;
+			shader_cache=NULL;
+
 		}
 	};
 
-	_FORCE_INLINE_ void _update_material_pass_shader_params(Material::Pass *p_material_pass) const;
+	_FORCE_INLINE_ void _update_material_shader_params(Material *p_material) const;
 	mutable RID_Owner<Material> material_owner;
 
 
@@ -926,7 +910,6 @@ class RasterizerGLES2 : public Rasterizer {
 			const Geometry *geometry;
 			const Geometry *geometry_cmp;
 			const Material *material;
-			const Material::Pass *pass;
 			const GeometryOwner *owner;
 			bool *additive_ptr;
 			bool additive;
@@ -974,28 +957,28 @@ class RasterizerGLES2 : public Rasterizer {
 		}
 
 
-		struct SortMatPassGeom {
+		struct SortMatGeom {
 
 			_FORCE_INLINE_ bool operator()(const Element* A,  const Element* B ) const {
 				// TODO move to a single uint64 (one comparison)
-				if (A->pass->shader_cache == B->pass->shader_cache) {
-					if (A->pass == B->pass) {
+				if (A->material->shader_cache == B->material->shader_cache) {
+					if (A->material == B->material) {
 
 						return A->geometry_cmp < B->geometry_cmp;
 					} else {
 
-						return (A->pass < B->pass);
+						return (A->material < B->material);
 					}
 				} else {
 
-					return A->pass->shader_cache < B->pass->shader_cache;
+					return A->material->shader_cache < B->material->shader_cache;
 				}
 			}
 		};
 
-		void sort_mat_pass_geom() {
+		void sort_mat_geom() {
 
-			SortArray<Element*,SortMatPassGeom> sorter;
+			SortArray<Element*,SortMatGeom> sorter;
 			sorter.sort(elements,element_count);
 		}
 
@@ -1005,12 +988,12 @@ class RasterizerGLES2 : public Rasterizer {
 
 				if (A->geometry_cmp == B->geometry_cmp) {
 
-					if (A->pass == B->pass) {
+					if (A->material == B->material) {
 
 						return A->light<B->light;
 					} else {
 
-						return (A->pass < B->pass);
+						return (A->material < B->material);
 					}
 				} else {
 
@@ -1019,7 +1002,7 @@ class RasterizerGLES2 : public Rasterizer {
 			}
 		};
 
-		void sort_mat_pass_light() {
+		void sort_mat_light() {
 
 			SortArray<Element*,SortMatLight> sorter;
 			sorter.sort(elements,element_count);
@@ -1030,17 +1013,17 @@ class RasterizerGLES2 : public Rasterizer {
 			_FORCE_INLINE_ bool operator()(const Element* A,  const Element* B ) const {
 
 				if (A->light_type == B->light_type) {
-					if (A->pass->shader_cache == B->pass->shader_cache) {
-						if (A->pass == B->pass) {
+					if (A->material->shader_cache == B->material->shader_cache) {
+						if (A->material == B->material) {
 
 							return (A->geometry_cmp < B->geometry_cmp);
 						} else {
 
-							return (A->pass < B->pass);
+							return (A->material < B->material);
 						}
 					} else {
 
-						return (A->pass->shader_cache < B->pass->shader_cache);
+						return (A->material->shader_cache < B->material->shader_cache);
 					}
 				} else {
 
@@ -1049,7 +1032,7 @@ class RasterizerGLES2 : public Rasterizer {
 			}
 		};
 
-		void sort_mat_pass_light_type() {
+		void sort_mat_light_type() {
 
 			SortArray<Element*,SortMatLightType> sorter;
 			sorter.sort(elements,element_count);
@@ -1060,17 +1043,17 @@ class RasterizerGLES2 : public Rasterizer {
 			_FORCE_INLINE_ bool operator()(const Element* A,  const Element* B ) const {
 
 				if (A->sort_key == B->sort_key) {
-					if (A->pass->shader_cache == B->pass->shader_cache) {
-						if (A->pass == B->pass) {
+					if (A->material->shader_cache == B->material->shader_cache) {
+						if (A->material == B->material) {
 
 							return (A->geometry_cmp < B->geometry_cmp);
 						} else {
 
-							return (A->pass < B->pass);
+							return (A->material < B->material);
 						}
 					} else {
 
-						return (A->pass->shader_cache < B->pass->shader_cache);
+						return (A->material->shader_cache < B->material->shader_cache);
 					}
 				} else {
 
@@ -1079,7 +1062,7 @@ class RasterizerGLES2 : public Rasterizer {
 			}
 		};
 
-		void sort_mat_pass_light_type_flags() {
+		void sort_mat_light_type_flags() {
 
 			SortArray<Element*,SortMatLightTypeFlags> sorter;
 			sorter.sort(elements,element_count);
@@ -1141,12 +1124,12 @@ class RasterizerGLES2 : public Rasterizer {
 	void _setup_light(uint16_t p_light);
 
 	_FORCE_INLINE_ void _setup_shader_params(const Material *p_material);
-	bool _setup_material_pass(const Material::Pass *p_material_pass, bool p_opaque_pass);
+	bool _setup_material(const Geometry *p_geometry, const Material *p_material, bool p_no_const_light, bool p_opaque_pass);
 	void _setup_skeleton(const Skeleton *p_skeleton);
 
 
-	Error _setup_geometry(const Geometry *p_geometry, const Skeleton *p_skeleton, const float *p_blends);
-	void _render(const Geometry *p_geometry, const Skeleton* p_skeleton, const GeometryOwner *p_owner,const Transform& p_xform);
+	Error _setup_geometry(const Geometry *p_geometry, const Material* p_material,const Skeleton *p_skeleton, const float *p_morphs);
+	void _render(const Geometry *p_geometry,const Material *p_material, const Skeleton* p_skeleton, const GeometryOwner *p_owner,const Transform& p_xform);
 
 
 	/***********/
@@ -1429,49 +1412,47 @@ public:
 
 	/* COMMON MATERIAL API */
 
-	virtual RID material_create(const int p_pass_count);
+	virtual RID material_create();
 
-	virtual void material_set_shader(RID p_shader_material, const int p_pass_index, RID p_shader);
-	virtual RID material_get_shader(RID p_shader_material, const int p_pass_index) const;
+	virtual void material_set_shader(RID p_shader_material, RID p_shader);
+	virtual RID material_get_shader(RID p_shader_material) const;
 
-	virtual void material_set_param(RID p_material, const int p_pass_index, const StringName& p_param, const Variant& p_value);
-	virtual Variant material_get_param(RID p_material, const int p_pass_index, const StringName& p_param) const;
+	virtual void material_set_param(RID p_material, const StringName& p_param, const Variant& p_value);
+	virtual Variant material_get_param(RID p_material, const StringName& p_param) const;
 
-	virtual void material_set_flag(RID p_material, const int p_pass_index, VS::MaterialFlag p_flag, bool p_enabled);
-	virtual bool material_get_flag(RID p_material, const int p_pass_index, VS::MaterialFlag p_flag) const;
+	virtual void material_set_flag(RID p_material, VS::MaterialFlag p_flag,bool p_enabled);
+	virtual bool material_get_flag(RID p_material,VS::MaterialFlag p_flag) const;
 
-	virtual void material_set_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit, bool p_enabled);
-	virtual bool material_get_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit) const;
+	virtual void material_set_color_mask_bit(RID p_material, VS::MaterialColorMaskBit p_color_bit, bool p_enabled);
+	virtual bool material_get_color_mask_bit(RID p_material, VS::MaterialColorMaskBit p_color_bit) const;
 
-	virtual void material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value);
-	virtual uint8_t material_get_stencil_reference_value(RID p_material, const int p_pass_index) const;
+	virtual void material_set_stencil_reference_value(RID p_material, uint8_t p_reference_value);
+	virtual uint8_t material_get_stencil_reference_value(RID p_material) const;
 
-	virtual void material_set_stencil_read_mask(RID p_material, const int p_pass_index, uint8_t p_read_mask);
-	virtual uint8_t material_get_stencil_read_mask(RID p_material, const int p_pass_index) const;
+	virtual void material_set_stencil_read_mask(RID p_material, uint8_t p_read_mask);
+	virtual uint8_t material_get_stencil_read_mask(RID p_material) const;
 
-	virtual void material_set_stencil_write_mask(RID p_material, const int p_pass_index, uint8_t p_write_mask);
-	virtual uint8_t material_get_stencil_write_mask(RID p_material, const int p_pass_index) const;
+	virtual void material_set_stencil_write_mask(RID p_material, uint8_t p_write_mask);
+	virtual uint8_t material_get_stencil_write_mask(RID p_material) const;
 
-	virtual void material_set_stencil_comparison(RID p_material, const int p_pass_index, VS::MaterialStencilComparison p_comparison);
-	virtual VS::MaterialStencilComparison material_get_stencil_comparison(RID p_material, const int p_pass_index) const;
+	virtual void material_set_stencil_comparison(RID p_material, VS::MaterialStencilComparison p_comparison);
+	virtual VS::MaterialStencilComparison material_get_stencil_comparison(RID p_material) const;
 
-	virtual void material_set_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option, VS::MaterialStencilOperation p_operation);
-	virtual VS::MaterialStencilOperation material_get_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option) const;
+	virtual void material_set_stencil_option(RID p_material, VS::MaterialStencilOperationOption p_option, VS::MaterialStencilOperation p_operation);
+	virtual VS::MaterialStencilOperation material_get_stencil_option(RID p_material, VS::MaterialStencilOperationOption p_option) const;
 
-	virtual void material_set_depth_draw_mode(RID p_material, const int p_pass_index, VS::MaterialDepthDrawMode p_mode);
-	virtual VS::MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material, const int p_pass_index) const;
+	virtual void material_set_depth_draw_mode(RID p_material, VS::MaterialDepthDrawMode p_mode);
+	virtual VS::MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material) const;
 
-	virtual void material_set_blend_mode(RID p_material, const int p_pass_index, VS::MaterialBlendMode p_mode);
-	virtual VS::MaterialBlendMode material_get_blend_mode(RID p_material, const int p_pass_index) const;
+	virtual void material_set_blend_mode(RID p_material,VS::MaterialBlendMode p_mode);
+	virtual VS::MaterialBlendMode material_get_blend_mode(RID p_material) const;
 
-	virtual void material_set_depth_test_mode(RID p_material, const int p_pass_index, VS::MaterialDepthTestMode p_depth_test_mode);
-	virtual VS::MaterialDepthTestMode material_get_depth_test_mode(RID p_material, const int p_pass_index) const;
+	virtual void material_set_depth_test_mode(RID p_material, VS::MaterialDepthTestMode p_depth_test_mode);
+	virtual VS::MaterialDepthTestMode material_get_depth_test_mode(RID p_material) const;
 
-	virtual void material_set_line_width(RID p_material, const int p_pass_index, float p_line_width);
-	virtual float material_get_line_width(RID p_material, const int p_pass_index) const;
+	virtual void material_set_line_width(RID p_material,float p_line_width);
+	virtual float material_get_line_width(RID p_material) const;
 
-	virtual void material_set_pass_count(RID p_material, const int p_pass_count);
-	virtual int material_get_pass_count(RID p_material) const;
 
 	/* MESH API */
 

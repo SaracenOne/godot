@@ -178,13 +178,13 @@ public:
 
 	/* COMMON MATERIAL API */
 
-	virtual RID material_create(const int p_pass_count) = 0;
+	virtual RID material_create()=0;
 
-	virtual void material_set_shader(RID p_shader_material,int p_pass, RID p_shader)=0;
-	virtual RID material_get_shader(RID p_shader_material,int p_pass) const=0;
+	virtual void material_set_shader(RID p_shader_material, RID p_shader)=0;
+	virtual RID material_get_shader(RID p_shader_material) const=0;
 
-	virtual void material_set_param(RID p_material,int p_pass, const StringName& p_param, const Variant& p_value)=0;
-	virtual Variant material_get_param(RID p_material,int p_pass, const StringName& p_param) const=0;
+	virtual void material_set_param(RID p_material, const StringName& p_param, const Variant& p_value)=0;
+	virtual Variant material_get_param(RID p_material, const StringName& p_param) const=0;
 
 	enum MaterialFlag {
 		MATERIAL_FLAG_VISIBLE,
@@ -198,8 +198,8 @@ public:
 		MATERIAL_FLAG_MAX,
 	};
 
-	virtual void material_set_flag(RID p_material,int p_pass, MaterialFlag p_flag,bool p_enabled)=0;
-	virtual bool material_get_flag(RID p_material,int p_pass, MaterialFlag p_flag) const=0;
+	virtual void material_set_flag(RID p_material, MaterialFlag p_flag,bool p_enabled)=0;
+	virtual bool material_get_flag(RID p_material,MaterialFlag p_flag) const=0;
 
 	enum MaterialDepthDrawMode {
 		MATERIAL_DEPTH_DRAW_ALWAYS,
@@ -208,8 +208,8 @@ public:
 		MATERIAL_DEPTH_DRAW_NEVER
 	};
 
-	virtual void material_set_depth_draw_mode(RID p_material, int p_pass, MaterialDepthDrawMode p_mode)=0;
-	virtual MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material,int p_pass) const=0;
+	virtual void material_set_depth_draw_mode(RID p_material, MaterialDepthDrawMode p_mode)=0;
+	virtual MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material) const=0;
 
 	enum MaterialColorMaskBit {
 		MATERIAL_COLOR_MASK_BIT_R=0,
@@ -219,15 +219,15 @@ public:
 		MATERIAL_COLOR_MASK_BIT_COUNT
 	};
 
-	virtual void material_set_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit, bool p_enabled)=0;
-	virtual bool material_get_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit) const = 0;
+	virtual void material_set_color_mask_bit(RID p_material, MaterialColorMaskBit p_color_bit, bool p_enabled)=0;
+	virtual bool material_get_color_mask_bit(RID p_material, MaterialColorMaskBit p_color_bit) const = 0;
 
-	virtual void material_set_stencil_reference_value(RID p_material, int p_pass, uint8_t p_reference_value)=0;
-	virtual uint8_t material_get_stencil_reference_value(RID p_material, int p_pass) const=0;
-	virtual void material_set_stencil_read_mask(RID p_material, int p_pass, uint8_t p_read_mask)=0;
-	virtual uint8_t material_get_stencil_read_mask(RID p_material, int p_pass) const=0;
-	virtual void material_set_stencil_write_mask(RID p_material, int p_pass, uint8_t p_write_mask)=0;
-	virtual uint8_t material_get_stencil_write_mask(RID p_material, int p_pass) const=0;
+	virtual void material_set_stencil_reference_value(RID p_material, uint8_t p_reference_value)=0;
+	virtual uint8_t material_get_stencil_reference_value(RID p_material) const=0;
+	virtual void material_set_stencil_read_mask(RID p_material, uint8_t p_read_mask)=0;
+	virtual uint8_t material_get_stencil_read_mask(RID p_material) const=0;
+	virtual void material_set_stencil_write_mask(RID p_material, uint8_t p_write_mask)=0;
+	virtual uint8_t material_get_stencil_write_mask(RID p_material) const=0;
 
 	enum MaterialStencilComparison {
 		MATERIAL_STENCIL_COMPARISON_NEVER=0,
@@ -241,8 +241,8 @@ public:
 		MATERIAL_STENCIL_COMPARISON_COUNT
 	};
 
-	virtual void material_set_stencil_comparison(RID p_material, int p_pass, MaterialStencilComparison p_option)=0;
-	virtual MaterialStencilComparison material_get_stencil_comparison(RID p_material, int p_pass) const=0;
+	virtual void material_set_stencil_comparison(RID p_material, MaterialStencilComparison p_option)=0;
+	virtual MaterialStencilComparison material_get_stencil_comparison(RID p_material) const=0;
 
 	enum MaterialStencilOperation {
 		MATERIAL_STENCIL_OP_KEEP=0,
@@ -263,8 +263,8 @@ public:
 		MATERIAL_STENCIL_OP_OPTION_COUNT
 	};
 
-	virtual void material_set_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option, MaterialStencilOperation p_operation)=0;
-	virtual MaterialStencilOperation material_get_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option) const=0;
+	virtual void material_set_stencil_option(RID p_material, MaterialStencilOperationOption p_option, MaterialStencilOperation p_operation)=0;
+	virtual MaterialStencilOperation material_get_stencil_option(RID p_material, MaterialStencilOperationOption p_option) const=0;
 
 
 	enum MaterialBlendMode {
@@ -277,8 +277,8 @@ public:
 	};
 
 
-	virtual void material_set_blend_mode(RID p_material,int p_pass,MaterialBlendMode p_mode)=0;
-	virtual MaterialBlendMode material_get_blend_mode(RID p_material,int p_pass) const=0;
+	virtual void material_set_blend_mode(RID p_material,MaterialBlendMode p_mode)=0;
+	virtual MaterialBlendMode material_get_blend_mode(RID p_material) const=0;
 
 	enum MaterialDepthTestMode {
 		MATERIAL_DEPTH_TEST_MODE_NEVER,
@@ -292,14 +292,12 @@ public:
 	};
 
 
-	virtual void material_set_depth_test_mode(RID p_material,int p_pass,MaterialDepthTestMode p_mode)=0;
-	virtual MaterialDepthTestMode material_get_depth_test_mode(RID p_material, int p_pass) const=0;
+	virtual void material_set_depth_test_mode(RID p_material,MaterialDepthTestMode p_mode)=0;
+	virtual MaterialDepthTestMode material_get_depth_test_mode(RID p_material) const=0;
 
-	virtual void material_set_line_width(RID p_material,int p_pass,float p_line_width)=0;
-	virtual float material_get_line_width(RID p_material, int p_pass) const=0;
+	virtual void material_set_line_width(RID p_material,float p_line_width)=0;
+	virtual float material_get_line_width(RID p_material) const=0;
 
-	virtual void material_set_pass_count(RID p_material, const int p_pass_count)=0;
-	virtual int material_get_pass_count(RID p_material) const=0;
 
 	//fixed material api
 

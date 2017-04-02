@@ -129,47 +129,6 @@ public:
 protected:
 	RID material;
 
-	static void _bind_methods();
-
-public:
-	virtual void set_flag(Flag p_flag,bool p_enabled)=0;
-	virtual bool get_flag(Flag p_flag) const=0;
-
-	virtual void set_blend_mode(BlendMode p_blend_mode)=0;
-	virtual BlendMode get_blend_mode() const=0;
-
-	virtual void set_depth_draw_mode(DepthDrawMode p_depth_draw_mode)=0;
-	virtual DepthDrawMode get_depth_draw_mode() const=0;
-
-	virtual void set_depth_test_mode(DepthTestMode p_depth_test_mode)=0;
-	virtual DepthTestMode get_depth_test_mode() const=0;
-
-	virtual void set_line_width(float p_width)=0;
-	virtual float get_line_width() const=0;
-
-	virtual RID get_rid() const;
-
-	Material(const RID& p_rid=RID());
-	virtual ~Material();
-};
-
-VARIANT_ENUM_CAST( Material::Flag );
-VARIANT_ENUM_CAST( Material::DepthDrawMode );
-
-VARIANT_ENUM_CAST( Material::BlendMode );
-VARIANT_ENUM_CAST( Material::DepthTestMode);
-
-VARIANT_ENUM_CAST(Material::ColorMaskBit);
-
-VARIANT_ENUM_CAST( Material::StencilComparison );
-VARIANT_ENUM_CAST( Material::StencilOperation );
-VARIANT_ENUM_CAST( Material::StencilOption );
-
-
-class SinglePassMaterial : public Material {
-	OBJ_TYPE(SinglePassMaterial, Material);
-	//REVERSE_GET_PROPERTY_LIST
-protected:
 	bool _set(const StringName& p_name, const Variant& p_value);
 	bool _get(const StringName& p_name, Variant &r_ret) const;
 	void _get_property_list(List<PropertyInfo> *p_list) const;
@@ -192,8 +151,9 @@ private:
 	uint8_t stencil_write_mask;
 	StencilComparison stencil_comparison;
 	StencilOperation stencil_options[STENCIL_OP_OPTION_COUNT];
+
 public:
-	void set_flag(Flag p_flag, bool p_enabled);
+	void set_flag(Flag p_flag,bool p_enabled);
 	bool get_flag(Flag p_flag) const;
 
 	void set_blend_mode(BlendMode p_blend_mode);
@@ -226,12 +186,27 @@ public:
 	void set_line_width(float p_width);
 	float get_line_width() const;
 
-	SinglePassMaterial(const RID& p_rid = RID());
+	RID get_rid() const;
+
+	Material(const RID& p_rid=RID());
+	~Material();
 };
 
-class FixedMaterial : public SinglePassMaterial {
+VARIANT_ENUM_CAST( Material::Flag );
+VARIANT_ENUM_CAST( Material::DepthDrawMode );
 
-	OBJ_TYPE( FixedMaterial, SinglePassMaterial );
+VARIANT_ENUM_CAST( Material::BlendMode );
+VARIANT_ENUM_CAST( Material::DepthTestMode);
+
+VARIANT_ENUM_CAST(Material::ColorMaskBit);
+
+VARIANT_ENUM_CAST( Material::StencilComparison );
+VARIANT_ENUM_CAST( Material::StencilOperation );
+VARIANT_ENUM_CAST( Material::StencilOption );
+
+class FixedMaterial : public Material {
+
+	OBJ_TYPE( FixedMaterial, Material );
 	REVERSE_GET_PROPERTY_LIST
 public:
 
@@ -334,9 +309,9 @@ VARIANT_ENUM_CAST( FixedMaterial::TexCoordMode );
 VARIANT_ENUM_CAST( FixedMaterial::FixedFlag );
 VARIANT_ENUM_CAST( FixedMaterial::LightShader );
 
-class ShaderMaterial : public SinglePassMaterial {
+class ShaderMaterial : public Material {
 
-	OBJ_TYPE( ShaderMaterial, SinglePassMaterial );
+	OBJ_TYPE( ShaderMaterial, Material );
 
 	Ref<Shader> shader;
 
@@ -364,108 +339,6 @@ public:
 	void get_argument_options(const StringName& p_function,int p_idx,List<String>*r_options) const;
 
 	ShaderMaterial();
-};
-
-class MultiPassMaterial : public Material {
-
-	OBJ_TYPE(MultiPassMaterial, Material);
-
-	struct Pass {
-		Ref<Shader> shader;
-
-		BlendMode blend_mode;
-		bool flags[VS::MATERIAL_FLAG_MAX];
-		float line_width;
-		DepthDrawMode depth_draw_mode;
-		DepthTestMode depth_test_mode;
-
-		// Color Mask
-		bool color_mask_bit[VS::MATERIAL_COLOR_MASK_BIT_COUNT];
-
-		// Stencil
-		uint8_t stencil_reference_value;
-		uint8_t stencil_read_mask;
-		uint8_t stencil_write_mask;
-		StencilComparison stencil_comparison;
-		StencilOperation stencil_options[STENCIL_OP_OPTION_COUNT];
-	};
-
-
-	Vector<Pass> passes;
-
-	void _shader_changed();
-
-protected:
-
-	bool _set(const StringName& p_name, const Variant& p_value);
-	bool _get(const StringName& p_name, Variant &r_ret) const;
-	void _get_property_list(List<PropertyInfo> *p_list) const;
-
-	static void _bind_methods();
-
-public:
-	void set_pass_count(const int p_pass_count);
-	int get_pass_count() const;
-
-	void set_flag(Flag p_flag, bool p_enabled);
-	bool get_flag(Flag p_flag) const;
-
-	void set_blend_mode(BlendMode p_blend_mode);
-	BlendMode get_blend_mode() const;
-
-	void set_depth_draw_mode(DepthDrawMode p_depth_draw_mode);
-	DepthDrawMode get_depth_draw_mode() const;
-
-	void set_depth_test_mode(DepthTestMode p_depth_test_mode);
-	DepthTestMode get_depth_test_mode() const;
-
-	void set_line_width(float p_width);
-	float get_line_width() const;
-
-	//
-	void set_pass_flag(const int p_pass_index, Flag p_flag, bool p_enabled);
-	bool get_pass_flag(const int p_pass_index, Flag p_flag) const;
-
-	void set_pass_blend_mode(const int p_pass_index, BlendMode p_blend_mode);
-	BlendMode get_pass_blend_mode(const int p_pass_index) const;
-
-	void set_pass_depth_draw_mode(const int p_pass_index, DepthDrawMode p_depth_draw_mode);
-	DepthDrawMode get_pass_depth_draw_mode(const int p_pass_index) const;
-
-	void set_pass_depth_test_mode(const int p_pass_index, DepthTestMode p_depth_test_mode);
-	DepthTestMode get_pass_depth_test_mode(const int p_pass_index) const;
-
-	void set_pass_color_mask_bit(const int p_pass_index, ColorMaskBit p_bit, bool p_enabled);
-	bool get_pass_color_mask_bit(const int p_pass_index, ColorMaskBit p_bit) const;
-
-	void set_pass_stencil_reference_value(const int p_pass_index, const uint8_t p_reference_value);
-	uint8_t get_pass_stencil_reference_value(const int p_pass_index) const;
-
-	void set_pass_stencil_read_mask(const int p_pass_index, const uint8_t p_read_mask);
-	uint8_t get_pass_stencil_read_mask(const int p_pass_index) const;
-
-	void set_pass_stencil_write_mask(const int p_pass_index, const uint8_t p_read_mask);
-	uint8_t get_pass_stencil_write_mask(const int p_pass_index) const;
-
-	void set_pass_stencil_comparison(const int p_pass_index, StencilComparison p_comparison);
-	StencilComparison get_pass_stencil_comparison(const int p_pass_index) const;
-
-	void set_pass_stencil_option(const int p_pass_index, StencilOption p_option, StencilOperation p_operation);
-	StencilOperation get_pass_stencil_option(const int p_pass_index, StencilOption p_option) const;
-
-	void set_pass_line_width(const int p_pass_index, float p_width);
-	float get_pass_line_width(const int p_pass_index) const;
-	//
-
-	void set_shader(const int p_pass_index, const Ref<Shader>& p_shader);
-	Ref<Shader> get_shader(const int p_pass_index) const;
-
-	void set_shader_param(const int p_pass_index, const StringName& p_param, const Variant& p_value);
-	Variant get_shader_param(const int p_pass_index, const StringName& p_param) const;
-
-	void get_argument_options(const StringName& p_function, int p_idx, List<String>*r_options) const;
-
-	MultiPassMaterial();
 };
 
 //////////////////////

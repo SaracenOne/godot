@@ -190,150 +190,141 @@ RID VisualServerRaster::shader_get_default_texture_param(RID p_shader, const Str
 
 /* Material */
 
-RID VisualServerRaster::material_create(const int p_pass_count) {
+RID VisualServerRaster::material_create() {
 
-	return rasterizer->material_create(p_pass_count);
+	return rasterizer->material_create();
 }
 
-void VisualServerRaster::material_set_shader(RID p_material, const int p_pass, RID p_shader) {
+void VisualServerRaster::material_set_shader(RID p_material, RID p_shader) {
 
 	VS_CHANGED;
-	rasterizer->material_set_shader(p_material, p_pass,p_shader );
+	rasterizer->material_set_shader(p_material, p_shader );
 }
 
-RID VisualServerRaster::material_get_shader(RID p_material, const int p_pass) const {
+RID VisualServerRaster::material_get_shader(RID p_material) const {
 
-	return rasterizer->material_get_shader(p_material,p_pass);
+	return rasterizer->material_get_shader(p_material);
 }
 
-void VisualServerRaster::material_set_param(RID p_material, const int p_pass, const StringName& p_param, const Variant& p_value) {
+void VisualServerRaster::material_set_param(RID p_material, const StringName& p_param, const Variant& p_value) {
 
 	VS_CHANGED;
-	rasterizer->material_set_param(p_material, p_pass,p_param,p_value );
+	rasterizer->material_set_param(p_material, p_param,p_value );
 }
 
-Variant VisualServerRaster::material_get_param(RID p_material, const int p_pass, const StringName& p_param) const {
+Variant VisualServerRaster::material_get_param(RID p_material, const StringName& p_param) const {
 
-	return rasterizer->material_get_param(p_material,p_pass,p_param);
+	return rasterizer->material_get_param(p_material,p_param);
 }
 
-void VisualServerRaster::material_set_flag(RID p_material, const int p_pass, MaterialFlag p_flag, bool p_enabled) {
+void VisualServerRaster::material_set_flag(RID p_material, MaterialFlag p_flag,bool p_enabled) {
 	VS_CHANGED;
-	rasterizer->material_set_flag(p_material,p_pass,p_flag, p_enabled);
+	rasterizer->material_set_flag(p_material,p_flag,p_enabled);
 }
 
-void VisualServerRaster::material_set_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit, bool p_enabled) {
+void VisualServerRaster::material_set_color_mask_bit(RID p_material, MaterialColorMaskBit p_color_bit, bool p_enabled) {
 	VS_CHANGED;
-	rasterizer->material_set_color_mask_bit(p_material, p_pass, p_color_bit, p_enabled);
+	rasterizer->material_set_color_mask_bit(p_material, p_color_bit, p_enabled);
 }
 
-bool VisualServerRaster::material_get_color_mask_bit(RID p_material, int p_pass, MaterialColorMaskBit p_color_bit) const {
+bool VisualServerRaster::material_get_color_mask_bit(RID p_material, MaterialColorMaskBit p_color_bit) const {
 
-	return rasterizer->material_get_color_mask_bit(p_material, p_pass, p_color_bit);
+	return rasterizer->material_get_color_mask_bit(p_material, p_color_bit);
 }
 
-void VisualServerRaster::material_set_stencil_reference_value(RID p_material, int p_pass, uint8_t p_reference_value) {
+void VisualServerRaster::material_set_stencil_reference_value(RID p_material, uint8_t p_reference_value) {
 	VS_CHANGED;
-	rasterizer->material_set_stencil_reference_value(p_material, p_pass, p_reference_value);
+	rasterizer->material_set_stencil_reference_value(p_material,p_reference_value);
 }
 
-uint8_t VisualServerRaster::material_get_stencil_reference_value(RID p_material, int p_pass) const {
+uint8_t VisualServerRaster::material_get_stencil_reference_value(RID p_material) const {
 
-	return rasterizer->material_get_stencil_reference_value(p_material, p_pass);
+	return rasterizer->material_get_stencil_reference_value(p_material);
 }
 
-void VisualServerRaster::material_set_stencil_read_mask(RID p_material, int p_pass, uint8_t p_read_mask) {
+void VisualServerRaster::material_set_stencil_read_mask(RID p_material, uint8_t p_read_mask) {
 	VS_CHANGED;
-	rasterizer->material_set_stencil_read_mask(p_material, p_pass, p_read_mask);
+	rasterizer->material_set_stencil_read_mask(p_material, p_read_mask);
 }
 
-uint8_t VisualServerRaster::material_get_stencil_read_mask(RID p_material, int p_pass) const {
+uint8_t VisualServerRaster::material_get_stencil_read_mask(RID p_material) const {
 
-	return rasterizer->material_get_stencil_read_mask(p_material, p_pass);
+	return rasterizer->material_get_stencil_read_mask(p_material);
 }
 
-void VisualServerRaster::material_set_stencil_write_mask(RID p_material, int p_pass, uint8_t p_write_mask) {
+void VisualServerRaster::material_set_stencil_write_mask(RID p_material, uint8_t p_write_mask) {
 	VS_CHANGED;
-	rasterizer->material_set_stencil_write_mask(p_material, p_pass, p_write_mask);
+	rasterizer->material_set_stencil_write_mask(p_material, p_write_mask);
 }
 
-uint8_t VisualServerRaster::material_get_stencil_write_mask(RID p_material, int p_pass) const {
+uint8_t VisualServerRaster::material_get_stencil_write_mask(RID p_material) const {
 
-	return rasterizer->material_get_stencil_write_mask(p_material, p_pass);
+	return rasterizer->material_get_stencil_write_mask(p_material);
 }
 
-void VisualServerRaster::material_set_stencil_comparison(RID p_material, int p_pass, MaterialStencilComparison p_comparison) {
+void VisualServerRaster::material_set_stencil_comparison(RID p_material, MaterialStencilComparison p_comparison) {
 	VS_CHANGED;
-	rasterizer->material_set_stencil_comparison(p_material, p_pass, p_comparison);
+	rasterizer->material_set_stencil_comparison(p_material, p_comparison);
 }
 
-VS::MaterialStencilComparison VisualServerRaster::material_get_stencil_comparison(RID p_material, int p_pass) const {
+VS::MaterialStencilComparison VisualServerRaster::material_get_stencil_comparison(RID p_material) const {
 
-	return rasterizer->material_get_stencil_comparison(p_material, p_pass);
+	return rasterizer->material_get_stencil_comparison(p_material);
 }
 
-void VisualServerRaster::material_set_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option, MaterialStencilOperation p_operation) {
+void VisualServerRaster::material_set_stencil_option(RID p_material, MaterialStencilOperationOption p_option, MaterialStencilOperation p_operation) {
 	VS_CHANGED;
-	rasterizer->material_set_stencil_option(p_material, p_pass, p_option, p_operation);
+	rasterizer->material_set_stencil_option(p_material, p_option, p_operation);
 }
 
-VS::MaterialStencilOperation VisualServerRaster::material_get_stencil_option(RID p_material, int p_pass, MaterialStencilOperationOption p_option) const {
+VS::MaterialStencilOperation VisualServerRaster::material_get_stencil_option(RID p_material, MaterialStencilOperationOption p_option) const {
 	
-	return rasterizer->material_get_stencil_option(p_material, p_pass, p_option);
+	return rasterizer->material_get_stencil_option(p_material, p_option);
 }
 
-void VisualServerRaster::material_set_depth_draw_mode(RID p_material, const int p_pass, MaterialDepthDrawMode p_mode) {
+void VisualServerRaster::material_set_depth_draw_mode(RID p_material, MaterialDepthDrawMode p_mode) {
 
 	VS_CHANGED;
-	rasterizer->material_set_depth_draw_mode(p_material,p_pass,p_mode);
+	rasterizer->material_set_depth_draw_mode(p_material,p_mode);
 
 }
 
-VS::MaterialDepthDrawMode VisualServerRaster::material_get_depth_draw_mode(RID p_material, const int p_pass) const {
+VS::MaterialDepthDrawMode VisualServerRaster::material_get_depth_draw_mode(RID p_material) const {
 
-	return rasterizer->material_get_depth_draw_mode(p_material,p_pass);
+	return rasterizer->material_get_depth_draw_mode(p_material);
 }
 
 
-bool VisualServerRaster::material_get_flag(RID p_material, const int p_pass, MaterialFlag p_flag) const {
+bool VisualServerRaster::material_get_flag(RID p_material,MaterialFlag p_flag) const {
 
-	return rasterizer->material_get_flag(p_material,p_pass,p_flag);
+	return rasterizer->material_get_flag(p_material,p_flag);
 }
 
-void VisualServerRaster::material_set_blend_mode(RID p_material,const int p_pass,MaterialBlendMode p_mode) {
+void VisualServerRaster::material_set_blend_mode(RID p_material,MaterialBlendMode p_mode) {
 	VS_CHANGED;
-	rasterizer->material_set_blend_mode(p_material,p_pass,p_mode);
+	rasterizer->material_set_blend_mode(p_material,p_mode);
 }
-VS::MaterialBlendMode VisualServerRaster::material_get_blend_mode(RID p_material, const int p_pass) const {
+VS::MaterialBlendMode VisualServerRaster::material_get_blend_mode(RID p_material) const {
 
-	return rasterizer->material_get_blend_mode(p_material,p_pass);
+	return rasterizer->material_get_blend_mode(p_material);
 }
 
-void VisualServerRaster::material_set_depth_test_mode(RID p_material,const int p_pass,MaterialDepthTestMode p_mode) {
+void VisualServerRaster::material_set_depth_test_mode(RID p_material,MaterialDepthTestMode p_mode) {
 	VS_CHANGED;
-	rasterizer->material_set_depth_test_mode(p_material,p_pass,p_mode);
+	rasterizer->material_set_depth_test_mode(p_material,p_mode);
 }
-VS::MaterialDepthTestMode VisualServerRaster::material_get_depth_test_mode(RID p_material,const int p_pass) const {
+VS::MaterialDepthTestMode VisualServerRaster::material_get_depth_test_mode(RID p_material) const {
 
-	return rasterizer->material_get_depth_test_mode(p_material, p_pass);
+	return rasterizer->material_get_depth_test_mode(p_material);
 }
 
-void VisualServerRaster::material_set_line_width(RID p_material,const int p_pass,float p_line_width) {
+void VisualServerRaster::material_set_line_width(RID p_material,float p_line_width) {
 	VS_CHANGED;
-	rasterizer->material_set_line_width(p_material,p_pass,p_line_width);
+	rasterizer->material_set_line_width(p_material,p_line_width);
 }
-float VisualServerRaster::material_get_line_width(RID p_material, const int p_pass) const {
+float VisualServerRaster::material_get_line_width(RID p_material) const {
 
-	return rasterizer->material_get_line_width(p_material, p_pass);
-}
-
-void VisualServerRaster::material_set_pass_count(RID p_material, const int p_pass_count) {
-	VS_CHANGED;
-	rasterizer->material_set_pass_count(p_material, p_pass_count);
-}
-
-int VisualServerRaster::material_get_pass_count(RID p_material) const {
-	return rasterizer->material_get_pass_count(p_material);
+	return rasterizer->material_get_line_width(p_material);
 }
 
 /* FIXED MATERIAL */
@@ -3491,7 +3482,7 @@ void VisualServerRaster::instance_light_set_enabled(RID p_instance,bool p_enable
 		return;
 
 	instance->light_info->enabled=p_enabled;
-	if (light_get_type(instance->base_rid) != VS::LIGHT_DIRECTIONAL && instance->octree_layers.size() && instance->scenario)
+	if (light_get_type(instance->base_rid)!=VS::LIGHT_DIRECTIONAL && instance->octree_layers.size() && instance->scenario)
 	{
 		for (int i = 0; i < instance->octree_layers.size(); i++) {
 			instance->scenario->octree[instance->octree_layers[i].layer_index].set_pairable(instance->octree_layers[i].octree_id, p_enabled, 1 << INSTANCE_LIGHT, p_enabled ? INSTANCE_GEOMETRY_MASK : 0);
@@ -5284,8 +5275,8 @@ void VisualServerRaster::_light_instance_update_pssm_shadow(Instance *p_light,Sc
 		light_frustum_planes[2]=Plane( y_vec, y_max );
 		light_frustum_planes[3]=Plane( -y_vec, -y_min );
 		//near/far
-		light_frustum_planes[4]=Plane( z_vec, z_max+1e6 ); 
-		light_frustum_planes[5]=Plane( -z_vec, -z_min ); // z_min is ok, since casters further than far-light plane are not needed		
+		light_frustum_planes[4]=Plane( z_vec, z_max+1e6 );
+		light_frustum_planes[5]=Plane( -z_vec, -z_min ); // z_min is ok, since casters further than far-light plane are not needed
 							
 		uint32_t camera_layer_mask = p_camera->visible_layers;
 		uint32_t light_layer_mask = p_light->layer_mask;

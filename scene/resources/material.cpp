@@ -73,66 +73,8 @@ RID Material::get_rid() const {
 	return material;
 }
 
-void Material::_bind_methods() {
 
-	ObjectTypeDB::bind_method(_MD("set_flag", "flag", "enable"), &Material::set_flag);
-	ObjectTypeDB::bind_method(_MD("get_flag", "flag"), &Material::get_flag);
-	ObjectTypeDB::bind_method(_MD("set_blend_mode", "mode"), &Material::set_blend_mode);
-	ObjectTypeDB::bind_method(_MD("get_blend_mode"), &Material::get_blend_mode);
-	ObjectTypeDB::bind_method(_MD("set_line_width", "width"), &Material::set_line_width);
-	ObjectTypeDB::bind_method(_MD("get_line_width"), &Material::get_line_width);
-	ObjectTypeDB::bind_method(_MD("set_depth_draw_mode", "mode"), &Material::set_depth_draw_mode);
-	ObjectTypeDB::bind_method(_MD("get_depth_draw_mode"), &Material::get_depth_draw_mode);
-	ObjectTypeDB::bind_method(_MD("set_depth_test_mode", "mode"), &Material::set_depth_test_mode);
-	ObjectTypeDB::bind_method(_MD("get_depth_test_mode"), &Material::get_depth_test_mode);
-
-	BIND_CONSTANT(FLAG_VISIBLE);
-	BIND_CONSTANT(FLAG_DOUBLE_SIDED);
-	BIND_CONSTANT(FLAG_INVERT_FACES);
-	BIND_CONSTANT(FLAG_UNSHADED);
-	BIND_CONSTANT(FLAG_ONTOP);
-	BIND_CONSTANT(FLAG_LIGHTMAP_ON_UV2);
-	BIND_CONSTANT(FLAG_COLOR_ARRAY_SRGB);
-	BIND_CONSTANT(FLAG_MAX);
-
-	BIND_CONSTANT(COLOR_MASK_BIT_R);
-	BIND_CONSTANT(COLOR_MASK_BIT_G);
-	BIND_CONSTANT(COLOR_MASK_BIT_B);
-	BIND_CONSTANT(COLOR_MASK_BIT_A);
-
-	BIND_CONSTANT(DEPTH_DRAW_ALWAYS);
-	BIND_CONSTANT(DEPTH_DRAW_OPAQUE_ONLY);
-	BIND_CONSTANT(DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA);
-	BIND_CONSTANT(DEPTH_DRAW_NEVER);
-
-	BIND_CONSTANT(DEPTH_TEST_MODE_NEVER);
-	BIND_CONSTANT(DEPTH_TEST_MODE_LESS);
-	BIND_CONSTANT(DEPTH_TEST_MODE_EQUAL);
-	BIND_CONSTANT(DEPTH_TEST_MODE_LEQUAL);
-	BIND_CONSTANT(DEPTH_TEST_MODE_GREATER);
-	BIND_CONSTANT(DEPTH_TEST_MODE_NOTEQUAL);
-	BIND_CONSTANT(DEPTH_TEST_MODE_GEQUAL);
-	BIND_CONSTANT(DEPTH_TEST_MODE_ALWAYS);
-
-	BIND_CONSTANT(BLEND_MODE_MIX);
-	BIND_CONSTANT(BLEND_MODE_ADD);
-	BIND_CONSTANT(BLEND_MODE_SUB);
-	BIND_CONSTANT(BLEND_MODE_MUL);
-	BIND_CONSTANT(BLEND_MODE_PREMULT_ALPHA);
-
-}
-
-Material::Material(const RID& p_material) {
-
-	material = p_material;
-}
-
-Material::~Material() {
-
-	VisualServer::get_singleton()->free(material);
-}
-
-bool SinglePassMaterial::_set(const StringName& p_name, const Variant& p_value) {
+bool Material::_set(const StringName& p_name, const Variant& p_value) {
 	Vector<String> split_path = String(p_name).split("/");
 	if (split_path[0] == "params") {
 		if (split_path[1] == "stencil_reference_value") {
@@ -172,7 +114,7 @@ bool SinglePassMaterial::_set(const StringName& p_name, const Variant& p_value) 
 	return false;
 }
 
-bool SinglePassMaterial::_get(const StringName& p_name, Variant &r_ret) const {
+bool Material::_get(const StringName& p_name, Variant &r_ret) const {
 	Vector<String> split_path = String(p_name).split("/");
 	if (split_path[0] == "params") {
 		if (split_path[1] == "stencil_reference_value") {
@@ -212,7 +154,7 @@ bool SinglePassMaterial::_get(const StringName& p_name, Variant &r_ret) const {
 	return false;
 }
 
-void SinglePassMaterial::_get_property_list(List<PropertyInfo> *p_list) const {
+void Material::_get_property_list(List<PropertyInfo> *p_list) const {
 	p_list->push_back(PropertyInfo(Variant::INT, "params/stencil_reference_value", PROPERTY_HINT_RANGE, "0,255,1"));
 	p_list->push_back(PropertyInfo(Variant::INT, "params/stencil_read_mask", PROPERTY_HINT_RANGE, "0,255,1"));
 	p_list->push_back(PropertyInfo(Variant::INT, "params/stencil_write_mask", PROPERTY_HINT_RANGE, "0,255,1"));
@@ -222,160 +164,211 @@ void SinglePassMaterial::_get_property_list(List<PropertyInfo> *p_list) const {
 	p_list->push_back(PropertyInfo(Variant::INT, "params/stencil_options/dppass", PROPERTY_HINT_ENUM, "Keep,Zero,Replace,Increment Saturate,Increment Wrap,Decrement Saturate,Decrement Wrap,Invert"));
 }
 
-void SinglePassMaterial::_bind_methods() {
-	ObjectTypeDB::bind_method(_MD("set_color_mask_bit", "bit", "enabled"), &SinglePassMaterial::set_color_mask_bit);
-	ObjectTypeDB::bind_method(_MD("get_color_mask_bit", "bit"), &SinglePassMaterial::get_color_mask_bit);
-
-	for (int i = 0; i<FLAG_MAX; i++)
-		ADD_PROPERTYI(PropertyInfo(Variant::BOOL, String() + "flags/" + _flag_names[i]), _SCS("set_flag"), _SCS("get_flag"), _flag_indices[i]);
-
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "params/blend_mode", PROPERTY_HINT_ENUM, "Mix,Add,Sub,PMAlpha,NoBlend"), _SCS("set_blend_mode"), _SCS("get_blend_mode"));
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "params/depth_draw", PROPERTY_HINT_ENUM, "Always,Opaque Only,Pre-Pass Alpha,Never"), _SCS("set_depth_draw_mode"), _SCS("get_depth_draw_mode"));
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "params/depth_test", PROPERTY_HINT_ENUM, "Never,Less,Equal,Less-or-Equal,Greater,Not Equal,Greater-or-Equal,Always"), _SCS("set_depth_test_mode"), _SCS("get_depth_test_mode"));
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "params/line_width", PROPERTY_HINT_RANGE, "0.1,32.0,0.1"), _SCS("set_line_width"), _SCS("get_line_width"));
-
-	for (int i=0;i<COLOR_MASK_BIT_COUNT;i++)
-		ADD_PROPERTYI(PropertyInfo(Variant::BOOL, String() + "params/color_mask_bit/" + _color_mask_bit_names[i]), _SCS("set_color_mask_bit"), _SCS("get_color_mask_bit"), _color_mask_bit_indices[i]);
-}
-
-void SinglePassMaterial::set_flag(Flag p_flag,bool p_enabled) {
+void Material::set_flag(Flag p_flag,bool p_enabled) {
 
 	ERR_FAIL_INDEX(p_flag,FLAG_MAX);
 	flags[p_flag]=p_enabled;
-	VisualServer::get_singleton()->material_set_flag(material,0,(VS::MaterialFlag)p_flag,p_enabled);
+	VisualServer::get_singleton()->material_set_flag(material,(VS::MaterialFlag)p_flag,p_enabled);
 	_change_notify();
 }
 
 
-void SinglePassMaterial::set_blend_mode(BlendMode p_blend_mode) {
+void Material::set_blend_mode(BlendMode p_blend_mode) {
 
 	ERR_FAIL_INDEX(p_blend_mode,4);
 	blend_mode=p_blend_mode;
-	VisualServer::get_singleton()->material_set_blend_mode(material,0,(VS::MaterialBlendMode)p_blend_mode);
+	VisualServer::get_singleton()->material_set_blend_mode(material,(VS::MaterialBlendMode)p_blend_mode);
 	_change_notify();
 }
 
-Material::BlendMode SinglePassMaterial::get_blend_mode() const {
+Material::BlendMode Material::get_blend_mode() const {
 
 	return blend_mode;
 }
 
 
-void SinglePassMaterial::set_depth_draw_mode(DepthDrawMode p_depth_draw_mode) {
+void Material::set_depth_draw_mode(DepthDrawMode p_depth_draw_mode) {
 
 	depth_draw_mode=p_depth_draw_mode;
-	VisualServer::get_singleton()->material_set_depth_draw_mode(material,0,(VS::MaterialDepthDrawMode)p_depth_draw_mode);
+	VisualServer::get_singleton()->material_set_depth_draw_mode(material,(VS::MaterialDepthDrawMode)p_depth_draw_mode);
 }
 
-Material::DepthDrawMode SinglePassMaterial::get_depth_draw_mode() const {
+Material::DepthDrawMode Material::get_depth_draw_mode() const {
 
 	return depth_draw_mode;
 }
 
-void SinglePassMaterial::set_depth_test_mode(DepthTestMode p_depth_test_mode) {
-
-	depth_test_mode = p_depth_test_mode;
-	VisualServer::get_singleton()->material_set_depth_test_mode(material, 0, (VS::MaterialDepthTestMode)p_depth_test_mode);
-}
-
-Material::DepthTestMode SinglePassMaterial::get_depth_test_mode() const {
-
-	return depth_test_mode;
-}
-
-void SinglePassMaterial::set_color_mask_bit(ColorMaskBit p_bit, bool p_enabled) {
-	ERR_FAIL_INDEX(p_bit, COLOR_MASK_BIT_COUNT);
-	color_mask_bit[p_bit] = p_enabled;
-	VisualServer::get_singleton()->material_set_color_mask_bit(material, 0, (VS::MaterialColorMaskBit)p_bit, p_enabled);
-}
-
-bool SinglePassMaterial::get_color_mask_bit(ColorMaskBit p_bit) const {
-	ERR_FAIL_INDEX_V(p_bit, COLOR_MASK_BIT_COUNT, false);
-	return color_mask_bit[p_bit];
-}
-
-
-void SinglePassMaterial::set_stencil_reference_value(uint8_t p_reference_value) {
-	stencil_reference_value = p_reference_value;
-	VisualServer::get_singleton()->material_set_stencil_reference_value(material, 0, p_reference_value);
-}
-
-uint8_t SinglePassMaterial::get_stencil_reference_value() const {
-	return stencil_reference_value;
-}
-
-void SinglePassMaterial::set_stencil_read_mask(uint8_t p_read_mask) {
-	stencil_read_mask = p_read_mask;
-	VisualServer::get_singleton()->material_set_stencil_read_mask(material, 0, p_read_mask);
-}
-
-uint8_t SinglePassMaterial::get_stencil_read_mask() const {
-	return stencil_read_mask;
-}
-
-void SinglePassMaterial::set_stencil_write_mask(uint8_t p_write_mask) {
-	stencil_write_mask = p_write_mask;
-	VisualServer::get_singleton()->material_set_stencil_write_mask(material, 0, p_write_mask);
-}
-
-uint8_t SinglePassMaterial::get_stencil_write_mask() const {
-	return stencil_write_mask;
-}
-
-void SinglePassMaterial::set_stencil_comparison(StencilComparison p_comparison) {
-	ERR_FAIL_INDEX(p_comparison, STENCIL_COMPARISON_COUNT);
-	stencil_comparison = p_comparison;
-	VisualServer::get_singleton()->material_set_stencil_comparison(material, 0, (VS::MaterialStencilComparison)p_comparison);
-}
-
-Material::StencilComparison SinglePassMaterial::get_stencil_comparison() const {
-	return stencil_comparison;
-}
-
-void SinglePassMaterial::set_stencil_option(StencilOption p_option, StencilOperation p_operation) {
-	stencil_options[p_option] = p_operation;
-	VisualServer::get_singleton()->material_set_stencil_option(material, 0, (VS::MaterialStencilOperationOption)p_option, (VS::MaterialStencilOperation)p_operation);
-}
-
-Material::StencilOperation SinglePassMaterial::get_stencil_option(StencilOption p_option) const {
-	ERR_FAIL_INDEX_V(p_option, STENCIL_OP_OPTION_COUNT, STENCIL_OPERATION_KEEP);
-	return stencil_options[p_option];
-}
-
-bool SinglePassMaterial::get_flag(Flag p_flag) const {
+bool Material::get_flag(Flag p_flag) const {
 
 	ERR_FAIL_INDEX_V(p_flag,FLAG_MAX,false);
 	return flags[p_flag];
 }
 
-void SinglePassMaterial::set_line_width(float p_width) {
+void Material::set_line_width(float p_width) {
 
 	line_width=p_width;
-	VisualServer::get_singleton()->material_set_line_width(material,0,p_width);
+	VisualServer::get_singleton()->material_set_line_width(material,p_width);
 	_change_notify("line_width");
 }
 
-float SinglePassMaterial::get_line_width() const {
+float Material::get_line_width() const {
 
 	return line_width;
 }
 
-SinglePassMaterial::SinglePassMaterial(const RID& p_material) : Material(p_material) {
+void Material::set_depth_test_mode(DepthTestMode p_depth_test_mode) {
 
-	flags[FLAG_VISIBLE] = true;
-	flags[FLAG_DOUBLE_SIDED] = false;
-	flags[FLAG_INVERT_FACES] = false;
-	flags[FLAG_UNSHADED] = false;
-	flags[FLAG_ONTOP] = false;
-	flags[FLAG_LIGHTMAP_ON_UV2] = true;
-	flags[FLAG_COLOR_ARRAY_SRGB] = false;
+	depth_test_mode = p_depth_test_mode;
+	VisualServer::get_singleton()->material_set_depth_test_mode(material, (VS::MaterialDepthTestMode)p_depth_test_mode);
+}
 
-	depth_draw_mode = DEPTH_DRAW_OPAQUE_ONLY;
-	depth_test_mode = DEPTH_TEST_MODE_LEQUAL;
-	blend_mode = BLEND_MODE_MIX;
-	line_width = 0.1;
+Material::DepthTestMode Material::get_depth_test_mode() const {
 
-	for (int i=0;i<COLOR_MASK_BIT_COUNT;i++) {
+	return depth_test_mode;
+}
+
+void Material::set_color_mask_bit(ColorMaskBit p_bit, bool p_enabled) {
+	ERR_FAIL_INDEX(p_bit, COLOR_MASK_BIT_COUNT);
+	color_mask_bit[p_bit] = p_enabled;
+	VisualServer::get_singleton()->material_set_color_mask_bit(material, (VS::MaterialColorMaskBit)p_bit, p_enabled);
+}
+
+bool Material::get_color_mask_bit(ColorMaskBit p_bit) const {
+	ERR_FAIL_INDEX_V(p_bit, COLOR_MASK_BIT_COUNT, false);
+	return color_mask_bit[p_bit];
+}
+
+
+void Material::set_stencil_reference_value(uint8_t p_reference_value) {
+	stencil_reference_value = p_reference_value;
+	VisualServer::get_singleton()->material_set_stencil_reference_value(material, p_reference_value);
+}
+
+uint8_t Material::get_stencil_reference_value() const {
+	return stencil_reference_value;
+}
+
+void Material::set_stencil_read_mask(uint8_t p_read_mask) {
+	stencil_read_mask = p_read_mask;
+	VisualServer::get_singleton()->material_set_stencil_read_mask(material, p_read_mask);
+}
+
+uint8_t Material::get_stencil_read_mask() const {
+	return stencil_read_mask;
+}
+
+void Material::set_stencil_write_mask(uint8_t p_write_mask) {
+	stencil_write_mask = p_write_mask;
+	VisualServer::get_singleton()->material_set_stencil_write_mask(material, p_write_mask);
+}
+
+uint8_t Material::get_stencil_write_mask() const {
+	return stencil_write_mask;
+}
+
+void Material::set_stencil_comparison(StencilComparison p_comparison) {
+	ERR_FAIL_INDEX(p_comparison, STENCIL_COMPARISON_COUNT);
+	stencil_comparison = p_comparison;
+	VisualServer::get_singleton()->material_set_stencil_comparison(material, (VS::MaterialStencilComparison)p_comparison);
+}
+
+Material::StencilComparison Material::get_stencil_comparison() const {
+	return stencil_comparison;
+}
+
+void Material::set_stencil_option(StencilOption p_option, StencilOperation p_operation) {
+	stencil_options[p_option] = p_operation;
+	VisualServer::get_singleton()->material_set_stencil_option(material, (VS::MaterialStencilOperationOption)p_option, (VS::MaterialStencilOperation)p_operation);
+}
+
+Material::StencilOperation Material::get_stencil_option(StencilOption p_option) const {
+	ERR_FAIL_INDEX_V(p_option, STENCIL_OP_OPTION_COUNT, STENCIL_OPERATION_KEEP);
+	return stencil_options[p_option];
+}
+
+void Material::_bind_methods() {
+
+	ObjectTypeDB::bind_method(_MD("set_flag","flag","enable"),&Material::set_flag);
+	ObjectTypeDB::bind_method(_MD("get_flag","flag"),&Material::get_flag);
+	ObjectTypeDB::bind_method(_MD("set_blend_mode","mode"),&Material::set_blend_mode);
+	ObjectTypeDB::bind_method(_MD("get_blend_mode"),&Material::get_blend_mode);
+	ObjectTypeDB::bind_method(_MD("set_line_width","width"),&Material::set_line_width);
+	ObjectTypeDB::bind_method(_MD("get_line_width"),&Material::get_line_width);
+	ObjectTypeDB::bind_method(_MD("set_depth_draw_mode","mode"),&Material::set_depth_draw_mode);
+	ObjectTypeDB::bind_method(_MD("get_depth_draw_mode"),&Material::get_depth_draw_mode);
+	ObjectTypeDB::bind_method(_MD("set_depth_test_mode","mode"),&Material::set_depth_test_mode);
+	ObjectTypeDB::bind_method(_MD("get_depth_test_mode"),&Material::get_depth_test_mode);
+
+	ObjectTypeDB::bind_method(_MD("set_color_mask_bit","bit","enabled"),&Material::set_color_mask_bit);
+	ObjectTypeDB::bind_method(_MD("get_color_mask_bit","bit"),&Material::get_color_mask_bit);
+
+	for(int i=0;i<FLAG_MAX;i++)
+		ADD_PROPERTYI( PropertyInfo( Variant::BOOL, String()+"flags/"+_flag_names[i] ),_SCS("set_flag"),_SCS("get_flag"),_flag_indices[i]);
+
+	ADD_PROPERTY( PropertyInfo( Variant::INT, "params/blend_mode",PROPERTY_HINT_ENUM,"Mix,Add,Sub,PMAlpha" ), _SCS("set_blend_mode"),_SCS("get_blend_mode"));
+	ADD_PROPERTY( PropertyInfo( Variant::INT, "params/depth_draw",PROPERTY_HINT_ENUM,"Always,Opaque Only,Pre-Pass Alpha,Never" ), _SCS("set_depth_draw_mode"),_SCS("get_depth_draw_mode"));
+	ADD_PROPERTY( PropertyInfo( Variant::REAL, "params/line_width",PROPERTY_HINT_RANGE,"0.1,32.0,0.1" ), _SCS("set_line_width"),_SCS("get_line_width"));
+	ADD_PROPERTY( PropertyInfo( Variant::INT, "params/depth_test",PROPERTY_HINT_ENUM,"Never,Less,Equal,Less-or-Equal,Greater,Not Equal,Greater-or-Equal,Always"), _SCS("set_depth_test_mode"), _SCS("get_depth_test_mode"));
+
+
+
+	for (int i = 0; i<COLOR_MASK_BIT_COUNT; i++)
+		ADD_PROPERTYI(PropertyInfo(Variant::BOOL, String() + "params/color_mask_bit/" + _color_mask_bit_names[i]), _SCS("set_color_mask_bit"), _SCS("get_color_mask_bit"), _color_mask_bit_indices[i]);
+
+	BIND_CONSTANT(FLAG_VISIBLE);
+	BIND_CONSTANT(FLAG_DOUBLE_SIDED);
+	BIND_CONSTANT(FLAG_INVERT_FACES);
+	BIND_CONSTANT(FLAG_UNSHADED);
+	BIND_CONSTANT(FLAG_ONTOP);
+	BIND_CONSTANT(FLAG_LIGHTMAP_ON_UV2);
+	BIND_CONSTANT(FLAG_COLOR_ARRAY_SRGB);
+	BIND_CONSTANT(FLAG_MAX);
+
+	BIND_CONSTANT(COLOR_MASK_BIT_R);
+	BIND_CONSTANT(COLOR_MASK_BIT_G);
+	BIND_CONSTANT(COLOR_MASK_BIT_B);
+	BIND_CONSTANT(COLOR_MASK_BIT_A);
+
+	BIND_CONSTANT(DEPTH_DRAW_ALWAYS);
+	BIND_CONSTANT(DEPTH_DRAW_OPAQUE_ONLY);
+	BIND_CONSTANT(DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA);
+	BIND_CONSTANT(DEPTH_DRAW_NEVER);
+
+	BIND_CONSTANT(DEPTH_TEST_MODE_NEVER);
+	BIND_CONSTANT(DEPTH_TEST_MODE_LESS);
+	BIND_CONSTANT(DEPTH_TEST_MODE_EQUAL);
+	BIND_CONSTANT(DEPTH_TEST_MODE_LEQUAL);
+	BIND_CONSTANT(DEPTH_TEST_MODE_GREATER);
+	BIND_CONSTANT(DEPTH_TEST_MODE_NOTEQUAL);
+	BIND_CONSTANT(DEPTH_TEST_MODE_GEQUAL);
+	BIND_CONSTANT(DEPTH_TEST_MODE_ALWAYS);
+
+	BIND_CONSTANT(BLEND_MODE_MIX);
+	BIND_CONSTANT(BLEND_MODE_ADD);
+	BIND_CONSTANT(BLEND_MODE_SUB);
+	BIND_CONSTANT(BLEND_MODE_MUL);
+	BIND_CONSTANT(BLEND_MODE_PREMULT_ALPHA);
+
+}
+
+Material::Material(const RID& p_material) {
+
+	material=p_material;
+
+	flags[FLAG_VISIBLE]=true;
+	flags[FLAG_DOUBLE_SIDED]=false;
+	flags[FLAG_INVERT_FACES]=false;
+	flags[FLAG_UNSHADED]=false;
+	flags[FLAG_ONTOP]=false;
+	flags[FLAG_LIGHTMAP_ON_UV2]=true;
+	flags[FLAG_COLOR_ARRAY_SRGB]=false;
+
+	depth_draw_mode=DEPTH_DRAW_OPAQUE_ONLY;
+	depth_test_mode=DEPTH_TEST_MODE_LEQUAL;
+	blend_mode=BLEND_MODE_MIX;
+	line_width=0.1;
+
+	for (int i=0; i<COLOR_MASK_BIT_COUNT;i++) {
 		color_mask_bit[i] = true;
 	}
 
@@ -386,6 +379,12 @@ SinglePassMaterial::SinglePassMaterial(const RID& p_material) : Material(p_mater
 	stencil_options[STENCIL_OP_OPTION_SFAIL] = STENCIL_OPERATION_KEEP;
 	stencil_options[STENCIL_OP_OPTION_DPFAIL] = STENCIL_OPERATION_KEEP;
 	stencil_options[STENCIL_OP_OPTION_DPPASS] = STENCIL_OPERATION_KEEP;
+
+}
+
+Material::~Material() {
+
+	VisualServer::get_singleton()->free(material);
 }
 
 static const char*_param_names[FixedMaterial::PARAM_MAX]={
@@ -410,6 +409,19 @@ static const char*_full_param_names[FixedMaterial::PARAM_MAX]={
 	"params/shade_param"
 };
 
+/*
+static const char*_texture_param_names[FixedMaterial::PARAM_MAX]={
+	"tex_diffuse",
+	"tex_detail",
+	"tex_specular",
+	"tex_emission",
+	"tex_specular_exp",
+	"tex_glow",
+	"tex_detail_mix",
+	"tex_normal",
+	"tex_shade_param"
+};
+*/
 static const FixedMaterial::Parameter _param_indices[FixedMaterial::PARAM_MAX]={
 	FixedMaterial::PARAM_DIFFUSE,
 	FixedMaterial::PARAM_DETAIL,
@@ -420,6 +432,9 @@ static const FixedMaterial::Parameter _param_indices[FixedMaterial::PARAM_MAX]={
 	FixedMaterial::PARAM_NORMAL,
 	FixedMaterial::PARAM_SHADE_PARAM,
 };
+
+
+
 
 void FixedMaterial::set_parameter(Parameter p_parameter, const Variant& p_value) {
 
@@ -546,6 +561,8 @@ float FixedMaterial::get_point_size() const{
 
 
 void FixedMaterial::_bind_methods() {
+
+
 	ObjectTypeDB::bind_method(_MD("set_parameter","param","value"),&FixedMaterial::set_parameter);
 	ObjectTypeDB::bind_method(_MD("get_parameter","param"),&FixedMaterial::get_parameter);
 
@@ -620,7 +637,7 @@ void FixedMaterial::_bind_methods() {
 }
 
 
-FixedMaterial::FixedMaterial() : SinglePassMaterial(VS::get_singleton()->fixed_material_create()) {
+FixedMaterial::FixedMaterial() : Material(VS::get_singleton()->fixed_material_create()) {
 
 
 
@@ -678,7 +695,7 @@ bool ShaderMaterial::_set(const StringName& p_name, const Variant& p_value) {
 				}
 			}
 			if (pr) {
-				VisualServer::get_singleton()->material_set_param(material,0,pr,p_value);
+				VisualServer::get_singleton()->material_set_param(material,pr,p_value);
 				return true;
 			}
 		}
@@ -700,7 +717,7 @@ bool ShaderMaterial::_get(const StringName& p_name,Variant &r_ret) const {
 
 			StringName pr = shader->remap_param(p_name);
 			if (pr) {
-				r_ret=VisualServer::get_singleton()->material_get_param(material,0,pr);
+				r_ret=VisualServer::get_singleton()->material_get_param(material,pr);
 				return true;
 			}
 		}
@@ -736,7 +753,7 @@ void ShaderMaterial::set_shader(const Ref<Shader>& p_shader) {
 	if (shader.is_valid())
 		shader->disconnect(SceneStringNames::get_singleton()->changed,this,SceneStringNames::get_singleton()->_shader_changed);
 	shader=p_shader;
-	VS::get_singleton()->material_set_shader(material,0,shader.is_valid()?shader->get_rid():RID());
+	VS::get_singleton()->material_set_shader(material,shader.is_valid()?shader->get_rid():RID());
 	if (shader.is_valid()) {
 		shader->connect(SceneStringNames::get_singleton()->changed,this,SceneStringNames::get_singleton()->_shader_changed);
 	}
@@ -752,18 +769,19 @@ Ref<Shader> ShaderMaterial::get_shader() const {
 
 void ShaderMaterial::set_shader_param(const StringName& p_param,const Variant& p_value) {
 
-	VisualServer::get_singleton()->material_set_param(material,0,p_param,p_value);
+	VisualServer::get_singleton()->material_set_param(material,p_param,p_value);
 
 }
 
 Variant ShaderMaterial::get_shader_param(const StringName& p_param) const{
 
-	return VisualServer::get_singleton()->material_get_param(material,0,p_param);
+	return VisualServer::get_singleton()->material_get_param(material,p_param);
 }
 
 
 
 void ShaderMaterial::_bind_methods() {
+
 	ObjectTypeDB::bind_method(_MD("set_shader","shader:Shader"), &ShaderMaterial::set_shader );
 	ObjectTypeDB::bind_method(_MD("get_shader:Shader"), &ShaderMaterial::get_shader );
 
@@ -790,565 +808,9 @@ void ShaderMaterial::get_argument_options(const StringName& p_function,int p_idx
 	Material::get_argument_options(p_function,p_idx,r_options);
 }
 
-ShaderMaterial::ShaderMaterial() :SinglePassMaterial(VisualServer::get_singleton()->material_create(1)){
+ShaderMaterial::ShaderMaterial() :Material(VisualServer::get_singleton()->material_create()){
 
 
-}
-
-bool MultiPassMaterial::_set(const StringName& p_name, const Variant& p_value) {
-	Vector<String> split_path = String(p_name).split("/");
-
-	int pass_index = split_path.get(1).to_int();
-	if (pass_index < passes.size()) {
-		if (p_name == ("passes/" + itos(pass_index) + "/shader/shader")) {
-			set_shader(pass_index, p_value);
-			return true;
-		}
-		else if (split_path[0] == "passes") {
-			if (split_path[2] == "flags") {
-				for (int i = 0; i < FLAG_MAX; i++) {
-					if (split_path[3] == _flag_names[i]) {
-						set_pass_flag(pass_index, _flag_indices[i], p_value);
-						return true;
-					}
-				}
-			}
-			else if (split_path[2] == "params") {
-				if (split_path[3] == "blend_mode") {
-					set_pass_blend_mode(pass_index, (Material::BlendMode)(int)p_value);
-					return true;
-				}
-				else if (split_path[3] == "depth_draw") {
-					set_pass_depth_draw_mode(pass_index, (Material::DepthDrawMode)(int)p_value);
-					return true;
-				}
-				else if (split_path[3] == "depth_test") {
-					set_pass_depth_test_mode(pass_index, (Material::DepthTestMode)(int)p_value);
-					return true;
-				}
-				else if (split_path[3] == "line_width") {
-					set_pass_line_width(pass_index, p_value);
-					return true;
-				}
-				else if (split_path[3] == "color_mask_bit") {
-					for (int i=0;i<COLOR_MASK_BIT_COUNT;i++) {
-						if (split_path[4] == _color_mask_bit_names[i]) {
-							set_pass_color_mask_bit(pass_index, _color_mask_bit_indices[i], p_value);
-							return true;
-						}
-					}
-				}
-
-				else if (split_path[3] == "stencil_reference_value") {
-					set_pass_stencil_reference_value(pass_index,(int)p_value);
-					return true;
-				}
-
-				else if (split_path[3] == "stencil_read_mask") {
-					set_pass_stencil_read_mask(pass_index,(int)p_value);
-					return true;
-				}
-
-				else if (split_path[3] == "stencil_write_mask") {
-					set_pass_stencil_write_mask(pass_index,(int)p_value);
-					return true;
-				}
-
-				else if (split_path[3] == "stencil_comparison") {
-					set_pass_stencil_comparison(pass_index,(Material::StencilComparison)(int)p_value);
-					return true;
-				}
-				else if (split_path[3] == "stencil_options") {
-					if (split_path[4] == "sfail") {
-						set_pass_stencil_option(pass_index, STENCIL_OP_OPTION_SFAIL,(Material::StencilOperation)(int)p_value);
-						return true;
-					}
-					else if (split_path[4] == "dpfail") {
-						set_pass_stencil_option(pass_index, STENCIL_OP_OPTION_DPFAIL,(Material::StencilOperation)(int)p_value);
-						return true;
-					}
-					else if (split_path[4] == "dppass") {
-						set_pass_stencil_option(pass_index, STENCIL_OP_OPTION_DPPASS, (Material::StencilOperation)(int)p_value);
-						return true;
-					}
-				}
-			}
-			else {
-				Ref<Shader> shader = get_shader(pass_index);
-				if (shader.is_valid()) {
-					StringName param_name = split_path[2] + "/" + split_path[3];
-
-					StringName pr = shader->remap_param(param_name);
-					if (!pr) {
-						String n = param_name;
-						if (n.find("param/") == 0) { //backwards compatibility
-							pr = n.substr(6, n.length());
-						}
-					}
-					if (pr) {
-						VisualServer::get_singleton()->material_set_param(material, pass_index, pr, p_value);
-						return true;
-					}
-				}
-			}
-		}
-	}
-	return false;
-}
-
-bool MultiPassMaterial::_get(const StringName& p_name, Variant &r_ret) const {
-	Vector<String> split_path = String(p_name).split("/");
-	if (split_path.size() == 4)
-	{
-		int pass_index = split_path.get(1).to_int();
-		if (pass_index < passes.size()) {
-			if (p_name == ("passes/" + itos(pass_index) + "/shader/shader")) {
-				r_ret = get_shader(pass_index);
-				return true;
-			}
-			else if (split_path[0] == "passes") {
-				if (split_path[2] == "flags") {
-					for (int i = 0; i < FLAG_MAX; i++) {
-						if (split_path[3] == _flag_names[i]) {
-							r_ret = get_pass_flag(pass_index, _flag_indices[i]);
-							return true;
-						}
-					}
-				}
-				else if (split_path[2] == "params") {
-					if (split_path[3] == "blend_mode") {
-						r_ret = get_pass_blend_mode(pass_index);
-						return true;
-					}
-					else if (split_path[3] == "depth_draw") {
-						r_ret = get_pass_depth_draw_mode(pass_index);
-						return true;
-					}
-					else if (split_path[3] == "depth_test") {
-						r_ret = get_pass_depth_test_mode(pass_index);
-						return true;
-					}
-					else if (split_path[3] == "line_width") {
-						r_ret = get_pass_line_width(pass_index);
-						return true;
-					}
-					else if (split_path[3] == "color_mask_bit") {
-						for (int i=0;i<COLOR_MASK_BIT_COUNT; i++) {
-							if (split_path[4] == _color_mask_bit_names[i]) {
-								r_ret = get_pass_color_mask_bit(pass_index, _color_mask_bit_indices[i]);
-								return true;
-							}
-						}
-					}
-
-					else if (split_path[3] == "stencil_reference_value") {
-						r_ret = get_pass_stencil_reference_value(pass_index);
-						return true;
-					}
-
-					else if (split_path[3] == "stencil_read_mask") {
-						r_ret = get_pass_stencil_read_mask(pass_index);
-						return true;
-					}
-
-					else if (split_path[3] == "stencil_write_mask") {
-						r_ret = get_pass_stencil_write_mask(pass_index);
-						return true;
-					}
-
-					else if (split_path[3] == "stencil_comparison") {
-						r_ret = get_pass_stencil_comparison(pass_index);
-						return true;
-					}
-					else if (split_path[3] == "stencil_options") {
-						if (split_path[4] == "sfail") {
-							r_ret = get_pass_stencil_option(pass_index, STENCIL_OP_OPTION_SFAIL);
-							return true;
-						}
-						else if (split_path[4] == "dpfail") {
-							r_ret = get_pass_stencil_option(pass_index, STENCIL_OP_OPTION_DPFAIL);
-							return true;
-						}
-						else if (split_path[4] == "dppass") {
-							r_ret = get_pass_stencil_option(pass_index, STENCIL_OP_OPTION_DPPASS);
-							return true;
-						}
-					}
-				}
-				else {
-					Ref<Shader> shader = get_shader(pass_index);
-					if (shader.is_valid()) {
-						StringName param_name = split_path[2] + "/" + split_path[3];
-
-						StringName pr = shader->remap_param(param_name);
-						if (!pr) {
-							String n = param_name;
-							if (n.find("param/") == 0) { //backwards compatibility
-								pr = n.substr(6, n.length());
-							}
-						}
-						if (pr) {
-							r_ret = VisualServer::get_singleton()->material_get_param(material, pass_index, pr);
-							return true;
-						}
-					}
-				}
-			}
-		}
-	}
-	return false;
-}
-
-
-void MultiPassMaterial::_get_property_list(List<PropertyInfo> *p_list) const {
-	
-	for (int i = 0; i < get_pass_count(); i++) {
-		List<PropertyInfo> param_list;
-
-		p_list->push_back(PropertyInfo(Variant::OBJECT, "passes/" + itos(i) + "/shader/shader", PROPERTY_HINT_RESOURCE_TYPE, "MaterialShader,MaterialShaderGraph"));
-		Ref<Shader> shader = get_shader(i);
-
-		if (!shader.is_null()) {
-			shader->get_param_list(&param_list);
-		}
-
-		for (int j = 0; j < param_list.size(); j++) {
-			String corrected_name = "passes/" + itos(i) + "/" + param_list[j].name;
-			param_list[j].name = corrected_name;
-			p_list->push_back(param_list[j]);
-		}
-
-		for (int j = 0; j<FLAG_MAX; j++)
-			p_list->push_back(PropertyInfo(Variant::BOOL, "passes/" + itos(i) + "/flags/" + _flag_names[j]));
-
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/blend_mode", PROPERTY_HINT_ENUM, "Mix,Add,Sub,PMAlpha"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/depth_draw", PROPERTY_HINT_ENUM, "Always,Opaque Only,Pre-Pass Alpha,Never"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/depth_test", PROPERTY_HINT_ENUM, "Never,Less,Equal,Less-or-Equal,Greater,Not Equal,Greater-or-Equal,Always"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/depth_test", PROPERTY_HINT_ENUM, "Never,Less,Equal,Less-or-Equal,Greater,Not Equal,Greater-or-Equal,Always"));
-		p_list->push_back(PropertyInfo(Variant::REAL, "passes/" + itos(i) + "/params/line_width", PROPERTY_HINT_RANGE, "0.1,32.0,0.1"));
-
-		for (int j=0;j<COLOR_MASK_BIT_COUNT;j++)
-			p_list->push_back(PropertyInfo(Variant::BOOL, "passes/" + itos(i) + "/color_mask_bit/" + _color_mask_bit_names[j]));
-
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/stencil_reference_value", PROPERTY_HINT_RANGE, "0,255,1"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/stencil_read_mask", PROPERTY_HINT_RANGE, "0,255,1"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/stencil_write_mask", PROPERTY_HINT_RANGE, "0,255,1"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/stencil_comparison", PROPERTY_HINT_ENUM, "Never,Less,Equal,Less-or-Equal,Greater,Not Equal,Greater-or-Equal,Always"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/stencil_options/sfail", PROPERTY_HINT_ENUM, "Keep,Zero,Replace,Increment Saturate,Increment Wrap,Decrement Saturate,Decrement Wrap,Invert"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/stencil_options/dpfail", PROPERTY_HINT_ENUM, "Keep,Zero,Replace,Increment Saturate,Increment Wrap,Decrement Saturate,Decrement Wrap,Invert"));
-		p_list->push_back(PropertyInfo(Variant::INT, "passes/" + itos(i) + "/params/stencil_options/dppass", PROPERTY_HINT_ENUM, "Keep,Zero,Replace,Increment Saturate,Increment Wrap,Decrement Saturate,Decrement Wrap,Invert"));
-	}
-}
-
-
-void MultiPassMaterial::_shader_changed() {
-
-	_change_notify(); //also all may have changed then
-}
-
-void MultiPassMaterial::set_pass_count(const int p_pass_count) {
-	int original_pass_count = passes.size();
-	if (p_pass_count > 0 && p_pass_count != original_pass_count) {
-
-		passes.resize(p_pass_count);
-		VisualServer::get_singleton()->material_set_pass_count(material, p_pass_count);
-
-		if (p_pass_count > original_pass_count) {
-			for (int i = original_pass_count; i < p_pass_count; i++) {
-				set_pass_flag(i, FLAG_VISIBLE, true);
-				set_pass_flag(i, FLAG_DOUBLE_SIDED, false);
-				set_pass_flag(i, FLAG_INVERT_FACES, false);
-				set_pass_flag(i, FLAG_UNSHADED, false);
-				set_pass_flag(i, FLAG_ONTOP, false);
-				set_pass_flag(i, FLAG_LIGHTMAP_ON_UV2, true);
-				set_pass_flag(i, FLAG_COLOR_ARRAY_SRGB, false);
-				
-				set_pass_depth_draw_mode(i, DEPTH_DRAW_OPAQUE_ONLY);
-				set_pass_depth_test_mode(i, DEPTH_TEST_MODE_LEQUAL);
-				set_pass_blend_mode(i, BLEND_MODE_MIX);
-				set_pass_line_width(i, 0.1f);
-
-				set_pass_color_mask_bit(i, COLOR_MASK_BIT_R, true);
-				set_pass_color_mask_bit(i, COLOR_MASK_BIT_G, true);
-				set_pass_color_mask_bit(i, COLOR_MASK_BIT_B, true);
-				set_pass_color_mask_bit(i, COLOR_MASK_BIT_A, true);
-
-				set_pass_stencil_reference_value(i, 0xff);
-				set_pass_stencil_read_mask(i, 0xff);
-				set_pass_stencil_write_mask(i, 0xff);
-				set_pass_stencil_comparison(i, STENCIL_COMPARISON_ALWAYS);
-				set_pass_stencil_option(i, STENCIL_OP_OPTION_SFAIL, STENCIL_OPERATION_KEEP);
-				set_pass_stencil_option(i, STENCIL_OP_OPTION_DPFAIL, STENCIL_OPERATION_KEEP);
-				set_pass_stencil_option(i, STENCIL_OP_OPTION_DPPASS, STENCIL_OPERATION_KEEP);
-			}
-		}
-		_change_notify();
-	}
-}
-
-int MultiPassMaterial::get_pass_count() const {
-	return passes.size();
-}
-
-void MultiPassMaterial::set_flag(Flag p_flag, bool p_enabled) {
-	set_pass_flag(0, p_flag, p_enabled);
-}
-
-bool MultiPassMaterial::get_flag(Flag p_flag) const {
-	return get_pass_flag(0, p_flag);
-}
-
-void MultiPassMaterial::set_blend_mode(BlendMode p_blend_mode) {
-	set_pass_blend_mode(0, p_blend_mode);
-}
-
-Material::BlendMode MultiPassMaterial::get_blend_mode() const {
-	return get_pass_blend_mode(0);
-}
-
-void MultiPassMaterial::set_depth_draw_mode(DepthDrawMode p_depth_draw_mode) {
-	set_pass_depth_draw_mode(0, p_depth_draw_mode);
-}
-
-Material::DepthDrawMode MultiPassMaterial::get_depth_draw_mode() const {
-	return get_pass_depth_draw_mode(0);
-}
-
-void MultiPassMaterial::set_depth_test_mode(DepthTestMode p_depth_test_mode) {
-	set_pass_depth_test_mode(0, p_depth_test_mode);
-}
-
-Material::DepthTestMode MultiPassMaterial::get_depth_test_mode() const {
-	return get_pass_depth_test_mode(0);
-}
-
-void MultiPassMaterial::set_pass_flag(const int p_pass_index, Flag p_flag, bool p_enabled) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	ERR_FAIL_INDEX(p_flag, FLAG_MAX);
-	passes[p_pass_index].flags[p_flag] = p_enabled;
-	VisualServer::get_singleton()->material_set_flag(material, p_pass_index, (VS::MaterialFlag)p_flag, p_enabled);
-	_change_notify();
-}
-
-bool MultiPassMaterial::get_pass_flag(const int p_pass_index, Flag p_flag) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), false);
-	ERR_FAIL_INDEX_V(p_flag, FLAG_MAX, false);
-	return passes[p_pass_index].flags[p_flag];
-}
-
-void MultiPassMaterial::set_pass_blend_mode(const int p_pass_index, BlendMode p_blend_mode) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	passes[p_pass_index].blend_mode = p_blend_mode;
-	VisualServer::get_singleton()->material_set_blend_mode(material, p_pass_index, (VS::MaterialBlendMode)p_blend_mode);
-	_change_notify();
-}
-
-Material::BlendMode MultiPassMaterial::get_pass_blend_mode(const int p_pass_index) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), BLEND_MODE_MIX);
-	return passes[p_pass_index].blend_mode;
-}
-
-void MultiPassMaterial::set_pass_depth_draw_mode(const int p_pass_index, DepthDrawMode p_depth_draw_mode) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	passes[p_pass_index].depth_draw_mode = p_depth_draw_mode;
-	VisualServer::get_singleton()->material_set_depth_draw_mode(material, p_pass_index, (VS::MaterialDepthDrawMode)p_depth_draw_mode);
-}
-
-Material::DepthDrawMode MultiPassMaterial::get_pass_depth_draw_mode(const int p_pass_index) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), DEPTH_DRAW_ALWAYS);
-	return passes[p_pass_index].depth_draw_mode;
-}
-
-void MultiPassMaterial::set_pass_depth_test_mode(const int p_pass_index, DepthTestMode p_depth_test_mode) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	passes[p_pass_index].depth_test_mode = p_depth_test_mode;
-	VisualServer::get_singleton()->material_set_depth_test_mode(material, p_pass_index, (VS::MaterialDepthTestMode)p_depth_test_mode);
-}
-
-Material::DepthTestMode MultiPassMaterial::get_pass_depth_test_mode(const int p_pass_index) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), DEPTH_TEST_MODE_LEQUAL);
-	return passes[p_pass_index].depth_test_mode;
-}
-
-void MultiPassMaterial::set_pass_color_mask_bit(const int p_pass_index, ColorMaskBit p_bit, bool p_enabled) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	ERR_FAIL_INDEX(p_bit, COLOR_MASK_BIT_COUNT);
-	passes[p_pass_index].color_mask_bit[p_bit] = p_enabled;
-	VisualServer::get_singleton()->material_set_color_mask_bit(material, p_pass_index, (VS::MaterialColorMaskBit)p_bit, p_enabled);
-}
-
-bool MultiPassMaterial::get_pass_color_mask_bit(const int p_pass_index, ColorMaskBit p_bit) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), false);
-	ERR_FAIL_INDEX_V(p_bit, COLOR_MASK_BIT_COUNT, false);
-	return passes[p_pass_index].color_mask_bit[p_bit];
-}
-
-void MultiPassMaterial::set_pass_stencil_reference_value(const int p_pass_index, const uint8_t p_reference_value) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	passes[p_pass_index].stencil_reference_value = p_reference_value;
-	VisualServer::get_singleton()->material_set_stencil_reference_value(material, p_pass_index, p_reference_value);
-}
-
-uint8_t MultiPassMaterial::get_pass_stencil_reference_value(const int p_pass_index) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), 0xff);
-	return passes[p_pass_index].stencil_reference_value;
-}
-
-void MultiPassMaterial::set_pass_stencil_read_mask(const int p_pass_index, const uint8_t p_read_mask) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	passes[p_pass_index].stencil_read_mask = p_read_mask;
-	VisualServer::get_singleton()->material_set_stencil_read_mask(material, p_pass_index, p_read_mask);
-}
-
-uint8_t MultiPassMaterial::get_pass_stencil_read_mask(const int p_pass_index) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), 0xff);
-	return passes[p_pass_index].stencil_read_mask;
-}
-
-void MultiPassMaterial::set_pass_stencil_write_mask(const int p_pass_index, const uint8_t p_write_mask) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	passes[p_pass_index].stencil_write_mask = p_write_mask;
-	VisualServer::get_singleton()->material_set_stencil_write_mask(material, p_pass_index, p_write_mask);
-}
-
-uint8_t MultiPassMaterial::get_pass_stencil_write_mask(const int p_pass_index) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), 0xff);
-	return passes[p_pass_index].stencil_read_mask;
-}
-
-void MultiPassMaterial::set_pass_stencil_comparison(const int p_pass_index, StencilComparison p_comparison) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	ERR_FAIL_INDEX(p_comparison, STENCIL_COMPARISON_COUNT);
-	passes[p_pass_index].stencil_comparison = p_comparison;
-	VisualServer::get_singleton()->material_set_stencil_comparison(material, p_pass_index, (VS::MaterialStencilComparison)p_comparison);
-}
-
-Material::StencilComparison MultiPassMaterial::get_pass_stencil_comparison(const int p_pass_index) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), STENCIL_COMPARISON_NEVER);
-	return passes[p_pass_index].stencil_comparison;
-}
-
-void MultiPassMaterial::set_pass_stencil_option(const int p_pass_index, StencilOption p_option, StencilOperation p_operation) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	ERR_FAIL_INDEX(p_option, STENCIL_OP_OPTION_COUNT);
-	ERR_FAIL_INDEX(p_operation, STENCIL_OPERATION_COUNT);
-	passes[p_pass_index].stencil_options[p_option] = p_operation;
-	VisualServer::get_singleton()->material_set_stencil_option(material, p_pass_index, (VS::MaterialStencilOperationOption)p_option, (VS::MaterialStencilOperation)p_operation);
-}
-
-Material::StencilOperation MultiPassMaterial::get_pass_stencil_option(const int p_pass_index, StencilOption p_option) const {
-	ERR_FAIL_INDEX_V(p_pass_index, passes.size(), STENCIL_OPERATION_KEEP);
-	ERR_FAIL_INDEX_V(p_option, STENCIL_OP_OPTION_COUNT, STENCIL_OPERATION_KEEP);
-	return passes[p_pass_index].stencil_options[p_option];
-}
-
-void MultiPassMaterial::set_pass_line_width(const int p_pass_index, float p_width) {
-	ERR_FAIL_INDEX(p_pass_index, passes.size());
-	passes[p_pass_index].line_width = p_width;
-	VisualServer::get_singleton()->material_set_line_width(material, p_pass_index, p_width);
-}
-
-void MultiPassMaterial::set_line_width(float p_width) {
-	set_pass_line_width(0, p_width);
-}
-
-float MultiPassMaterial::get_pass_line_width(const int p_pass_index) const {
-	return passes[p_pass_index].line_width;
-}
-
-float MultiPassMaterial::get_line_width() const {
-	return get_pass_line_width(0);
-}
-
-void MultiPassMaterial::set_shader(const int p_pass_index, const Ref<Shader>& p_shader) {
-
-	ERR_FAIL_COND(p_shader.is_valid() && p_shader->get_mode() != Shader::MODE_MATERIAL);
-
-	if (passes[p_pass_index].shader.is_valid())
-		passes[p_pass_index].shader->disconnect(SceneStringNames::get_singleton()->changed, this, SceneStringNames::get_singleton()->_shader_changed);
-	passes[p_pass_index].shader = p_shader;
-	VS::get_singleton()->material_set_shader(material, p_pass_index, passes[p_pass_index].shader.is_valid() ? passes[p_pass_index].shader->get_rid() : RID());
-	if (passes[p_pass_index].shader.is_valid()) {
-		passes[p_pass_index].shader->connect(SceneStringNames::get_singleton()->changed, this, SceneStringNames::get_singleton()->_shader_changed);
-	}
-	_change_notify();
-
-}
-
-Ref<Shader> MultiPassMaterial::get_shader(const int p_pass_index) const {
-
-	if (p_pass_index < passes.size()) {
-		return passes[p_pass_index].shader;
-	}
-	else {
-		return NULL;
-	}
-}
-
-
-void MultiPassMaterial::set_shader_param(const int p_pass_index, const StringName& p_param, const Variant& p_value) {
-
-	VisualServer::get_singleton()->material_set_param(material, p_pass_index, p_param, p_value);
-
-}
-
-Variant MultiPassMaterial::get_shader_param(const int p_pass_index, const StringName& p_param) const{
-
-	return VisualServer::get_singleton()->material_get_param(material, p_pass_index, p_param);
-}
-
-
-
-void MultiPassMaterial::_bind_methods() {
-	
-	ObjectTypeDB::bind_method(_MD("set_pass_flag", "pass_index", "flag", "enable"), &MultiPassMaterial::set_pass_flag);
-	ObjectTypeDB::bind_method(_MD("get_pass_flag", "pass_index", "flag"), &MultiPassMaterial::get_pass_flag);
-	ObjectTypeDB::bind_method(_MD("set_pass_blend_mode", "pass_index", "mode"), &MultiPassMaterial::set_pass_blend_mode);
-	ObjectTypeDB::bind_method(_MD("get_pass_blend_mode", "pass_index"), &MultiPassMaterial::get_pass_blend_mode);
-	ObjectTypeDB::bind_method(_MD("set_pass_line_width", "pass_index", "width"), &MultiPassMaterial::set_pass_line_width);
-	ObjectTypeDB::bind_method(_MD("get_pass_line_width", "pass_index"), &MultiPassMaterial::get_pass_line_width);
-	ObjectTypeDB::bind_method(_MD("set_pass_depth_draw_mode", "pass_index", "mode"), &MultiPassMaterial::set_pass_depth_draw_mode);
-	ObjectTypeDB::bind_method(_MD("get_pass_depth_draw_mode", "pass_index"), &MultiPassMaterial::get_pass_depth_draw_mode);
-	ObjectTypeDB::bind_method(_MD("set_pass_depth_test_mode", "pass_index", "mode"), &MultiPassMaterial::set_pass_depth_test_mode);
-	ObjectTypeDB::bind_method(_MD("get_pass_depth_test_mode", "pass_index"), &MultiPassMaterial::get_pass_depth_test_mode);
-
-	ObjectTypeDB::bind_method(_MD("set_pass_color_mask_bit", "pass_index", "color_mask_bit", "enable"), &MultiPassMaterial::set_pass_color_mask_bit);
-	ObjectTypeDB::bind_method(_MD("get_pass_color_mask_bit", "pass_index", "color_mask_bit"), &MultiPassMaterial::get_pass_color_mask_bit);
-
-	ObjectTypeDB::bind_method(_MD("set_pass_count", "pass_count"), &MultiPassMaterial::set_pass_count);
-	ObjectTypeDB::bind_method(_MD("get_pass_count"), &MultiPassMaterial::get_pass_count);
-
-	ObjectTypeDB::bind_method(_MD("set_shader", "pass_index", "shader:Shader"), &MultiPassMaterial::set_shader);
-	ObjectTypeDB::bind_method(_MD("get_shader:Shader", "pass_index"), &MultiPassMaterial::get_shader);
-
-	ObjectTypeDB::bind_method(_MD("set_shader_param", "pass_index", "param", "value:Variant"), &MultiPassMaterial::set_shader_param);
-	ObjectTypeDB::bind_method(_MD("get_shader_param:Variant", "pass_index", "param"), &MultiPassMaterial::get_shader_param);
-
-	ObjectTypeDB::bind_method(_MD("_shader_changed"), &MultiPassMaterial::_shader_changed);
-
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "passes/pass_count", PROPERTY_HINT_RANGE, "1,255,1"), _SCS("set_pass_count"), _SCS("get_pass_count"));
-}
-
-
-void MultiPassMaterial::get_argument_options(const StringName& p_function, int p_idx, List<String>*r_options) const {
-
-	String f = p_function.operator String();
-	if ((f == "get_shader_param" || f == "set_shader_param") && p_idx == 0) {
-		for (int i = 0; i < passes.size(); i++) {
-			if (passes[i].shader.is_valid()) {
-				List<PropertyInfo> pl;
-				passes[i].shader->get_param_list(&pl);
-				for (List<PropertyInfo>::Element *E = pl.front(); E; E = E->next()) {
-					r_options->push_back("\"" + E->get().name.replace_first("passes/ " + itos(i) + "/shader_param/", "") + "\"");
-				}
-			}
-		}
-	}
-	Material::get_argument_options(p_function, p_idx, r_options);
-}
-
-MultiPassMaterial::MultiPassMaterial() :Material(VisualServer::get_singleton()->material_create(1)){
-	set_pass_count(1);
 }
 
 

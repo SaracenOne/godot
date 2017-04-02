@@ -137,48 +137,45 @@ public:
 
 	/* COMMON MATERIAL API */
 
-	FUNC1R(RID,material_create,int);
-	FUNC3(material_set_shader,RID,int,RID);
-	FUNC2RC(RID,material_get_shader,RID,int);
+	FUNC0R(RID,material_create);
+	FUNC2(material_set_shader,RID,RID);
+	FUNC1RC(RID,material_get_shader,RID);
 
-	FUNC4(material_set_param,RID,int,const StringName&,const Variant&);
-	FUNC3RC(Variant,material_get_param,RID,int,const StringName&);
+	FUNC3(material_set_param,RID,const StringName&,const Variant&);
+	FUNC2RC(Variant,material_get_param,RID,const StringName&);
 
-	FUNC4(material_set_flag,RID,int,MaterialFlag,bool);
-	FUNC3RC(bool,material_get_flag,RID,int,MaterialFlag);
+	FUNC3(material_set_flag,RID,MaterialFlag,bool);
+	FUNC2RC(bool,material_get_flag,RID,MaterialFlag);
 
-	FUNC4(material_set_color_mask_bit,RID,int,MaterialColorMaskBit,bool);
-	FUNC3RC(bool, material_get_color_mask_bit,RID,int,MaterialColorMaskBit);
+	FUNC3(material_set_color_mask_bit,RID,MaterialColorMaskBit,bool);
+	FUNC2RC(bool, material_get_color_mask_bit,RID,MaterialColorMaskBit);
 
-	FUNC3(material_set_stencil_reference_value,RID,int,uint8_t);
-	FUNC2RC(uint8_t, material_get_stencil_reference_value,RID,int);
+	FUNC2(material_set_stencil_reference_value,RID,uint8_t);
+	FUNC1RC(uint8_t, material_get_stencil_reference_value,RID);
 
-	FUNC3(material_set_stencil_read_mask,RID,int,uint8_t);
-	FUNC2RC(uint8_t,material_get_stencil_read_mask,RID,int);
+	FUNC2(material_set_stencil_read_mask,RID,uint8_t);
+	FUNC1RC(uint8_t,material_get_stencil_read_mask,RID);
 
-	FUNC3(material_set_stencil_write_mask,RID,int,uint8_t);
-	FUNC2RC(uint8_t,material_get_stencil_write_mask,RID,int);
+	FUNC2(material_set_stencil_write_mask,RID,uint8_t);
+	FUNC1RC(uint8_t,material_get_stencil_write_mask,RID);
 
-	FUNC3(material_set_stencil_comparison,RID,int,MaterialStencilComparison);
-	FUNC2RC(MaterialStencilComparison,material_get_stencil_comparison,RID,int);
+	FUNC2(material_set_stencil_comparison,RID,MaterialStencilComparison);
+	FUNC1RC(MaterialStencilComparison,material_get_stencil_comparison,RID);
 
-	FUNC4(material_set_stencil_option,RID,int,MaterialStencilOperationOption,MaterialStencilOperation);
-	FUNC3RC(MaterialStencilOperation,material_get_stencil_option,RID,int,MaterialStencilOperationOption);
+	FUNC3(material_set_stencil_option,RID,MaterialStencilOperationOption,MaterialStencilOperation);
+	FUNC2RC(MaterialStencilOperation,material_get_stencil_option,RID,MaterialStencilOperationOption);
 
-	FUNC3(material_set_depth_draw_mode,RID,int,MaterialDepthDrawMode);
-	FUNC2RC(MaterialDepthDrawMode,material_get_depth_draw_mode,RID,int);
+	FUNC2(material_set_depth_draw_mode,RID,MaterialDepthDrawMode);
+	FUNC1RC(MaterialDepthDrawMode,material_get_depth_draw_mode,RID);
 
-	FUNC3(material_set_blend_mode,RID,int,MaterialBlendMode);
-	FUNC2RC(MaterialBlendMode,material_get_blend_mode,RID,int);
+	FUNC2(material_set_blend_mode,RID,MaterialBlendMode);
+	FUNC1RC(MaterialBlendMode,material_get_blend_mode,RID);
 
-	FUNC3(material_set_depth_test_mode,RID,int,MaterialDepthTestMode);
-	FUNC2RC(MaterialDepthTestMode,material_get_depth_test_mode,RID,int);
+	FUNC2(material_set_depth_test_mode,RID,MaterialDepthTestMode);
+	FUNC1RC(MaterialDepthTestMode,material_get_depth_test_mode,RID);
 
-	FUNC3(material_set_line_width,RID,int,float);
-	FUNC2RC(float,material_get_line_width,RID,int);
-
-	FUNC2(material_set_pass_count,RID,int);
-	FUNC1RC(int, material_get_pass_count,RID);
+	FUNC2(material_set_line_width,RID,float);
+	FUNC1RC(float,material_get_line_width,RID);
 
 	/* FIXED MATERIAL */
 

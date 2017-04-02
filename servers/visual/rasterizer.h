@@ -219,49 +219,47 @@ public:
 
 	/* COMMON MATERIAL API */
 
-	virtual RID material_create(const int p_pass_count) = 0;
+	virtual RID material_create()=0;
 
-	virtual void material_set_shader(RID p_shader_material, const int p_pass_index, RID p_shader)=0;
-	virtual RID material_get_shader(RID p_shader_material, const int p_pass_index) const=0;
+	virtual void material_set_shader(RID p_shader_material, RID p_shader)=0;
+	virtual RID material_get_shader(RID p_shader_material) const=0;
 
-	virtual void material_set_param(RID p_material, const int p_pass_index, const StringName& p_param, const Variant& p_value)=0;
-	virtual Variant material_get_param(RID p_material, const int p_pass_index, const StringName& p_param) const=0;
+	virtual void material_set_param(RID p_material, const StringName& p_param, const Variant& p_value)=0;
+	virtual Variant material_get_param(RID p_material, const StringName& p_param) const=0;
 
-	virtual void material_set_flag(RID p_material, const int p_pass_index, VS::MaterialFlag p_flag, bool p_enabled)=0;
-	virtual bool material_get_flag(RID p_material, const int p_pass_index, VS::MaterialFlag p_flag) const=0;
+	virtual void material_set_flag(RID p_material, VS::MaterialFlag p_flag,bool p_enabled)=0;
+	virtual bool material_get_flag(RID p_material,VS::MaterialFlag p_flag) const=0;
 
-	virtual void material_set_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit, bool p_enabled)=0;
-	virtual bool material_get_color_mask_bit(RID p_material, const int p_pass_index, VS::MaterialColorMaskBit p_color_bit) const=0;
+	virtual void material_set_color_mask_bit(RID p_material, VS::MaterialColorMaskBit p_color_bit, bool p_enabled)=0;
+	virtual bool material_get_color_mask_bit(RID p_material, VS::MaterialColorMaskBit p_color_bit) const=0;
 
-	virtual void material_set_stencil_reference_value(RID p_material, const int p_pass_index, uint8_t p_reference_value)=0;
-	virtual uint8_t material_get_stencil_reference_value(RID p_material, const int p_pass_index) const=0;
+	virtual void material_set_stencil_reference_value(RID p_material, uint8_t p_reference_value)=0;
+	virtual uint8_t material_get_stencil_reference_value(RID p_material) const=0;
 
-	virtual void material_set_stencil_read_mask(RID p_material, const int p_pass_index, uint8_t p_read_mask)=0;
-	virtual uint8_t material_get_stencil_read_mask(RID p_material, const int p_pass_index) const=0;
+	virtual void material_set_stencil_read_mask(RID p_material, uint8_t p_read_mask)=0;
+	virtual uint8_t material_get_stencil_read_mask(RID p_material) const=0;
 
-	virtual void material_set_stencil_write_mask(RID p_material, const int p_pass_index, uint8_t p_write_mask)=0;
-	virtual uint8_t material_get_stencil_write_mask(RID p_material, const int p_pass_index) const=0;
+	virtual void material_set_stencil_write_mask(RID p_material, uint8_t p_write_mask)=0;
+	virtual uint8_t material_get_stencil_write_mask(RID p_material) const=0;
 
-	virtual void material_set_stencil_comparison(RID p_material, const int p_pass_index, VS::MaterialStencilComparison p_comparison)=0;
-	virtual VS::MaterialStencilComparison material_get_stencil_comparison(RID p_material, const int p_pass_index) const=0;
+	virtual void material_set_stencil_comparison(RID p_material, VS::MaterialStencilComparison p_comparison)=0;
+	virtual VS::MaterialStencilComparison material_get_stencil_comparison(RID p_material) const=0;
 
-	virtual void material_set_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option, VS::MaterialStencilOperation p_operation)=0;
-	virtual VS::MaterialStencilOperation material_get_stencil_option(RID p_material, const int p_pass_index, VS::MaterialStencilOperationOption p_option) const=0;
+	virtual void material_set_stencil_option(RID p_material, VS::MaterialStencilOperationOption p_option, VS::MaterialStencilOperation p_operation)=0;
+	virtual VS::MaterialStencilOperation material_get_stencil_option(RID p_material, VS::MaterialStencilOperationOption p_option) const=0;
 
-	virtual void material_set_depth_draw_mode(RID p_material, const int p_pass_index, VS::MaterialDepthDrawMode p_mode)=0;
-	virtual VS::MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material, const int p_pass_index) const=0;
+	virtual void material_set_depth_draw_mode(RID p_material, VS::MaterialDepthDrawMode p_mode)=0;
+	virtual VS::MaterialDepthDrawMode material_get_depth_draw_mode(RID p_material) const=0;
 
-	virtual void material_set_blend_mode(RID p_material, const int p_pass_index, VS::MaterialBlendMode p_mode)=0;
-	virtual VS::MaterialBlendMode material_get_blend_mode(RID p_material, const int p_pass_index) const=0;
+	virtual void material_set_blend_mode(RID p_material,VS::MaterialBlendMode p_mode)=0;
+	virtual VS::MaterialBlendMode material_get_blend_mode(RID p_material) const=0;
 
-	virtual void material_set_depth_test_mode(RID p_material, const int p_pass_index, VS::MaterialDepthTestMode p_mode)=0;
-	virtual VS::MaterialDepthTestMode material_get_depth_test_mode(RID p_material, const int p_pass_index) const=0;
+	virtual void material_set_line_width(RID p_material,float p_line_width)=0;
+	virtual float material_get_line_width(RID p_material) const=0;
 
-	virtual void material_set_line_width(RID p_material, const int p_pass_index, float p_line_width)=0;
-	virtual float material_get_line_width(RID p_material, const int p_pass_index) const=0;
+	virtual void material_set_depth_test_mode(RID p_material, VS::MaterialDepthTestMode p_mode)=0;
+	virtual VS::MaterialDepthTestMode material_get_depth_test_mode(RID p_material) const=0;
 
-	virtual void material_set_pass_count(RID p_material, const int p_pass_count)=0;
-	virtual int material_get_pass_count(RID p_material) const=0;
 
 	/* FIXED MATERIAL */
 

@@ -132,7 +132,7 @@ Error ContextGL_Win::initialize() {
 		PFD_DRAW_TO_WINDOW |						// Format Must Support Window
 		PFD_SUPPORT_OPENGL |						// Format Must Support OpenGL
 		PFD_DOUBLEBUFFER,
-		PFD_TYPE_RGBA,	
+		PFD_TYPE_RGBA,
 		24,
 		0, 0, 0, 0, 0, 0,							// Color Bits Ignored
 		0,// No Alpha Buffer
