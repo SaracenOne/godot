@@ -448,6 +448,21 @@ float RasterizerDummy::material_get_line_width(RID p_material) const {
 	return material->line_width;
 }
 
+void RasterizerDummy::material_set_next_material(RID p_material, RID p_next_material) {
+
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+	material->next_material = p_next_material;
+}
+
+RID RasterizerDummy::material_get_next_material(RID p_material) const {
+
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, RID());
+
+	return material->next_material;
+}
+
 /* MESH API */
 
 

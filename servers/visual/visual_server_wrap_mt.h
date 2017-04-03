@@ -177,6 +177,9 @@ public:
 	FUNC2(material_set_line_width,RID,float);
 	FUNC1RC(float,material_get_line_width,RID);
 
+	FUNC2(material_set_next_material, RID, RID);
+	FUNC1RC(RID, material_get_next_material, RID);
+
 	/* FIXED MATERIAL */
 
 

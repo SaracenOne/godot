@@ -151,6 +151,9 @@ private:
 	uint8_t stencil_write_mask;
 	StencilComparison stencil_comparison;
 	StencilOperation stencil_options[STENCIL_OP_OPTION_COUNT];
+	
+	// Multi-pass
+	Ref<Material> next_material;
 
 public:
 	void set_flag(Flag p_flag,bool p_enabled);
@@ -185,6 +188,9 @@ public:
 
 	void set_line_width(float p_width);
 	float get_line_width() const;
+
+	void set_next_material(Ref<Material> p_next_material);
+	Ref<Material> get_next_material() const;
 
 	RID get_rid() const;
 

@@ -260,6 +260,8 @@ public:
 	virtual void material_set_depth_test_mode(RID p_material, VS::MaterialDepthTestMode p_mode)=0;
 	virtual VS::MaterialDepthTestMode material_get_depth_test_mode(RID p_material) const=0;
 
+	virtual void material_set_next_material(RID p_material, RID p_next_material) = 0;
+	virtual RID material_get_next_material(RID p_material) const = 0;
 
 	/* FIXED MATERIAL */
 

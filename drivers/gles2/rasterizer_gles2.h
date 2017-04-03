@@ -279,6 +279,7 @@ class RasterizerGLES2 : public Rasterizer {
 
 		uint64_t last_pass;
 
+		RID next_material;
 
 		Material() {
 
@@ -1452,6 +1453,9 @@ public:
 
 	virtual void material_set_line_width(RID p_material,float p_line_width);
 	virtual float material_get_line_width(RID p_material) const;
+
+	virtual void material_set_next_material(RID p_material, RID p_next_material);
+	virtual RID material_get_next_material(RID p_material) const;
 
 
 	/* MESH API */

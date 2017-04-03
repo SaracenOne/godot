@@ -380,6 +380,9 @@ void VisualServer::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("material_set_line_width"),&VisualServer::material_set_line_width);
 	ObjectTypeDB::bind_method(_MD("material_get_line_width"),&VisualServer::material_get_line_width);
 
+	ObjectTypeDB::bind_method(_MD("material_set_next_material","material"),&VisualServer::material_set_next_material);
+	ObjectTypeDB::bind_method(_MD("material_get_next_material"), &VisualServer::material_get_next_material);
+
 	ObjectTypeDB::bind_method(_MD("material_set_depth_test_mode"),&VisualServer::material_set_depth_test_mode);
 	ObjectTypeDB::bind_method(_MD("material_get_depth_test_mode"),&VisualServer::material_get_depth_test_mode);
 

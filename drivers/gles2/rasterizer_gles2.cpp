@@ -1943,7 +1943,21 @@ float RasterizerGLES2::material_get_line_width(RID p_material) const {
 	return material->line_width;
 }
 
+void RasterizerGLES2::material_set_next_material(RID p_material, RID p_next_material) {
 
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND(!material);
+
+	material->next_material = p_next_material;
+}
+
+RID RasterizerGLES2::material_get_next_material(RID p_material) const {
+
+	Material *material = material_owner.get(p_material);
+	ERR_FAIL_COND_V(!material, RID());
+
+	return material->next_material;
+}
 
 /* MESH API */
 
@@ -5043,221 +5057,227 @@ void RasterizerGLES2::_add_geometry( const Geometry* p_geometry, const InstanceD
 
 	ERR_FAIL_COND(!m);
 
-	if (m->last_pass!=frame) {
+	while(m) {
+		if (m->last_pass!=frame) {
 
-		if (m->shader.is_valid()) {
+			if (m->shader.is_valid()) {
 
-			m->shader_cache=shader_owner.get(m->shader);
-			if (m->shader_cache) {
+				m->shader_cache=shader_owner.get(m->shader);
+				if (m->shader_cache) {
 
 
 
-				if (!m->shader_cache->valid) {
-					m->shader_cache=NULL;
+					if (!m->shader_cache->valid) {
+						m->shader_cache=NULL;
+					} else {
+						if (m->shader_cache->has_texscreen)
+							texscreen_used=true;
+					}
 				} else {
-					if (m->shader_cache->has_texscreen)
-						texscreen_used=true;
+					m->shader=RID();
 				}
+
 			} else {
-				m->shader=RID();
+				m->shader_cache=NULL;
 			}
 
-		} else {
-			m->shader_cache=NULL;
+			m->last_pass=frame;
 		}
 
-		m->last_pass=frame;
-	}
 
 
+		RenderList *render_list=NULL;
 
-	RenderList *render_list=NULL;
-
-	bool has_base_alpha=(m->shader_cache && m->shader_cache->has_alpha);
-	bool has_blend_alpha=m->blend_mode!=VS::MATERIAL_BLEND_MODE_MIX || m->flags[VS::MATERIAL_FLAG_ONTOP];
-	bool has_alpha = has_base_alpha || has_blend_alpha;
-
-
-	if (shadow) {
-
-		if (has_blend_alpha || (has_base_alpha && m->depth_draw_mode!=VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA))
-			return; //bye
-
-		if (!m->shader_cache || (!m->shader_cache->writes_vertex && !m->shader_cache->uses_discard && m->depth_draw_mode!=VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA)) {
-			//shader does not use discard and does not write a vertex position, use generic material
-			if (p_instance->cast_shadows == VS::SHADOW_CASTING_SETTING_DOUBLE_SIDED)
-				m = shadow_mat_double_sided_ptr;
-			else
-				m = shadow_mat_ptr;
-			if (m->last_pass!=frame) {
-
-				if (m->shader.is_valid()) {
-
-					m->shader_cache=shader_owner.get(m->shader);
-					if (m->shader_cache) {
+		bool has_base_alpha=(m->shader_cache && m->shader_cache->has_alpha);
+		bool has_blend_alpha=m->blend_mode!=VS::MATERIAL_BLEND_MODE_MIX || m->flags[VS::MATERIAL_FLAG_ONTOP];
+		bool has_alpha = has_base_alpha || has_blend_alpha;
 
 
-						if (!m->shader_cache->valid)
-							m->shader_cache=NULL;
+		if (shadow) {
+
+			if (has_blend_alpha || (has_base_alpha && m->depth_draw_mode!=VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA))
+				return; //bye
+
+			if (!m->shader_cache || (!m->shader_cache->writes_vertex && !m->shader_cache->uses_discard && m->depth_draw_mode!=VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA)) {
+				//shader does not use discard and does not write a vertex position, use generic material
+				if (p_instance->cast_shadows == VS::SHADOW_CASTING_SETTING_DOUBLE_SIDED)
+					m = shadow_mat_double_sided_ptr;
+				else
+					m = shadow_mat_ptr;
+				if (m->last_pass!=frame) {
+
+					if (m->shader.is_valid()) {
+
+						m->shader_cache=shader_owner.get(m->shader);
+						if (m->shader_cache) {
+
+
+							if (!m->shader_cache->valid)
+								m->shader_cache=NULL;
+						} else {
+							m->shader=RID();
+						}
+
 					} else {
-						m->shader=RID();
+						m->shader_cache=NULL;
 					}
 
-				} else {
-					m->shader_cache=NULL;
+					m->last_pass=frame;
 				}
+			}
 
-				m->last_pass=frame;
+			render_list = &opaque_render_list;
+		/* notyet
+			if (!m->shader_cache || m->shader_cache->can_zpass)
+				render_list = &alpha_render_list;
+			} else {
+				render_list = &opaque_render_list;
+			}*/
+
+		} else {
+			if (has_alpha) {
+				render_list = &alpha_render_list;
+			} else {
+				render_list = &opaque_render_list;
+
 			}
 		}
 
-		render_list = &opaque_render_list;
-	/* notyet
-		if (!m->shader_cache || m->shader_cache->can_zpass)
-			render_list = &alpha_render_list;
-		} else {
-			render_list = &opaque_render_list;
-		}*/
 
-	} else {
-		if (has_alpha) {
-			render_list = &alpha_render_list;
-		} else {
-			render_list = &opaque_render_list;
+		RenderList::Element *e = render_list->add_element();
 
-		}
-	}
-
-
-	RenderList::Element *e = render_list->add_element();
-
-	if (!e)
-		return;
-
-	e->geometry=p_geometry;
-	e->geometry_cmp=p_geometry_cmp;
-	e->material=m;
-	e->instance=p_instance;
-	if (camera_ortho) {
-		e->depth=camera_plane.distance_to(p_instance->transform.origin);
-	} else {
-		e->depth=camera_transform.origin.distance_to(p_instance->transform.origin);
-	}
-	e->owner=p_owner;
-	e->light_type=0;
-	e->additive=false;
-	e->additive_ptr=&e->additive;
-	e->sort_flags=0;
-
-
-	if (p_instance->skeleton.is_valid()) {
-		e->skeleton=skeleton_owner.get(p_instance->skeleton);
-		if (!e->skeleton)
-			const_cast<InstanceData*>(p_instance)->skeleton=RID();
-		else
-			e->sort_flags|=RenderList::SORT_FLAG_SKELETON;
-	} else {
-		e->skeleton=NULL;
-
-	}
-
-	if (e->geometry->type==Geometry::GEOMETRY_MULTISURFACE)
-		e->sort_flags|=RenderList::SORT_FLAG_INSTANCING;
-
-
-	e->mirror=p_instance->mirror;
-	if (m->flags[VS::MATERIAL_FLAG_INVERT_FACES])
-		e->mirror=!e->mirror;
-
-	//e->light_type=0xFF; // no lights!
-	e->light_type=3; //light type 3 is no light?
-	e->light=0xFFFF;
-
-	if (!shadow && !has_blend_alpha && has_alpha && m->depth_draw_mode==VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA) {
-
-		//if nothing exists, add this element as opaque too
-		RenderList::Element *oe = opaque_render_list.add_element();
-
-		if (!oe)
+		if (!e)
 			return;
 
-		memcpy(oe,e,sizeof(RenderList::Element));
-		oe->additive_ptr=&oe->additive;
-	}
+		e->geometry=p_geometry;
+		e->geometry_cmp=p_geometry_cmp;
+		e->material=m;
+		e->instance=p_instance;
+		if (camera_ortho) {
+			e->depth=camera_plane.distance_to(p_instance->transform.origin);
+		} else {
+			e->depth=camera_transform.origin.distance_to(p_instance->transform.origin);
+		}
+		e->owner=p_owner;
+		e->light_type=0;
+		e->additive=false;
+		e->additive_ptr=&e->additive;
+		e->sort_flags=0;
 
-	if (shadow || m->flags[VS::MATERIAL_FLAG_UNSHADED] || current_debug==VS::SCENARIO_DEBUG_SHADELESS) {
 
-		e->light_type=0x7F; //unshaded is zero
-	} else {
-
-		bool duplicate=false;
-
-
-		for(int i=0;i<directional_light_count;i++) {
-			uint16_t sort_key = directional_lights[i]->sort_key;
-			uint8_t light_type = VS::LIGHT_DIRECTIONAL;
-			if (directional_lights[i]->base->shadow_enabled) {
-				light_type|=0x8;
-				if (directional_lights[i]->base->directional_shadow_mode==VS::LIGHT_DIRECTIONAL_SHADOW_PARALLEL_2_SPLITS)
-					light_type|=0x10;
-				else if (directional_lights[i]->base->directional_shadow_mode==VS::LIGHT_DIRECTIONAL_SHADOW_PARALLEL_4_SPLITS)
-					light_type|=0x30;
-
-			}
-
-			RenderList::Element *ec;
-			if (duplicate) {
-
-				ec = render_list->add_element();
-				memcpy(ec,e,sizeof(RenderList::Element));
-			} else {
-
-				ec=e;
-				duplicate=true;
-			}
-
-			ec->light_type=light_type;
-			ec->light=sort_key;
-			ec->additive_ptr=&e->additive;
+		if (p_instance->skeleton.is_valid()) {
+			e->skeleton=skeleton_owner.get(p_instance->skeleton);
+			if (!e->skeleton)
+				const_cast<InstanceData*>(p_instance)->skeleton=RID();
+			else
+				e->sort_flags|=RenderList::SORT_FLAG_SKELETON;
+		} else {
+			e->skeleton=NULL;
 
 		}
 
-
-		const RID *liptr = p_instance->light_instances.ptr();
-		int ilc=p_instance->light_instances.size();
-
+		if (e->geometry->type==Geometry::GEOMETRY_MULTISURFACE)
+			e->sort_flags|=RenderList::SORT_FLAG_INSTANCING;
 
 
-		for(int i=0;i<ilc;i++) {
+		e->mirror=p_instance->mirror;
+		if (m->flags[VS::MATERIAL_FLAG_INVERT_FACES])
+			e->mirror=!e->mirror;
 
-			LightInstance *li=light_instance_owner.get( liptr[i] );
-			if (!li || li->last_pass!=scene_pass) //lit by light not in visible scene
-				continue;
-			uint8_t light_type=li->base->type|0x40; //penalty to ensure directionals always go first
-			if (li->base->shadow_enabled) {
-				light_type|=0x8;
-			}
-			uint16_t sort_key =li->sort_key;
+		//e->light_type=0xFF; // no lights!
+		e->light_type=3; //light type 3 is no light?
+		e->light=0xFFFF;
 
-			RenderList::Element *ec;
-			if (duplicate) {
+		if (!shadow && !has_blend_alpha && has_alpha && m->depth_draw_mode==VS::MATERIAL_DEPTH_DRAW_OPAQUE_PRE_PASS_ALPHA) {
 
-				ec = render_list->add_element();
-				memcpy(ec,e,sizeof(RenderList::Element));
-			} else {
+			//if nothing exists, add this element as opaque too
+			RenderList::Element *oe = opaque_render_list.add_element();
 
-				duplicate=true;
-				ec=e;
-			}
+			if (!oe)
+				return;
 
-			ec->light_type=light_type;
-			ec->light=sort_key;
-			ec->additive_ptr=&e->additive;
-
+			memcpy(oe,e,sizeof(RenderList::Element));
+			oe->additive_ptr=&oe->additive;
 		}
 
+		if (shadow || m->flags[VS::MATERIAL_FLAG_UNSHADED] || current_debug==VS::SCENARIO_DEBUG_SHADELESS) {
+
+			e->light_type=0x7F; //unshaded is zero
+		} else {
+
+			bool duplicate=false;
 
 
+			for(int i=0;i<directional_light_count;i++) {
+				uint16_t sort_key = directional_lights[i]->sort_key;
+				uint8_t light_type = VS::LIGHT_DIRECTIONAL;
+				if (directional_lights[i]->base->shadow_enabled) {
+					light_type|=0x8;
+					if (directional_lights[i]->base->directional_shadow_mode==VS::LIGHT_DIRECTIONAL_SHADOW_PARALLEL_2_SPLITS)
+						light_type|=0x10;
+					else if (directional_lights[i]->base->directional_shadow_mode==VS::LIGHT_DIRECTIONAL_SHADOW_PARALLEL_4_SPLITS)
+						light_type|=0x30;
+
+				}
+
+				RenderList::Element *ec;
+				if (duplicate) {
+
+					ec = render_list->add_element();
+					memcpy(ec,e,sizeof(RenderList::Element));
+				} else {
+
+					ec=e;
+					duplicate=true;
+				}
+
+				ec->light_type=light_type;
+				ec->light=sort_key;
+				ec->additive_ptr=&e->additive;
+
+			}
+
+
+			const RID *liptr = p_instance->light_instances.ptr();
+			int ilc=p_instance->light_instances.size();
+
+
+
+			for(int i=0;i<ilc;i++) {
+
+				LightInstance *li=light_instance_owner.get( liptr[i] );
+				if (!li || li->last_pass!=scene_pass) //lit by light not in visible scene
+					continue;
+				uint8_t light_type=li->base->type|0x40; //penalty to ensure directionals always go first
+				if (li->base->shadow_enabled) {
+					light_type|=0x8;
+				}
+				uint16_t sort_key =li->sort_key;
+
+				RenderList::Element *ec;
+				if (duplicate) {
+
+					ec = render_list->add_element();
+					memcpy(ec,e,sizeof(RenderList::Element));
+				} else {
+
+					duplicate=true;
+					ec=e;
+				}
+
+				ec->light_type=light_type;
+				ec->light=sort_key;
+				ec->additive_ptr=&e->additive;
+
+			}
+
+
+
+		}
+		if(m->next_material.is_valid())
+			m=material_owner.get(m->next_material);
+		else
+			m=NULL;
 	}
 
 	DEBUG_TEST_ERROR("Add Geometry");

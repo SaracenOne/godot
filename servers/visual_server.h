@@ -298,6 +298,8 @@ public:
 	virtual void material_set_line_width(RID p_material,float p_line_width)=0;
 	virtual float material_get_line_width(RID p_material) const=0;
 
+	virtual void material_set_next_material(RID p_material, RID p_next_material)=0;
+	virtual RID material_get_next_material(RID p_material) const=0;
 
 	//fixed material api
 

@@ -327,6 +327,15 @@ float VisualServerRaster::material_get_line_width(RID p_material) const {
 	return rasterizer->material_get_line_width(p_material);
 }
 
+void VisualServerRaster::material_set_next_material(RID p_material, RID p_next_material) {
+	VS_CHANGED;
+	rasterizer->material_set_next_material(p_material, p_next_material);
+}
+RID VisualServerRaster::material_get_next_material(RID p_material) const {
+
+	return rasterizer->material_get_next_material(p_material);
+}
+
 /* FIXED MATERIAL */
 
 RID VisualServerRaster::fixed_material_create() {

@@ -111,6 +111,12 @@ bool Material::_set(const StringName& p_name, const Variant& p_value) {
 			}
 		}
 	}
+	else if (split_path[0] == "next_material") {
+		if (split_path[1] == "next_material") {
+			set_next_material(p_value);
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -151,6 +157,12 @@ bool Material::_get(const StringName& p_name, Variant &r_ret) const {
 			}
 		}
 	}
+	else if (split_path[0] == "next_material") {
+		if (split_path[1] == "next_material") {
+			r_ret = get_next_material();
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -162,6 +174,7 @@ void Material::_get_property_list(List<PropertyInfo> *p_list) const {
 	p_list->push_back(PropertyInfo(Variant::INT, "params/stencil_options/sfail", PROPERTY_HINT_ENUM, "Keep,Zero,Replace,Increment Saturate,Increment Wrap,Decrement Saturate,Decrement Wrap,Invert"));
 	p_list->push_back(PropertyInfo(Variant::INT, "params/stencil_options/dpfail", PROPERTY_HINT_ENUM, "Keep,Zero,Replace,Increment Saturate,Increment Wrap,Decrement Saturate,Decrement Wrap,Invert"));
 	p_list->push_back(PropertyInfo(Variant::INT, "params/stencil_options/dppass", PROPERTY_HINT_ENUM, "Keep,Zero,Replace,Increment Saturate,Increment Wrap,Decrement Saturate,Decrement Wrap,Invert"));
+	p_list->push_back(PropertyInfo(Variant::OBJECT, "next_material/next_material", PROPERTY_HINT_RESOURCE_TYPE, "FixedMaterial,ShaderMaterial"));
 }
 
 void Material::set_flag(Flag p_flag,bool p_enabled) {
@@ -214,6 +227,15 @@ void Material::set_line_width(float p_width) {
 float Material::get_line_width() const {
 
 	return line_width;
+}
+
+void Material::set_next_material(Ref<Material> p_next_material) {
+	next_material = p_next_material;
+	VisualServer::get_singleton()->material_set_next_material(material,next_material.is_valid()?next_material->get_rid():RID());
+}
+
+Ref<Material> Material::get_next_material() const {
+	return next_material;
 }
 
 void Material::set_depth_test_mode(DepthTestMode p_depth_test_mode) {
@@ -301,6 +323,9 @@ void Material::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("set_color_mask_bit","bit","enabled"),&Material::set_color_mask_bit);
 	ObjectTypeDB::bind_method(_MD("get_color_mask_bit","bit"),&Material::get_color_mask_bit);
+
+	ObjectTypeDB::bind_method(_MD("set_next_material", "next_material:Material"), &Material::set_next_material);
+	ObjectTypeDB::bind_method(_MD("get_next_material"), &Material::get_next_material);
 
 	for(int i=0;i<FLAG_MAX;i++)
 		ADD_PROPERTYI( PropertyInfo( Variant::BOOL, String()+"flags/"+_flag_names[i] ),_SCS("set_flag"),_SCS("get_flag"),_flag_indices[i]);
