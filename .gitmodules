@@ -13,3 +13,6 @@
 [submodule "modules/precipitation"]
 	path = modules/precipitation
 	url = https://github.com/SaracenOne/precipitation
+[submodule "modules/bmp"]
+	path = modules/bmp
+	url = https://github.com/SaracenOne/bmp
