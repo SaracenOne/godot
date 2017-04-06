@@ -768,8 +768,8 @@ public:
 	virtual void material_set_line_width(RID p_material, float p_line_width);
 	virtual float material_get_line_width(RID p_material) const;
 
-	virtual void VisualServerRaster::material_set_next_material(RID p_material, RID p_next_material);
-	virtual RID VisualServerRaster::material_get_next_material(RID p_material) const;
+	virtual void material_set_next_material(RID p_material, RID p_next_material);
+	virtual RID material_get_next_material(RID p_material) const;
 	
 	/* FIXED MATERIAL */
 
