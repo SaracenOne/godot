@@ -1202,7 +1202,7 @@ void SceneTreeDock::_do_reparent(Node* p_new_parent,int p_position_in_parent,Vec
 			if (node->cast_to<Spatial>())
 				editor_data->get_undo_redo().add_undo_method(node,"set_transform",node->cast_to<Spatial>()->get_transform());
 			if (node->cast_to<Control>())
-				editor_data->get_undo_redo().add_undo_method(node,"set_pos",node->cast_to<Control>()->get_pos());
+				editor_data->get_undo_redo().add_undo_method(node,"set_position",node->cast_to<Control>()->get_pos());
 		}
 
 

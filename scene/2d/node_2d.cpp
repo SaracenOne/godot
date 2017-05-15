@@ -426,14 +426,14 @@ void Node2D::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("_get_rotd"),&Node2D::_get_rotd);
 	ObjectTypeDB::bind_method(_MD("_set_rotd","degrees"),&Node2D::_set_rotd);
 
-	ObjectTypeDB::bind_method(_MD("set_pos","pos"),&Node2D::set_pos);
-	ObjectTypeDB::bind_method(_MD("set_rot","radians"),&Node2D::set_rot);
-	ObjectTypeDB::bind_method(_MD("set_rotd","degrees"),&Node2D::set_rotd);
+	ObjectTypeDB::bind_method(_MD("set_position","pos"),&Node2D::set_pos);
+	ObjectTypeDB::bind_method(_MD("set_rotation","radians"),&Node2D::set_rot);
+	ObjectTypeDB::bind_method(_MD("set_rotation_in_degrees","degrees"),&Node2D::set_rotd);
 	ObjectTypeDB::bind_method(_MD("set_scale","scale"),&Node2D::set_scale);
 
-	ObjectTypeDB::bind_method(_MD("get_pos"),&Node2D::get_pos);
-	ObjectTypeDB::bind_method(_MD("get_rot"),&Node2D::get_rot);
-	ObjectTypeDB::bind_method(_MD("get_rotd"),&Node2D::get_rotd);
+	ObjectTypeDB::bind_method(_MD("get_position"),&Node2D::get_pos);
+	ObjectTypeDB::bind_method(_MD("get_rotation"),&Node2D::get_rot);
+	ObjectTypeDB::bind_method(_MD("get_rotation_in_degrees"),&Node2D::get_rotd);
 	ObjectTypeDB::bind_method(_MD("get_scale"),&Node2D::get_scale);
 
 	ObjectTypeDB::bind_method(_MD("rotate","radians"),&Node2D::rotate);
@@ -468,8 +468,8 @@ void Node2D::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("get_relative_transform_to_parent","parent"),&Node2D::get_relative_transform_to_parent);
 
-	ADD_PROPERTYNZ(PropertyInfo(Variant::VECTOR2,"transform/pos"),_SCS("set_pos"),_SCS("get_pos"));
-	ADD_PROPERTYNZ(PropertyInfo(Variant::REAL,"transform/rot",PROPERTY_HINT_RANGE,"-1440,1440,0.1"),_SCS("set_rotd"),_SCS("get_rotd"));
+	ADD_PROPERTYNZ(PropertyInfo(Variant::VECTOR2,"transform/pos"),_SCS("set_position"),_SCS("get_position"));
+	ADD_PROPERTYNZ(PropertyInfo(Variant::REAL,"transform/rot",PROPERTY_HINT_RANGE,"-1440,1440,0.1"),_SCS("set_rotation_in_degrees"),_SCS("get_rotation_in_degrees"));
 	ADD_PROPERTYNO(PropertyInfo(Variant::VECTOR2,"transform/scale"),_SCS("set_scale"),_SCS("get_scale"));
 	ADD_PROPERTYNZ(PropertyInfo(Variant::INT,"z/z",PROPERTY_HINT_RANGE,itos(VS::CANVAS_ITEM_Z_MIN)+","+itos(VS::CANVAS_ITEM_Z_MAX)+",1"),_SCS("set_z"),_SCS("get_z"));
 	ADD_PROPERTYNO(PropertyInfo(Variant::BOOL,"z/relative"),_SCS("set_z_as_relative"),_SCS("is_z_relative"));

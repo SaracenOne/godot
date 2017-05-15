@@ -2988,11 +2988,11 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 				Node2D *n2d = o->cast_to<Node2D>();
 				if (!n2d)
 					continue;
-				undo_redo->add_do_method(n2d,"set_pos",E->get().pos);
-				undo_redo->add_do_method(n2d,"set_rot",E->get().rot);
+				undo_redo->add_do_method(n2d,"set_position",E->get().pos);
+				undo_redo->add_do_method(n2d,"set_rotation",E->get().rot);
 				undo_redo->add_do_method(n2d,"set_scale",E->get().scale);
-				undo_redo->add_undo_method(n2d,"set_pos",n2d->get_pos());
-				undo_redo->add_undo_method(n2d,"set_rot",n2d->get_rot());
+				undo_redo->add_undo_method(n2d,"set_position",n2d->get_pos());
+				undo_redo->add_undo_method(n2d,"set_rotation",n2d->get_rot());
 				undo_redo->add_undo_method(n2d,"set_scale",n2d->get_scale());
 			}
 			undo_redo->commit_action();
@@ -3805,7 +3805,7 @@ void CanvasItemEditorViewport::_create_nodes(Node* parent, Node* child, String& 
 	if (default_type=="Polygon2D" || default_type=="TouchScreenButton" || default_type=="TextureFrame" || default_type=="Patch9Frame") {
 		target_pos -= texture_size/2;
 	}
-	editor_data->get_undo_redo().add_do_method(child,"set_pos",target_pos);
+	editor_data->get_undo_redo().add_do_method(child,"set_position",target_pos);
 }
 
 bool CanvasItemEditorViewport::_create_instance(Node* parent, String& path, const Point2& p_point) {
@@ -3849,7 +3849,7 @@ bool CanvasItemEditorViewport::_create_instance(Node* parent, String& path, cons
 		}
 	}
 	Matrix32 trans=canvas->get_canvas_transform();
-	editor_data->get_undo_redo().add_do_method(instanced_scene,"set_pos",(p_point-trans.get_origin())/trans.get_scale().x-pos);
+	editor_data->get_undo_redo().add_do_method(instanced_scene,"set_position",(p_point-trans.get_origin())/trans.get_scale().x-pos);
 
 	return true;
 }

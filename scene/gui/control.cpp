@@ -2507,7 +2507,7 @@ void Control::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("set_anchor_and_margin","margin","anchor_mode","offset"),&Control::set_anchor_and_margin);
 	ObjectTypeDB::bind_method(_MD("set_begin","pos"),&Control::set_begin);
 	ObjectTypeDB::bind_method(_MD("set_end","pos"),&Control::set_end);
-	ObjectTypeDB::bind_method(_MD("set_pos","pos"),&Control::set_pos);
+	ObjectTypeDB::bind_method(_MD("set_position","pos"),&Control::set_pos);
 	ObjectTypeDB::bind_method(_MD("set_size","size"),&Control::set_size);
 	ObjectTypeDB::bind_method(_MD("set_custom_minimum_size","size"),&Control::set_custom_minimum_size);
 	ObjectTypeDB::bind_method(_MD("set_global_pos","pos"),&Control::set_global_pos);
@@ -2519,7 +2519,7 @@ void Control::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("get_margin","margin"),&Control::get_margin);
 	ObjectTypeDB::bind_method(_MD("get_begin"),&Control::get_begin);
 	ObjectTypeDB::bind_method(_MD("get_end"),&Control::get_end);
-	ObjectTypeDB::bind_method(_MD("get_pos"),&Control::get_pos);
+	ObjectTypeDB::bind_method(_MD("get_position"),&Control::get_pos);
 	ObjectTypeDB::bind_method(_MD("get_size"),&Control::get_size);
 	ObjectTypeDB::bind_method(_MD("get_rotation"),&Control::get_rotation);
 	ObjectTypeDB::bind_method(_MD("get_rotation_deg"),&Control::get_rotation_deg);
@@ -2629,7 +2629,7 @@ void Control::_bind_methods() {
 	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/right", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("_set_anchor"),_SCS("get_anchor"), MARGIN_RIGHT );
 	ADD_PROPERTYINZ( PropertyInfo(Variant::INT,"anchor/bottom", PROPERTY_HINT_ENUM, "Begin,End,Ratio,Center"), _SCS("_set_anchor"),_SCS("get_anchor"), MARGIN_BOTTOM );
 
-	ADD_PROPERTYNZ( PropertyInfo(Variant::VECTOR2,"rect/pos", PROPERTY_HINT_NONE, "",PROPERTY_USAGE_EDITOR), _SCS("set_pos"),_SCS("get_pos") );
+	ADD_PROPERTYNZ( PropertyInfo(Variant::VECTOR2,"rect/pos", PROPERTY_HINT_NONE, "",PROPERTY_USAGE_EDITOR), _SCS("set_position"),_SCS("get_position") );
 	ADD_PROPERTYNZ( PropertyInfo(Variant::VECTOR2,"rect/size", PROPERTY_HINT_NONE, "",PROPERTY_USAGE_EDITOR), _SCS("set_size"),_SCS("get_size") );
 	ADD_PROPERTYNZ( PropertyInfo(Variant::VECTOR2,"rect/min_size"), _SCS("set_custom_minimum_size"),_SCS("get_custom_minimum_size") );
 	ADD_PROPERTYNZ( PropertyInfo(Variant::REAL,"rect/rotation",PROPERTY_HINT_RANGE,"-1080,1080,0.01"), _SCS("set_rotation_deg"),_SCS("get_rotation_deg") );
