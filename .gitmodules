@@ -1,6 +1,3 @@
-[submodule "modules/gdnet"]
-	path = modules/gdnet
-	url = https://github.com/jrimclean/gdnet.git
 [submodule "modules/godot_math_extension"]
 	path = modules/godot_math_extension
 	url = https://github.com/SaracenOne/godot_math_extension.git
