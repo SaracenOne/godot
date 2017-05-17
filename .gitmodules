@@ -16,3 +16,6 @@
 [submodule "modules/bmp"]
 	path = modules/bmp
 	url = https://github.com/SaracenOne/bmp
+[submodule "modules/blitter"]
+	path = modules/blitter
+	url = https://github.com/SaracenOne/blitter
