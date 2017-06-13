@@ -80,7 +80,7 @@
 #include "fileserver/editor_file_server.h"
 #include "editor_resource_preview.h"
 
-
+#include "editor_export_godot3.h"
 
 #include "progress_dialog.h"
 
@@ -149,6 +149,7 @@ private:
 		EDIT_REDO,
 		EDIT_REVERT,
 		TOOLS_ORPHAN_RESOURCES,
+		TOOLS_EXPORT_GODOT3,
 		RESOURCE_NEW,
 		RESOURCE_LOAD,
 		RESOURCE_SAVE,
@@ -284,6 +285,9 @@ private:
 
 	HBoxContainer *search_bar;
 	LineEdit *search_box;
+
+	EditorExportGodot3 export_godot3;
+	FileDialog *export_godot3_dialog;
 
 	CreateDialog *create_dialog;
 
@@ -576,6 +580,8 @@ private:
 	void _clear_undo_history();
 
 	void _update_addon_config();
+
+	void _export_godot3_path(const String &p_path);
 
 	static void _file_access_close_error_notify(const String& p_str);
 
