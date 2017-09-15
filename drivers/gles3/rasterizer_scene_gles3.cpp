@@ -163,10 +163,9 @@ void RasterizerSceneGLES3::shadow_atlas_set_size(RID p_atlas, int p_size) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, shadow_atlas->size, shadow_atlas->size, 0,
 				GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_LINEAR);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_LINEAR);
+		_set_texture_addressing_mode(TEXTURE_TYPE_2D, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
 				GL_TEXTURE_2D, shadow_atlas->depth, 0);
@@ -526,10 +525,9 @@ void RasterizerSceneGLES3::reflection_atlas_set_size(RID p_ref_atlas, int p_size
 		int mmsize = reflection_atlas->size;
 		glTexStorage2DCustom(GL_TEXTURE_2D, 6, internal_format, mmsize, mmsize, format, type);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_LINEAR_MIPMAP_LINEAR);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_LINEAR);
+		_set_texture_addressing_mode(TEXTURE_TYPE_2D, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 5);
@@ -1101,19 +1099,11 @@ bool RasterizerSceneGLES3::_setup_material(RasterizerStorageGLES3::Material *p_m
 	} */
 
 	if (state.current_line_width != p_material->line_width) {
-		//glLineWidth(MAX(p_material->line_width,1.0));
 		state.current_line_width = p_material->line_width;
 	}
 
 	if (state.current_depth_test != (!p_material->shader->spatial.no_depth_test)) {
-		if (p_material->shader->spatial.no_depth_test) {
-			glDisable(GL_DEPTH_TEST);
-
-		} else {
-			glEnable(GL_DEPTH_TEST);
-		}
-
-		state.current_depth_test = !p_material->shader->spatial.no_depth_test;
+		_set_depth_test_enabled(!p_material->shader->spatial.no_depth_test);
 	}
 
 	if (state.current_depth_draw != p_material->shader->spatial.depth_draw_mode) {
@@ -1866,6 +1856,64 @@ void RasterizerSceneGLES3::_setup_light(RenderList::Element *e, const Transform 
 	}
 }
 
+GLenum RasterizerSceneGLES3::_get_gl_blend_factor(const BlendFactor p_blend_factor) {
+	switch (p_blend_factor) {
+		case BF_ONE:
+			return GL_ONE;
+		case BF_ZERO:
+			return GL_ZERO;
+		case BF_DST_COLOR:
+			return GL_DST_COLOR;
+		case BF_SRC_COLOR:
+			return GL_SRC_COLOR;
+		case BF_ONE_MINUS_DST_COLOR:
+			return GL_ONE_MINUS_DST_COLOR;
+		case BF_ONE_MINUS_SRC_COLOR:
+			return GL_ONE_MINUS_SRC_COLOR;
+		case BF_DST_ALPHA:
+			return GL_DST_ALPHA;
+		case BF_SRC_ALPHA:
+			return GL_SRC_ALPHA;
+		case BF_ONE_MINUS_DST_ALPHA:
+			return GL_ONE_MINUS_DST_ALPHA;
+		case BF_ONE_MINUS_SRC_ALPHA:
+			return GL_ONE_MINUS_SRC_ALPHA;
+	};
+
+	return GL_ONE;
+}
+
+GLenum RasterizerSceneGLES3::_get_gl_texture_addressing_mode(const TextureAddressingMode p_mode) {
+	switch (p_mode) {
+		case MODE_REPEAT:
+			return GL_REPEAT;
+		case MODE_MIRRORED_REPEAT:
+			return GL_MIRRORED_REPEAT;
+		case MODE_CLAMP_TO_EDGE:
+			return GL_CLAMP_TO_EDGE;
+		case MODE_CLAMP_TO_BORDER:
+			return GL_CLAMP_TO_BORDER;
+	};
+
+	return GL_ONE;
+}
+
+GLenum RasterizerSceneGLES3::_get_texture_type(TextureType p_texture_type) {
+
+	switch (p_texture_type) {
+		case TEXTURE_TYPE_1D:
+			return GL_TEXTURE_1D;
+		case TEXTURE_TYPE_2D:
+			return GL_TEXTURE_2D;
+		case TEXTURE_TYPE_3D:
+			return GL_TEXTURE_3D;
+		case TEXTURE_TYPE_CUBE_MAP:
+			return GL_TEXTURE_CUBE_MAP;
+		case TEXTURE_TYPE_2D_ARRAY:
+			return GL_TEXTURE_2D_ARRAY;
+	}
+}
+
 void RasterizerSceneGLES3::_set_cull(bool p_front, bool p_disabled, bool p_reverse_cull) {
 
 	bool front = p_front;
@@ -1885,6 +1933,84 @@ void RasterizerSceneGLES3::_set_cull(bool p_front, bool p_disabled, bool p_rever
 
 		glCullFace(front ? GL_FRONT : GL_BACK);
 		state.cull_front = front;
+	}
+}
+
+void RasterizerSceneGLES3::_set_scissor_mode(const bool p_enabled, Rect2 p_rectangle) {
+}
+
+void RasterizerSceneGLES3::_set_depth_test_enabled(bool p_enabled) {
+
+	if (state.current_depth_test != p_enabled) {
+		if (p_enabled) {
+			glClearDepth(1.0f);
+			glEnable(GL_DEPTH_TEST);
+		} else {
+			glDisable(GL_DEPTH_TEST);
+		}
+		state.current_depth_test = p_enabled;
+	}
+}
+
+void RasterizerSceneGLES3::_set_blending(BlendFactor p_source_factor, BlendFactor p_dest_factor, BlendOperation p_op) {
+}
+
+void RasterizerSceneGLES3::_set_texture_addressing_mode(const TextureType p_type, const UVWAddressingMode &uvw) {
+	GLenum gl_type = _get_texture_type(p_type);
+
+	glTexParameterf(gl_type, GL_TEXTURE_WRAP_S, _get_gl_texture_addressing_mode(uvw.u));
+	glTexParameterf(gl_type, GL_TEXTURE_WRAP_T, _get_gl_texture_addressing_mode(uvw.v));
+	glTexParameterf(gl_type, GL_TEXTURE_WRAP_R, _get_gl_texture_addressing_mode(uvw.w));
+}
+
+void RasterizerSceneGLES3::_set_texture_unit_filtering(const TextureType p_texture_type, const FilterType p_filter_type, const FilterOptions p_filter_options) {
+
+	GLenum gl_type = _get_texture_type(p_texture_type);
+	switch (p_filter_type) {
+		case FILTER_TYPE_MIN:
+			switch (p_filter_options) {
+				case FILTER_OPTION_NEAREST:
+					glTexParameteri(gl_type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					break;
+				case FILTER_OPTION_LINEAR:
+					glTexParameteri(gl_type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+					break;
+				case FILTER_OPTION_NEAREST_MIPMAP_NEAREST:
+					glTexParameteri(gl_type, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+					break;
+				case FILTER_OPTION_NEAREST_MIPMAP_LINEAR:
+					glTexParameteri(gl_type, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+					break;
+				case FILTER_OPTION_LINEAR_MIPMAP_NEAREST:
+					glTexParameteri(gl_type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+					break;
+				case FILTER_OPTION_LINEAR_MIPMAP_LINEAR:
+					glTexParameteri(gl_type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+					break;
+			}
+			break;
+		case FILTER_TYPE_MAG:
+			switch (p_filter_options) {
+				case FILTER_OPTION_NEAREST:
+					glTexParameteri(gl_type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					break;
+				case FILTER_OPTION_LINEAR:
+					glTexParameteri(gl_type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+					break;
+				case FILTER_OPTION_NEAREST_MIPMAP_NEAREST:
+					glTexParameteri(gl_type, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+					break;
+				case FILTER_OPTION_NEAREST_MIPMAP_LINEAR:
+					glTexParameteri(gl_type, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+					break;
+				case FILTER_OPTION_LINEAR_MIPMAP_NEAREST:
+					glTexParameteri(gl_type, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+					break;
+				case FILTER_OPTION_LINEAR_MIPMAP_LINEAR:
+					glTexParameteri(gl_type, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+					break;
+			}
+			break;
 	}
 }
 
@@ -1917,10 +2043,7 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 		state.scene_shader.set_conditional(SceneShaderGLES3::USE_RADIANCE_MAP_ARRAY, false);
 	}
 
-	state.cull_front = false;
-	state.cull_disabled = false;
-	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
+	_set_cull(false, false, false);
 
 	state.current_depth_test = true;
 	glEnable(GL_DEPTH_TEST);
@@ -3397,8 +3520,8 @@ void RasterizerSceneGLES3::_render_mrts(Environment *env, const CameraMatrix &p_
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, storage->frame.current_rt->effects.mip_maps[0].color);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); //disable filter (fixes bugs on AMD)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_NEAREST); //disable filter (fixes bugs on AMD)
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_NEAREST);
 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, storage->frame.current_rt->effects.ssao.blur_red[0]);
@@ -3417,8 +3540,8 @@ void RasterizerSceneGLES3::_render_mrts(Environment *env, const CameraMatrix &p_
 		_copy_screen(true);
 
 		glBindTexture(GL_TEXTURE_2D, storage->frame.current_rt->effects.mip_maps[0].color); //restore filter
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_LINEAR);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_LINEAR_MIPMAP_LINEAR);
 	}
 
 	if (env->ssr_enabled) {
@@ -3608,8 +3731,8 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, composite_from);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_NEAREST);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -3666,10 +3789,9 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, composite_from);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_NEAREST);
+		_set_texture_addressing_mode(TEXTURE_TYPE_2D, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 
 		glBindFramebuffer(GL_FRAMEBUFFER, storage->frame.current_rt->fbo); //copy to front first
 
@@ -3725,10 +3847,9 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 		//these needed to disable filtering, reenamble
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, storage->frame.current_rt->effects.mip_maps[0].color);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_LINEAR);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_LINEAR_MIPMAP_LINEAR);
+		_set_texture_addressing_mode(TEXTURE_TYPE_2D, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 	}
 
 	if (env->auto_exposure) {
@@ -4420,11 +4541,11 @@ void RasterizerSceneGLES3::render_scene(const Transform &p_cam_transform, const 
 		storage->canvas->canvas_begin();
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, env_radiance_tex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_NEAREST);
 		storage->canvas->draw_generic_textured_rect(Rect2(0, 0, storage->frame.current_rt->width / 2, storage->frame.current_rt->height / 2), Rect2(0, 0, 1, 1));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_LINEAR_MIPMAP_LINEAR);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_LINEAR);
 	}
 
 	//disable all stuff
@@ -4857,12 +4978,10 @@ void RasterizerSceneGLES3::initialize() {
 			glTexImage2D(_cube_side_enum[i], 0, GL_DEPTH_COMPONENT24, cube.size, cube.size, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
 		}
 
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_CUBE_MAP, FILTER_TYPE_MIN, FILTER_OPTION_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_CUBE_MAP, FILTER_TYPE_MAG, FILTER_OPTION_NEAREST);
 		// Remove artifact on the edges of the shadowmap
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		_set_texture_addressing_mode(TEXTURE_TYPE_CUBE_MAP, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 
 		//gen renderbuffers second, because it needs a complete cubemap
 		for (int i = 0; i < 6; i++) {
@@ -4889,11 +5008,9 @@ void RasterizerSceneGLES3::initialize() {
 		glGenTextures(1, &directional_shadow.depth);
 		glBindTexture(GL_TEXTURE_2D, directional_shadow.depth);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, directional_shadow.size, directional_shadow.size, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_LINEAR);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_LINEAR);
+		_set_texture_addressing_mode(TEXTURE_TYPE_2D, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, directional_shadow.depth, 0);
 		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -4973,10 +5090,9 @@ void RasterizerSceneGLES3::initialize() {
 			glGenTextures(1, &cube.depth);
 			glBindTexture(GL_TEXTURE_2D, cube.depth);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, cube.size, cube.size, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_NEAREST);
+			_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_NEAREST);
+			_set_texture_addressing_mode(TEXTURE_TYPE_2D, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 
 			glGenTextures(1, &cube.cubemap);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, cube.cubemap);
@@ -4986,12 +5102,10 @@ void RasterizerSceneGLES3::initialize() {
 				glTexImage2D(_cube_side_enum[i], 0, internal_format, cube.size, cube.size, 0, format, type, NULL);
 			}
 
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_NEAREST);
+			_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_NEAREST);
 			// Remove artifact on the edges of the reflectionmap
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			_set_texture_addressing_mode(TEXTURE_TYPE_CUBE_MAP, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 
 			//gen renderbuffers second, because it needs a complete cubemap
 			for (int i = 0; i < 6; i++) {
@@ -5069,10 +5183,9 @@ void RasterizerSceneGLES3::initialize() {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, max_exposure_shrink_size, max_exposure_shrink_size, 0, GL_RED, GL_FLOAT, NULL);
 #endif
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, e.color, 0);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MIN, FILTER_OPTION_NEAREST);
+		_set_texture_unit_filtering(TEXTURE_TYPE_2D, FILTER_TYPE_MAG, FILTER_OPTION_NEAREST);
+		_set_texture_addressing_mode(TEXTURE_TYPE_2D, UVWAddressingMode(MODE_CLAMP_TO_EDGE, MODE_CLAMP_TO_EDGE));
 
 		exposure_shrink.push_back(e);
 		max_exposure_shrink_size /= 3;

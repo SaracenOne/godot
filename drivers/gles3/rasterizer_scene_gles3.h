@@ -810,7 +810,18 @@ public:
 
 	RenderList render_list;
 
+	_FORCE_INLINE_ GLenum _get_gl_blend_factor(const BlendFactor p_blend_factor);
+	_FORCE_INLINE_ GLenum _get_gl_texture_addressing_mode(const TextureAddressingMode p_mode);
+	_FORCE_INLINE_ GLenum _get_texture_type(TextureType p_texture_type);
+
 	_FORCE_INLINE_ void _set_cull(bool p_front, bool p_disabled, bool p_reverse_cull);
+	_FORCE_INLINE_ void _set_scissor_mode(const bool p_enabled, Rect2 p_rectangle);
+
+	_FORCE_INLINE_ void _set_depth_test_enabled(bool p_enabled);
+	_FORCE_INLINE_ void _set_blending(BlendFactor p_source_factor, BlendFactor p_dest_factor, BlendOperation p_op);
+
+	_FORCE_INLINE_ void _set_texture_unit_filtering(const TextureType p_texture_type, const FilterType p_filter_type, const FilterOptions p_filter_options);
+	_FORCE_INLINE_ void _set_texture_addressing_mode(const TextureType p_texture_type, const UVWAddressingMode &uvw);
 
 	_FORCE_INLINE_ bool _setup_material(RasterizerStorageGLES3::Material *p_material, bool p_alpha_pass);
 	_FORCE_INLINE_ void _setup_geometry(RenderList::Element *e, const Transform &p_view_transform);

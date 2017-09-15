@@ -37,6 +37,78 @@
 
 class RasterizerScene {
 public:
+	enum BlendType {
+
+		BT_TRANSPARENT_ALPHA,
+		BT_TRANSPARENT_COLOR,
+		BT_ADD,
+		BT_MODULATE,
+		BT_REPLACE
+	};
+
+	enum BlendFactor {
+
+		BF_ONE,
+		BF_ZERO,
+		BF_DST_COLOR,
+		BF_SRC_COLOR,
+		BF_ONE_MINUS_DST_COLOR,
+		BF_ONE_MINUS_SRC_COLOR,
+		BF_DST_ALPHA,
+		BF_SRC_ALPHA,
+		BF_ONE_MINUS_DST_ALPHA,
+		BF_ONE_MINUS_SRC_ALPHA
+	};
+
+	enum BlendOperation {
+
+		BO_ADD,
+		BO_SUBTRACT,
+		BO_REVERSE_SUBTRACT,
+		BO_MIN,
+		BO_MAX
+	};
+
+	enum TextureAddressingMode {
+		MODE_REPEAT,
+		MODE_MIRRORED_REPEAT,
+		MODE_CLAMP_TO_EDGE,
+		MODE_CLAMP_TO_BORDER,
+	};
+
+	enum TextureType {
+		TEXTURE_TYPE_1D = 1,
+		TEXTURE_TYPE_2D = 2,
+		TEXTURE_TYPE_3D = 3,
+		TEXTURE_TYPE_CUBE_MAP = 4,
+		TEXTURE_TYPE_2D_ARRAY = 5
+	};
+
+	enum FilterOptions {
+		FILTER_OPTION_NEAREST,
+		FILTER_OPTION_LINEAR,
+		FILTER_OPTION_NEAREST_MIPMAP_NEAREST,
+		FILTER_OPTION_NEAREST_MIPMAP_LINEAR,
+		FILTER_OPTION_LINEAR_MIPMAP_NEAREST,
+		FILTER_OPTION_LINEAR_MIPMAP_LINEAR
+	};
+
+	enum FilterType {
+		FILTER_TYPE_MIN,
+		FILTER_TYPE_MAG,
+	};
+
+	class UVWAddressingMode {
+	public:
+		TextureAddressingMode u, v, w;
+
+		UVWAddressingMode(const TextureAddressingMode p_u = MODE_REPEAT, const TextureAddressingMode p_v = MODE_REPEAT, TextureAddressingMode p_w = MODE_REPEAT) {
+			u = p_u;
+			v = p_v;
+			w = p_w;
+		}
+	};
+
 	/* SHADOW ATLAS API */
 
 	virtual RID shadow_atlas_create() = 0;
