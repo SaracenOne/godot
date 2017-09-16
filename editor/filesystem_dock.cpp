@@ -34,6 +34,7 @@
 #include "io/resource_loader.h"
 #include "os/dir_access.h"
 #include "os/file_access.h"
+#include "os/input.h"
 #include "os/os.h"
 #include "project_settings.h"
 #include "scene/main/viewport.h"
@@ -160,6 +161,8 @@ void FileSystemDock::_notification(int p_what) {
 			current_path->connect("text_entered", this, "_go_to_dir");
 			_update_tree(); //maybe it finished already
 
+			get_tree()->connect("files_dropped", this, "_dropped_files");
+
 			if (EditorFileSystem::get_singleton()->is_scanning()) {
 				_set_scanning_mode();
 			}
@@ -172,6 +175,7 @@ void FileSystemDock::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
 
+			get_tree()->disconnect("files_dropped", this, "_dropped_files");
 		} break;
 		case NOTIFICATION_DRAG_BEGIN: {
 
@@ -1618,6 +1622,28 @@ void FileSystemDock::_file_selected() {
 	}
 }
 
+void FileSystemDock::_dropped_files(PoolStringArray p_files, int p_screen) {
+	Rect2 rect_position = Rect2(get_global_position(), get_size());
+	Point2 mouse_position = Input::get_singleton()->get_mouse_position();
+	//if (rect_position.has_point(mouse_position)) {
+	{
+		for (int i = 0; i < p_files.size(); i++) {
+			String file_path = p_files[i];
+			String file = file_path.get_file();
+			if (FileAccess::exists(file_path)) {
+				String file = file_path.get_file();
+
+				String base_name = file.get_basename();
+				String extensions = file.get_extension();
+			}
+
+			DirAccess *da = DirAccess::create(DirAccess::ACCESS_RESOURCES);
+			da->copy(file, get_current_path() + file);
+			memdelete(da);
+		}
+	}
+}
+
 void FileSystemDock::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_update_tree"), &FileSystemDock::_update_tree);
@@ -1650,6 +1676,7 @@ void FileSystemDock::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_preview_invalidated"), &FileSystemDock::_preview_invalidated);
 	ClassDB::bind_method(D_METHOD("_file_selected"), &FileSystemDock::_file_selected);
+	ClassDB::bind_method(D_METHOD("_dropped_files"), &FileSystemDock::_dropped_files);
 	ClassDB::bind_method(D_METHOD("_file_multi_selected"), &FileSystemDock::_file_multi_selected);
 
 	ADD_SIGNAL(MethodInfo("instance", PropertyInfo(Variant::POOL_STRING_ARRAY, "files")));
