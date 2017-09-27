@@ -277,6 +277,9 @@ const ShaderLanguage::KeyWord ShaderLanguage::keyword_list[] = {
 	{ TK_ARG_OUT, "out" },
 	{ TK_ARG_INOUT, "inout" },
 	{ TK_RENDER_MODE, "render_mode" },
+	{ TK_STENCIL_REF_VALUE, "stencil_ref_value" },
+	{ TK_STENCIL_READ_MASK, "stencil_read_mask" },
+	{ TK_STENCIL_WRITE_MASK, "stencil_write_mask" },
 	{ TK_HINT_WHITE_TEXTURE, "hint_white" },
 	{ TK_HINT_BLACK_TEXTURE, "hint_black" },
 	{ TK_HINT_NORMAL_TEXTURE, "hint_normal" },
@@ -3592,6 +3595,40 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 						return ERR_PARSE_ERROR;
 					}
 				}
+			} break;
+			case TK_STENCIL_REF_VALUE:
+			case TK_STENCIL_READ_MASK:
+			case TK_STENCIL_WRITE_MASK: {
+				tk = _get_token();
+				if (tk.type == TK_INT_CONSTANT) {
+					if (tk.constant < 0x00 || tk.constant > 0xff) {
+						_set_error("Invalid stencil value  '" + String::num(tk.constant) + "', must be 8-bit!");
+						return ERR_PARSE_ERROR;
+					}
+
+					tk = _get_token();
+					if (tk.type != TK_SEMICOLON) {
+						_set_error("Expected ';'");
+						return ERR_PARSE_ERROR;
+					}
+
+					switch (tk.type) {
+						case TK_STENCIL_REF_VALUE:
+							shader->stencil_ref_value = tk.constant;
+							break;
+						case TK_STENCIL_READ_MASK:
+							shader->stencil_read_mask = tk.constant;
+							break;
+						case TK_STENCIL_WRITE_MASK:
+							shader->stencil_write_mask = tk.constant;
+							break;
+					}
+
+				} else {
+					_set_error("Expected int constant. ");
+					return ERR_PARSE_ERROR;
+				}
+
 			} break;
 			case TK_UNIFORM:
 			case TK_VARYING: {

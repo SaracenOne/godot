@@ -798,6 +798,7 @@ public:
 
 		Transform2D xform;
 		bool clip;
+		bool mask;
 		bool visible;
 		bool behind;
 		//VS::MaterialBlendMode blend_mode;
@@ -824,6 +825,7 @@ public:
 		ViewportRender *vp_render;
 		bool distance_field;
 		bool light_masked;
+		uint8_t stencil_id;
 
 		Rect2 global_rect_cache;
 
@@ -979,10 +981,12 @@ public:
 				memdelete(commands[i]);
 			commands.clear();
 			clip = false;
+			mask = false;
 			rect_dirty = true;
 			final_clip_owner = NULL;
 			material_owner = NULL;
 			light_masked = false;
+			stencil_id = 0x00;
 		}
 		Item() {
 			light_mask = 1;
@@ -990,6 +994,7 @@ public:
 			next = NULL;
 			final_clip_owner = NULL;
 			clip = false;
+			mask = false;
 			final_modulate = Color(1, 1, 1, 1);
 			visible = true;
 			rect_dirty = true;
@@ -999,6 +1004,7 @@ public:
 			copy_back_buffer = NULL;
 			distance_field = false;
 			light_masked = false;
+			stencil_id = 0x00;
 		}
 		virtual ~Item() {
 			clear();

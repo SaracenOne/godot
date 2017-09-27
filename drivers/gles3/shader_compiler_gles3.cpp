@@ -294,6 +294,10 @@ String ShaderCompilerGLES3::_dump_node_code(SL::Node *p_node, int p_level, Gener
 				}
 			}
 
+			*p_actions.stencil_ref_value_pointer = pnode->stencil_ref_value;
+			*p_actions.stencil_read_mask_pointer = pnode->stencil_read_mask;
+			*p_actions.stencil_write_mask_pointer = pnode->stencil_write_mask;
+
 			int max_texture_uniforms = 0;
 			int max_uniforms = 0;
 

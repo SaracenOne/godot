@@ -1134,6 +1134,70 @@ bool RasterizerSceneGLES3::_setup_material(RasterizerStorageGLES3::Material *p_m
 		state.current_depth_draw = p_material->shader->spatial.depth_draw_mode;
 	}
 
+	_set_color_mask(
+			!state.color_write_disabled && !p_material->shader->spatial.disable_channel_r,
+			!state.color_write_disabled && !p_material->shader->spatial.disable_channel_g,
+			!state.color_write_disabled && !p_material->shader->spatial.disable_channel_b,
+			!state.color_write_disabled && !p_material->shader->spatial.disable_channel_a);
+
+	if (state.stencil_ref_value != p_material->shader->spatial.stencil_ref_value ||
+			state.stencil_read_mask != p_material->shader->spatial.stencil_read_mask ||
+			state.stencil_comparision_function != p_material->shader->spatial.stencil_comparision_function) {
+
+		switch (p_material->shader->spatial.stencil_comparision_function) {
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_ALWAYS:
+				state.stencil_comparision_function = GL_ALWAYS;
+				break;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_NEVER:
+				state.stencil_comparision_function = GL_NEVER;
+				break;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_LESS:
+				state.stencil_comparision_function = GL_LESS;
+				break;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_EQUAL:
+				state.stencil_comparision_function = GL_EQUAL;
+				break;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_LEQUAL:
+				state.stencil_comparision_function = GL_LEQUAL;
+				break;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_GREATER:
+				state.stencil_comparision_function = GL_GREATER;
+				break;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_NOTEQUAL:
+				state.stencil_comparision_function = GL_NOTEQUAL;
+				break;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_GEQUAL:
+				state.stencil_comparision_function = GL_GEQUAL;
+				break;
+			default:
+				state.stencil_comparision_function = GL_NEVER;
+				break;
+		};
+
+		state.stencil_ref_value = p_material->shader->spatial.stencil_ref_value;
+		state.stencil_read_mask = p_material->shader->spatial.stencil_read_mask;
+
+		glStencilFunc(state.stencil_comparision_function, state.stencil_ref_value, state.stencil_read_mask);
+	}
+
+	if (state.stencil_write_mask != p_material->shader->spatial.stencil_write_mask) {
+
+		state.stencil_write_mask = p_material->shader->spatial.stencil_write_mask;
+
+		glStencilMask(state.stencil_write_mask);
+	}
+
+	if (state.stencil_option_sfail != p_material->shader->spatial.stencil_option_sfail ||
+			state.stencil_option_dpfail != p_material->shader->spatial.stencil_option_dpfail ||
+			state.stencil_option_dppass != p_material->shader->spatial.stencil_option_dppass) {
+
+		state.stencil_option_sfail = RasterizerStorageGLES3::get_stencil_option(p_material->shader->spatial.stencil_option_sfail);
+		state.stencil_option_dpfail = RasterizerStorageGLES3::get_stencil_option(p_material->shader->spatial.stencil_option_dpfail);
+		state.stencil_option_dppass = RasterizerStorageGLES3::get_stencil_option(p_material->shader->spatial.stencil_option_dppass);
+
+		glStencilOp(state.stencil_option_sfail, state.stencil_option_dpfail, state.stencil_option_dppass);
+	}
+
 #if 0
 	//blend mode
 	if (state.current_blend_mode!=p_material->shader->spatial.blend_mode) {
@@ -1888,6 +1952,16 @@ void RasterizerSceneGLES3::_set_cull(bool p_front, bool p_disabled, bool p_rever
 	}
 }
 
+_FORCE_INLINE_ void RasterizerSceneGLES3::_set_color_mask(bool p_color_mask_red, bool p_color_mask_green, bool p_color_mask_blue, bool p_color_mask_alpha) {
+	if (p_color_mask_red != state.color_mask_red || p_color_mask_green != state.color_mask_green || p_color_mask_blue != state.color_mask_blue || p_color_mask_alpha != state.color_mask_alpha) {
+		glColorMask(p_color_mask_red ? 1 : 0, p_color_mask_green ? 1 : 0, p_color_mask_blue ? 1 : 0, p_color_mask_alpha ? 1 : 0);
+		state.color_mask_red = p_color_mask_red;
+		state.color_mask_green = p_color_mask_green;
+		state.color_mask_blue = p_color_mask_blue;
+		state.color_mask_alpha = p_color_mask_alpha;
+	}
+}
+
 void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_element_count, const Transform &p_view_transform, const CameraMatrix &p_projection, GLuint p_base_env, bool p_reverse_cull, bool p_alpha_pass, bool p_shadow, bool p_directional_add, bool p_directional_shadows) {
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, state.scene_ubo); //bind globals ubo
@@ -1948,6 +2022,8 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 
 	storage->info.render.draw_call_count += p_element_count;
 	bool prev_opaque_prepass = false;
+
+	glEnable(GL_STENCIL_TEST);
 
 	for (int i = 0; i < p_element_count; i++) {
 
@@ -2151,6 +2227,7 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 		first = false;
 	}
 
+	glDisable(GL_STENCIL_TEST);
 	glBindVertexArray(0);
 
 	state.scene_shader.set_conditional(SceneShaderGLES3::USE_INSTANCING, false);
@@ -2369,7 +2446,8 @@ void RasterizerSceneGLES3::_draw_sky(RasterizerStorageGLES3::Sky *p_sky, const C
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
-	glColorMask(1, 1, 1, 1);
+	state.color_write_disabled = false;
+	_set_color_mask(true, true, true, true);
 
 	// Camera
 	CameraMatrix camera;
@@ -2442,7 +2520,8 @@ void RasterizerSceneGLES3::_draw_sky(RasterizerStorageGLES3::Sky *p_sky, const C
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	glBindVertexArray(0);
-	glColorMask(1, 1, 1, 1);
+	state.color_write_disabled = false;
+	_set_color_mask(true, true, true, true);
 
 	storage->shaders.copy.set_conditional(CopyShaderGLES3::USE_ASYM_PANO, false);
 	storage->shaders.copy.set_conditional(CopyShaderGLES3::USE_MULTIPLIER, false);
@@ -3022,7 +3101,8 @@ void RasterizerSceneGLES3::_copy_to_front_buffer(Environment *env) {
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
-	glColorMask(1, 1, 1, 1);
+	state.color_write_disabled = false;
+	_set_color_mask(true, true, true, true);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, storage->frame.current_rt->buffers.diffuse);
@@ -3056,7 +3136,8 @@ void RasterizerSceneGLES3::_copy_texture_to_front_buffer(GLuint p_texture) {
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
-	glColorMask(1, 1, 1, 1);
+	state.color_write_disabled = false;
+	_set_color_mask(true, true, true, true);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, p_texture);
@@ -3524,7 +3605,8 @@ void RasterizerSceneGLES3::_post_process(Environment *env, const CameraMatrix &p
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
-	glColorMask(1, 1, 1, 1);
+	state.color_write_disabled = false;
+	_set_color_mask(true, true, true, true);
 
 	//turn off everything used
 
@@ -4048,6 +4130,7 @@ void RasterizerSceneGLES3::render_scene(const Transform &p_cam_transform, const 
 	bool fb_cleared = false;
 
 	glDepthFunc(GL_LEQUAL);
+	glStencilMask(0xff);
 
 	state.used_contact_shadows = true;
 
@@ -4063,7 +4146,8 @@ void RasterizerSceneGLES3::render_scene(const Transform &p_cam_transform, const 
 
 		glViewport(0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height);
 
-		glColorMask(0, 0, 0, 0);
+		state.color_write_disabled = true;
+		_set_color_mask(false, false, false, false);
 		glClearDepth(1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -4074,7 +4158,8 @@ void RasterizerSceneGLES3::render_scene(const Transform &p_cam_transform, const 
 		_render_list(render_list.elements, render_list.element_count, p_cam_transform, p_cam_projection, 0, false, false, true, false, false);
 		state.scene_shader.set_conditional(SceneShaderGLES3::RENDER_DEPTH, false);
 
-		glColorMask(1, 1, 1, 1);
+		state.color_write_disabled = false;
+		_set_color_mask(true, true, true, true);
 
 		if (state.used_contact_shadows) {
 
@@ -4317,7 +4402,8 @@ void RasterizerSceneGLES3::render_scene(const Transform &p_cam_transform, const 
 	}
 
 	//_render_list_forward(&alpha_render_list,camera_transform,camera_transform_inverse,camera_projection,false,fragment_lighting,true);
-	//glColorMask(1,1,1,1);
+	//state.color_write_disabled = false;
+	//_set_color_mask(true, true, true, true);
 
 	//state.scene_shader.set_conditional( SceneShaderGLES3::USE_FOG,false);
 
@@ -4615,7 +4701,8 @@ void RasterizerSceneGLES3::render_shadow(RID p_light, RID p_shadow_atlas, int p_
 	glEnable(GL_DEPTH_TEST);
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glDepthMask(true);
-	glColorMask(0, 0, 0, 0);
+	state.color_write_disabled = true;
+	_set_color_mask(false, false, false, false);
 
 	if (custom_vp_size) {
 		glViewport(0, 0, custom_vp_size, custom_vp_size);
@@ -4628,7 +4715,7 @@ void RasterizerSceneGLES3::render_shadow(RID p_light, RID p_shadow_atlas, int p_
 
 	glEnable(GL_SCISSOR_TEST);
 	glClearDepth(1.0f);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glDisable(GL_SCISSOR_TEST);
 
 	state.ubo_data.z_offset = bias;
@@ -4683,7 +4770,7 @@ void RasterizerSceneGLES3::render_shadow(RID p_light, RID p_shadow_atlas, int p_
 			glScissor(local_x, local_y, local_width, local_height);
 			glEnable(GL_SCISSOR_TEST);
 			glClearDepth(1.0f);
-			glClear(GL_DEPTH_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			glDisable(GL_SCISSOR_TEST);
 			//glDisable(GL_DEPTH_TEST);
 			glDisable(GL_BLEND);
@@ -4692,7 +4779,8 @@ void RasterizerSceneGLES3::render_shadow(RID p_light, RID p_shadow_atlas, int p_
 		}
 	}
 
-	glColorMask(1, 1, 1, 1);
+	state.color_write_disabled = false;
+	_set_color_mask(true, true, true, true);
 }
 
 void RasterizerSceneGLES3::set_scene_pass(uint64_t p_pass) {
@@ -5074,6 +5162,11 @@ void RasterizerSceneGLES3::initialize() {
 		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		ERR_CONTINUE(status != GL_FRAMEBUFFER_COMPLETE);
 	}
+
+	state.color_mask_red = true;
+	state.color_mask_green = true;
+	state.color_mask_blue = true;
+	state.color_mask_alpha = true;
 
 	state.debug_draw = VS::VIEWPORT_DEBUG_DRAW_DISABLED;
 
