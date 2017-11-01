@@ -136,6 +136,9 @@ public:
 		TK_ARG_OUT,
 		TK_ARG_INOUT,
 		TK_RENDER_MODE,
+		TK_STENCIL_REF_VALUE,
+		TK_STENCIL_READ_MASK,
+		TK_STENCIL_WRITE_MASK,
 		TK_HINT_WHITE_TEXTURE,
 		TK_HINT_BLACK_TEXTURE,
 		TK_HINT_NORMAL_TEXTURE,
@@ -467,6 +470,9 @@ public:
 		Map<StringName, Varying> varyings;
 		Map<StringName, Uniform> uniforms;
 		Vector<StringName> render_modes;
+		uint8_t stencil_ref_value = 0x00;
+		uint8_t stencil_read_mask = 0x00;
+		uint8_t stencil_write_mask = 0x00;
 
 		Vector<Function> functions;
 

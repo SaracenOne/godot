@@ -52,6 +52,8 @@ void glTexStorage2DCustom(GLenum target, GLsizei levels, GLenum internalformat, 
 
 class RasterizerStorageGLES3 : public RasterizerStorage {
 public:
+	struct Shader;
+
 	RasterizerCanvasGLES3 *canvas;
 	RasterizerSceneGLES3 *scene;
 	static GLuint system_fbo; //on some devices, such as apple, screen is rendered to yet another fbo.
@@ -434,6 +436,39 @@ public:
 
 			int depth_draw_mode;
 
+			enum StencilComparison {
+				STENCIL_COMPARISON_ALWAYS,
+				STENCIL_COMPARISON_NEVER,
+				STENCIL_COMPARISON_LESS,
+				STENCIL_COMPARISON_EQUAL,
+				STENCIL_COMPARISON_LEQUAL,
+				STENCIL_COMPARISON_GREATER,
+				STENCIL_COMPARISON_NOTEQUAL,
+				STENCIL_COMPARISON_GEQUAL,
+				STENCIL_COMPARISON_COUNT
+			};
+
+			enum StencilOperation {
+				STENCIL_OP_KEEP,
+				STENCIL_OP_ZERO,
+				STENCIL_OP_REPLACE,
+				STENCIL_OP_INCREMENT_SATURATE,
+				STENCIL_OP_INCREMENT_WRAP,
+				STENCIL_OP_DECREMENT_SATURATE,
+				STENCIL_OP_DECREMENT_WRAP,
+				STENCIL_OP_INVERT,
+				STENCIL_OP_COUNT
+			};
+
+			uint8_t stencil_ref_value = 0x00;
+			uint8_t stencil_read_mask = 0x00;
+			uint8_t stencil_write_mask = 0x00;
+
+			int stencil_comparision_function = STENCIL_COMPARISON_ALWAYS;
+			int stencil_option_sfail = STENCIL_OP_KEEP;
+			int stencil_option_dpfail = STENCIL_OP_KEEP;
+			int stencil_option_dppass = STENCIL_OP_KEEP;
+
 			enum CullMode {
 				CULL_MODE_FRONT,
 				CULL_MODE_BACK,
@@ -453,6 +488,10 @@ public:
 			bool uses_time;
 			bool writes_modelview_or_projection;
 			bool uses_vertex_lighting;
+			bool disable_channel_r;
+			bool disable_channel_g;
+			bool disable_channel_b;
+			bool disable_channel_a;
 
 		} spatial;
 
@@ -488,6 +527,7 @@ public:
 	virtual void shader_set_default_texture_param(RID p_shader, const StringName &p_name, RID p_texture);
 	virtual RID shader_get_default_texture_param(RID p_shader, const StringName &p_name) const;
 
+	static GLuint get_stencil_option(const int p_option);
 	void _update_shader(Shader *p_shader) const;
 
 	void update_dirty_shaders();
