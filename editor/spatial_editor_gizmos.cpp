@@ -1637,6 +1637,27 @@ PortalSpatialGizmo::PortalSpatialGizmo(Portal *p_portal) {
 #endif
 /////
 
+void SpatialCanvasGizmo::redraw() {
+
+	clear();
+	add_mesh(SpatialEditorGizmos::singleton->pos3d_mesh);
+	Vector<Vector3> cursor_points;
+	float cs = 0.25;
+	cursor_points.push_back(Vector3(+cs, 0, 0));
+	cursor_points.push_back(Vector3(-cs, 0, 0));
+	cursor_points.push_back(Vector3(0, +cs, 0));
+	cursor_points.push_back(Vector3(0, -cs, 0));
+	cursor_points.push_back(Vector3(0, 0, +cs));
+	cursor_points.push_back(Vector3(0, 0, -cs));
+	add_collision_segments(cursor_points);
+}
+
+SpatialCanvasGizmo::SpatialCanvasGizmo(SpatialCanvas *p_spatial_canvas) {
+
+	spatial_canvas = p_spatial_canvas;
+	set_spatial_node(spatial_canvas);
+}
+
 void RayCastSpatialGizmo::redraw() {
 
 	clear();
@@ -3465,6 +3486,12 @@ Ref<SpatialEditorGizmo> SpatialEditorGizmos::get_gizmo(Spatial *p_spatial) {
 	if (Object::cast_to<Position3D>(p_spatial)) {
 
 		Ref<Position3DSpatialGizmo> lsg = memnew(Position3DSpatialGizmo(Object::cast_to<Position3D>(p_spatial)));
+		return lsg;
+	}
+
+	if (Object::cast_to<SpatialCanvas>(p_spatial)) {
+
+		Ref<SpatialCanvasGizmo> lsg = memnew(SpatialCanvasGizmo(Object::cast_to<SpatialCanvas>(p_spatial)));
 		return lsg;
 	}
 

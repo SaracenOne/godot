@@ -48,6 +48,7 @@
 #include "scene/3d/ray_cast.h"
 #include "scene/3d/reflection_probe.h"
 #include "scene/3d/room_instance.h"
+#include "scene/3d/spatial_canvas.h"
 #include "scene/3d/vehicle_body.h"
 #include "scene/3d/visibility_notifier.h"
 
@@ -210,6 +211,17 @@ class SkeletonSpatialGizmo : public EditorSpatialGizmo {
 public:
 	void redraw();
 	SkeletonSpatialGizmo(Skeleton *p_skel = NULL);
+};
+
+class SpatialCanvasGizmo : public EditorSpatialGizmo {
+
+	GDCLASS(SpatialCanvasGizmo, EditorSpatialGizmo);
+
+	SpatialCanvas *spatial_canvas;
+
+public:
+	void redraw();
+	SpatialCanvasGizmo(SpatialCanvas *p_spatial_canvas = NULL);
 };
 
 #if 0
