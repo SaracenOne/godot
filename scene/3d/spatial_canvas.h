@@ -31,19 +31,34 @@
 #define SPATIAL_CANVAS_H
 
 #include "scene/3d/spatial.h"
+#include "scene/3d/visual_instance.h"
 
-class SpatialCanvas : public Spatial {
+class SpatialCanvas : public VisualInstance {
 
-	GDCLASS(SpatialCanvas, Spatial);
+	GDCLASS(SpatialCanvas, VisualInstance);
 
-protected:
+	RID viewport;
+	Viewport *vp;
+
+	int sort_index;
 	Size2 size;
 
+	Ref<World2D> canvas;
+
+protected:
 	static void _bind_methods();
 
 public:
+	virtual AABB get_aabb() const;
+	virtual PoolVector<Face3> get_faces(uint32_t p_usage_flags) const;
+
 	Size2 get_size() const;
 	void set_size(const Size2 &p_size);
+
+	void reset_sort_index();
+	int get_sort_index();
+
+	Ref<World2D> get_world_2d() const;
 
 	SpatialCanvas();
 	~SpatialCanvas();

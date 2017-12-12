@@ -30,6 +30,7 @@
 #ifndef CANVAS_ITEM_H
 #define CANVAS_ITEM_H
 
+#include "scene/3d/spatial_canvas.h"
 #include "scene/main/node.h"
 #include "scene/main/scene_tree.h"
 #include "scene/resources/material.h"
@@ -152,6 +153,7 @@ private:
 	RID canvas_item;
 	String group;
 
+	SpatialCanvas *spatial_canvas;
 	CanvasLayer *canvas_layer;
 
 	Color modulate;
@@ -303,6 +305,7 @@ public:
 
 	CanvasItem *get_toplevel() const;
 	_FORCE_INLINE_ RID get_canvas_item() const { return canvas_item; }
+	_FORCE_INLINE_ SpatialCanvas *get_spatial_canvas() const { return spatial_canvas; }
 
 	void set_block_transform_notify(bool p_enable);
 	bool is_block_transform_notify_enabled() const;

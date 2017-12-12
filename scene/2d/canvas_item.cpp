@@ -388,6 +388,8 @@ void CanvasItem::_toplevel_raise_self() {
 
 	if (canvas_layer)
 		VisualServer::get_singleton()->canvas_item_set_draw_index(canvas_item, canvas_layer->get_sort_index());
+	else if (spatial_canvas)
+		VisualServer::get_singleton()->canvas_item_set_draw_index(canvas_item, spatial_canvas->get_sort_index());
 	else
 		VisualServer::get_singleton()->canvas_item_set_draw_index(canvas_item, get_viewport()->gui_get_canvas_sort_index());
 }
@@ -399,11 +401,16 @@ void CanvasItem::_enter_canvas() {
 		Node *n = this;
 
 		canvas_layer = NULL;
+		spatial_canvas = NULL;
 
 		while (n) {
 
 			canvas_layer = Object::cast_to<CanvasLayer>(n);
 			if (canvas_layer) {
+				break;
+			}
+			spatial_canvas = Object::cast_to<SpatialCanvas>(n);
+			if (spatial_canvas) {
 				break;
 			}
 			n = n->get_parent();
@@ -412,6 +419,8 @@ void CanvasItem::_enter_canvas() {
 		RID canvas;
 		if (canvas_layer)
 			canvas = canvas_layer->get_world_2d()->get_canvas();
+		else if (spatial_canvas)
+			canvas = spatial_canvas->get_world_2d()->get_canvas();
 		else
 			canvas = get_viewport()->find_world_2d()->get_canvas();
 
@@ -431,6 +440,7 @@ void CanvasItem::_enter_canvas() {
 
 		CanvasItem *parent = get_parent_item();
 		canvas_layer = parent->canvas_layer;
+		spatial_canvas = parent->spatial_canvas;
 		VisualServer::get_singleton()->canvas_item_set_parent(canvas_item, parent->get_canvas_item());
 		VisualServer::get_singleton()->canvas_item_set_draw_index(canvas_item, get_index());
 	}
@@ -446,6 +456,7 @@ void CanvasItem::_exit_canvas() {
 	notification(NOTIFICATION_EXIT_CANVAS, true); //reverse the notification
 	VisualServer::get_singleton()->canvas_item_set_parent(canvas_item, RID());
 	canvas_layer = NULL;
+	spatial_canvas = NULL;
 	group = "";
 }
 
@@ -1171,6 +1182,7 @@ CanvasItem::CanvasItem() :
 	block_transform_notify = false;
 	//viewport=NULL;
 	canvas_layer = NULL;
+	spatial_canvas = NULL;
 	use_parent_material = false;
 	global_invalid = true;
 	notify_local_transform = false;
