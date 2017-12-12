@@ -1640,16 +1640,25 @@ PortalSpatialGizmo::PortalSpatialGizmo(Portal *p_portal) {
 void SpatialCanvasGizmo::redraw() {
 
 	clear();
-	add_mesh(SpatialEditorGizmos::singleton->pos3d_mesh);
-	Vector<Vector3> cursor_points;
-	float cs = 0.25;
-	cursor_points.push_back(Vector3(+cs, 0, 0));
-	cursor_points.push_back(Vector3(-cs, 0, 0));
-	cursor_points.push_back(Vector3(0, +cs, 0));
-	cursor_points.push_back(Vector3(0, -cs, 0));
-	cursor_points.push_back(Vector3(0, 0, +cs));
-	cursor_points.push_back(Vector3(0, 0, -cs));
-	add_collision_segments(cursor_points);
+
+	Vector<Vector3> lines;
+	lines.push_back(Vector3());
+	lines.push_back(Vector3(spatial_canvas->get_size().x, 0.0, 0.0));
+
+	lines.push_back(Vector3(spatial_canvas->get_size().x, 0.0, 0.0));
+	lines.push_back(Vector3(spatial_canvas->get_size().x, -spatial_canvas->get_size().y, 0.0));
+
+	lines.push_back(Vector3(spatial_canvas->get_size().x, -spatial_canvas->get_size().y, 0.0));
+	lines.push_back(Vector3(0.0, -spatial_canvas->get_size().y, 0.0));
+
+	lines.push_back(Vector3(0.0, -spatial_canvas->get_size().y, 0.0));
+	lines.push_back(Vector3());
+
+	Color gizmo_color = EDITOR_GET("editors/3d_gizmos/gizmo_colors/spatial_canvas");
+	Ref<Material> material = create_material("spatial_canvas_material", gizmo_color);
+
+	add_lines(lines, material);
+	add_collision_segments(lines);
 }
 
 SpatialCanvasGizmo::SpatialCanvasGizmo(SpatialCanvas *p_spatial_canvas) {
@@ -3651,6 +3660,7 @@ SpatialEditorGizmos::SpatialEditorGizmos() {
 	EDITOR_DEF("editors/3d_gizmos/gizmo_colors/navigation_edge_disabled", Color(0.7, 0.7, 0.7));
 	EDITOR_DEF("editors/3d_gizmos/gizmo_colors/navigation_solid", Color(0.5, 1, 1, 0.4));
 	EDITOR_DEF("editors/3d_gizmos/gizmo_colors/navigation_solid_disabled", Color(0.7, 0.7, 0.7, 0.4));
+	EDITOR_DEF("editors/3d_gizmos/gizmo_colors/spatial_canvas", Color(1.0, 1.0, 1.0, 0.9));
 	EDITOR_DEF("editors/3d_gizmos/gizmo_colors/instanced", Color(0.7, 0.7, 0.7, 0.5));
 
 #if 0

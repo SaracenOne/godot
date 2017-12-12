@@ -29,5 +29,29 @@
 /*************************************************************************/
 #include "spatial_canvas.h"
 
+Size2 SpatialCanvas::get_size() const {
+	return size;
+}
+
+void SpatialCanvas::set_size(const Size2 &p_size) {
+	size = p_size;
+
+#if TOOLS_ENABLED
+	update_gizmo();
+#endif
+}
+
+void SpatialCanvas::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_size"), &SpatialCanvas::get_size);
+	ClassDB::bind_method(D_METHOD("set_size"), &SpatialCanvas::set_size);
+
+	ADD_GROUP("Rect", "rect_");
+	ADD_PROPERTYNZ(PropertyInfo(Variant::VECTOR2, "rect_size", PROPERTY_HINT_NONE, ""), "set_size", "get_size");
+}
+
 SpatialCanvas::SpatialCanvas() {
+	size = Size2(Vector2());
+}
+
+SpatialCanvas::~SpatialCanvas() {
 }

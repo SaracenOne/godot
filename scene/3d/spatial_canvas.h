@@ -36,8 +36,17 @@ class SpatialCanvas : public Spatial {
 
 	GDCLASS(SpatialCanvas, Spatial);
 
+protected:
+	Size2 size;
+
+	static void _bind_methods();
+
 public:
+	Size2 get_size() const;
+	void set_size(const Size2 &p_size);
+
 	SpatialCanvas();
+	~SpatialCanvas();
 };
 
 #endif // SPATIAL_CANVAS_H
