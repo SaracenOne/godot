@@ -77,8 +77,8 @@ class VisualServerRaster : public VisualServer {
 	static void _changes_changed() {}
 
 public:
-	//if editor is redrawing when it shouldn't, enable this and put a breakpoint in _changes_changed()
-	//#define DEBUG_CHANGES
+//if editor is redrawing when it shouldn't, enable this and put a breakpoint in _changes_changed()
+//#define DEBUG_CHANGES
 
 #ifdef DEBUG_CHANGES
 	_FORCE_INLINE_ static void redraw_request() {
@@ -406,6 +406,17 @@ public:
 	BIND1R(AABB, particles_get_current_aabb, RID)
 	BIND2(particles_set_emission_transform, RID, const Transform &)
 
+	/* SPATIAL CANVAS */
+
+	BIND0R(RID, spatial_canvas_create)
+
+	BIND2(spatial_canvas_set_aabb, RID, const AABB &)
+	BIND1RC(AABB, spatial_canvas_get_aabb, RID)
+
+	BIND2(spatial_canvas_set_canvas, RID, RID)
+
+	BIND2(spatial_canvas_set_size, RID, Size2)
+
 #undef BINDBASE
 //from now on, calls forwarded to this singleton
 #define BINDBASE VSG::scene
@@ -468,7 +479,7 @@ public:
 	BIND2R(int, viewport_get_render_info, RID, ViewportRenderInfo)
 	BIND2(viewport_set_debug_draw, RID, ViewportDebugDraw)
 
-	/* ENVIRONMENT API */
+/* ENVIRONMENT API */
 
 #undef BINDBASE
 //from now on, calls forwarded to this singleton
@@ -498,7 +509,7 @@ public:
 	BIND6(environment_set_fog_depth, RID, bool, float, float, bool, float)
 	BIND5(environment_set_fog_height, RID, bool, float, float, float)
 
-	/* SCENARIO API */
+/* SCENARIO API */
 
 #undef BINDBASE
 #define BINDBASE VSG::scene

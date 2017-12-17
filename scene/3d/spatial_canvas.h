@@ -33,20 +33,22 @@
 #include "scene/3d/spatial.h"
 #include "scene/3d/visual_instance.h"
 
-class SpatialCanvas : public VisualInstance {
+class Viewport;
+class SpatialCanvas : public GeometryInstance {
 
-	GDCLASS(SpatialCanvas, VisualInstance);
-
-	RID viewport;
-	Viewport *vp;
+	GDCLASS(SpatialCanvas, GeometryInstance);
 
 	int sort_index;
 	Size2 size;
 
-	Ref<World2D> canvas;
+	Ref<World2D> world_2d;
+
+	RID current_canvas;
+	RID spatial_canvas;
 
 protected:
 	static void _bind_methods();
+	void _notification(int p_what);
 
 public:
 	virtual AABB get_aabb() const;

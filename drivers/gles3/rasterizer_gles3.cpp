@@ -392,6 +392,7 @@ RasterizerGLES3::RasterizerGLES3() {
 	canvas->scene_render = scene;
 	storage->canvas = canvas;
 	scene->storage = storage;
+	scene->canvas = canvas;
 	storage->scene = scene;
 
 	prev_ticks = 0;

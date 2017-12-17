@@ -87,6 +87,7 @@ public:
 	RID default_overdraw_shader;
 
 	RasterizerStorageGLES3 *storage;
+	RasterizerCanvasGLES3 *canvas;
 
 	Vector<RasterizerStorageGLES3::RenderTarget::Exposure> exposure_shrink;
 	int exposure_shrink_size;
@@ -814,6 +815,7 @@ public:
 
 	_FORCE_INLINE_ bool _setup_material(RasterizerStorageGLES3::Material *p_material, bool p_alpha_pass);
 	_FORCE_INLINE_ void _setup_geometry(RenderList::Element *e, const Transform &p_view_transform);
+	_FORCE_INLINE_ void _render_canvas_item(VisualServerCanvas::Item *p_canvas_item, const Transform2D &p_transform, const Rect2 &p_clip_rect, const Color &p_modulate, int p_z, RasterizerCanvas::Item **z_list, RasterizerCanvas::Item **z_last_list, VisualServerCanvas::Item *p_canvas_clip, VisualServerCanvas::Item *p_material_owner);
 	_FORCE_INLINE_ void _render_geometry(RenderList::Element *e);
 	_FORCE_INLINE_ void _setup_light(RenderList::Element *e, const Transform &p_view_transform);
 

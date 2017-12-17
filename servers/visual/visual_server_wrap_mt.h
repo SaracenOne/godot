@@ -62,7 +62,7 @@ class VisualServerWrapMT : public VisualServer {
 
 	int pool_max_size;
 
-	//#define DEBUG_SYNC
+//#define DEBUG_SYNC
 
 	static VisualServerWrapMT *singleton_mt;
 
@@ -338,6 +338,17 @@ public:
 	FUNC2(particles_set_emission_transform, RID, const Transform &)
 
 	FUNC1R(AABB, particles_get_current_aabb, RID)
+
+	/* SPATIAL CANVAS */
+
+	FUNCRID(spatial_canvas)
+
+	FUNC2(spatial_canvas_set_aabb, RID, const AABB &)
+	FUNC1RC(AABB, spatial_canvas_get_aabb, RID)
+
+	FUNC2(spatial_canvas_set_canvas, RID, RID)
+
+	FUNC2(spatial_canvas_set_size, RID, Size2)
 
 	/* CAMERA API */
 

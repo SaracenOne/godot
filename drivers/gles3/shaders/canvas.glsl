@@ -34,9 +34,16 @@ uniform highp vec2 color_texpixel_size;
 
 layout(std140) uniform CanvasItemData { //ubo:0
 
+	highp mat4 camera_inverse_matrix;
 	highp mat4 projection_matrix;
+	highp mat4 camera_matrix;
 	highp float time;
 };
+
+#ifdef USE_WORLD_TRANSFORM
+
+uniform highp mat4 world_transform;
+#endif
 
 uniform highp mat4 modelview_matrix;
 uniform highp mat4 extra_matrix;
@@ -106,7 +113,15 @@ VERTEX_SHADER_GLOBALS
 void main() {
 
 	vec4 color = color_attrib;
+	
+#ifdef USE_WORLD_TRANSFORM
+	mat4 world_matrix = world_transform;
+	highp mat4 modelview = camera_inverse_matrix * mat4(world_matrix[0], -world_matrix[1], world_matrix[2], world_matrix[3]);
+#else
+	highp mat4 modelview = camera_inverse_matrix;
+#endif
 
+	
 #ifdef USE_INSTANCING
 	mat4 extra_matrix2 = extra_matrix * transpose(mat4(instance_xform0,instance_xform1,instance_xform2,vec4(0.0,0.0,0.0,1.0)));
 	color*=instance_color;
@@ -174,7 +189,7 @@ VERTEX_SHADER_CODE
 	outvec.xy=floor(outvec+0.5);
 #endif
 
-
+	outvec = modelview * outvec;
 	gl_Position = projection_matrix * outvec;
 
 #ifdef USE_LIGHTING
@@ -224,7 +239,9 @@ uniform vec2 screen_pixel_size;
 
 layout(std140) uniform CanvasItemData {
 
+	highp mat4 camera_inverse_matrix;
 	highp mat4 projection_matrix;
+	highp mat4 camera_matrix;
 	highp float time;
 };
 

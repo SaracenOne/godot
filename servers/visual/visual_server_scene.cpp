@@ -438,7 +438,8 @@ void VisualServerScene::instance_set_base(RID p_instance, RID p_base) {
 			case VS::INSTANCE_MESH:
 			case VS::INSTANCE_MULTIMESH:
 			case VS::INSTANCE_IMMEDIATE:
-			case VS::INSTANCE_PARTICLES: {
+			case VS::INSTANCE_PARTICLES:
+			case VS::INSTANCE_SPATIAL_CANVAS: {
 
 				InstanceGeometryData *geom = memnew(InstanceGeometryData);
 				instance->base_data = geom;
@@ -984,6 +985,11 @@ void VisualServerScene::_update_instance_aabb(Instance *p_instance) {
 				new_aabb = *p_instance->custom_aabb;
 			else
 				new_aabb = VSG::storage->particles_get_aabb(p_instance->base);
+
+		} break;
+		case VisualServer::INSTANCE_SPATIAL_CANVAS: {
+
+			new_aabb = VSG::storage->spatial_canvas_get_aabb(p_instance->base);
 
 		} break;
 		case VisualServer::INSTANCE_LIGHT: {
@@ -1664,6 +1670,7 @@ void VisualServerScene::render_camera(RID p_camera, RID p_scenario, Size2 p_view
 					camera->znear,
 					camera->zfar,
 					camera->vaspect);
+
 			ortho = false;
 
 		} break;
