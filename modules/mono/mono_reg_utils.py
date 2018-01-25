@@ -73,6 +73,12 @@ def find_msbuild_tools_path_reg():
     vswhere = os.getenv('PROGRAMFILES(X86)')
     if not vswhere:
         vswhere = os.getenv('PROGRAMFILES')
+    
+	# This should never happen, but just to be safe...
+    if not vswhere:
+        print('Cannot find `PROGRAMFILES(X86)` or `PROGRAMFILES` environment variables')
+        return ''
+
     vswhere += r'\Microsoft Visual Studio\Installer\vswhere.exe'
 
     vswhere_args = ['-latest', '-requires', 'Microsoft.Component.MSBuild']

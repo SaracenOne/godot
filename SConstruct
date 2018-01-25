@@ -203,7 +203,7 @@ opts.Add("LINKFLAGS", "Custom flags for the linker")
 
 # add platform specific options
 
-for k in platform_opts.keys():
+for k in list(platform_opts.keys()):
     opt_list = platform_opts[k]
     for o in opt_list:
         opts.Add(o)
@@ -451,7 +451,7 @@ if selected_platform in platform_list:
     scons_cache_path = os.environ.get("SCONS_CACHE")
     if scons_cache_path != None:
         CacheDir(scons_cache_path)
-        print("Scons cache enabled... (path: '" + scons_cache_path + "')")
+        print(("Scons cache enabled... (path: '" + scons_cache_path + "')"))
 
     Export('env')
 
@@ -490,7 +490,7 @@ else:
     print("No valid target platform selected.")
     print("The following were detected:")
     for x in platform_list:
-        print("\t" + x)
+        print(("\t" + x))
     print("\nPlease run scons again with argument: platform=<string>")
 
 
@@ -548,7 +548,7 @@ class cache_progress:
         if env['verbose']:
             # Utter something
             screen.write('\rPurging %d %s from cache...\n' % (len(files), len(files) > 1 and 'files' or 'file'))
-        map(os.remove, files)
+        list(map(os.remove, files))
 
     def file_list(self):
         if self.path == None:
