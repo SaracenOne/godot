@@ -39,39 +39,97 @@ const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
 const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
+const IID IID_IAudioCaptureClient = __uuidof(IAudioCaptureClient);
 
-Error AudioDriverWASAPI::init_device(bool reinit) {
+#define SAFE_RELEASE(memory)  \
+if ((memory) != NULL)  \
+	{ (memory)->Release(); (memory) = NULL; }
+
+#define REFTIMES_PER_SEC  10000000
+#define REFTIMES_PER_MILLISEC  10000
+
+Error AudioDriverWASAPI::get_input_devices() {
+	IMMDeviceEnumerator *enumerator = NULL;
+	IMMDeviceCollection *device_collection;
+	IMMDevice *device = NULL;
+	IPropertyStore *props = NULL;
+	LPWSTR pwszID = NULL;
+
+	HRESULT hr = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void **)&enumerator);
+	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+	hr = enumerator->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE, &device_collection);
+	SAFE_RELEASE(enumerator)
+
+	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+	UINT count;
+	hr = device_collection->GetCount(&count);
+	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+	for (unsigned int i = 0; i < count; i++) {
+		hr = device_collection->Item(i, &device);
+		ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+		hr = device->GetId(&pwszID);
+		ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+		hr = device->OpenPropertyStore(
+		STGM_READ, &props);
+		ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+		PROPVARIANT var_name;
+		PropVariantInit(&var_name);
+
+		hr = props->GetValue(PKEY_Device_FriendlyName, &var_name);
+		ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+		printf("Endpoint %d: \"%S\" (%S)\n", i, var_name.pwszVal, pwszID);
+
+		CoTaskMemFree(pwszID);
+		pwszID = NULL;
+		PropVariantClear(&var_name);
+		SAFE_RELEASE(props)
+		SAFE_RELEASE(device)
+	}
+}
+
+Error AudioDriverWASAPI::init_out_device(bool reinit) {
 
 	WAVEFORMATEX *pwfex;
 	IMMDeviceEnumerator *enumerator = NULL;
 	IMMDevice *device = NULL;
 
-	CoInitialize(NULL);
-
 	HRESULT hr = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void **)&enumerator);
 	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
 
 	hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
+	SAFE_RELEASE(enumerator)
+
 	if (reinit) {
 		// In case we're trying to re-initialize the device prevent throwing this error on the console,
 		// otherwise if there is currently no devie available this will spam the console.
 		if (hr != S_OK) {
 			return ERR_CANT_OPEN;
 		}
-	} else {
+	}
+	else {
 		ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
 	}
 
-	hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void **)&audio_client);
+	hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void **)&audio_out_client);
+	SAFE_RELEASE(device)
+
 	if (reinit) {
 		if (hr != S_OK) {
 			return ERR_CANT_OPEN;
 		}
-	} else {
+	}
+	else {
 		ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
 	}
 
-	hr = audio_client->GetMixFormat(&pwfex);
+	hr = audio_out_client->GetMixFormat(&pwfex);
 	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
 
 	// Since we're using WASAPI Shared Mode we can't control any of these, we just tag along
@@ -81,17 +139,17 @@ Error AudioDriverWASAPI::init_device(bool reinit) {
 	bits_per_sample = pwfex->wBitsPerSample;
 
 	switch (wasapi_channels) {
-		case 2: // Stereo
-		case 4: // Surround 3.1
-		case 6: // Surround 5.1
-		case 8: // Surround 7.1
-			channels = wasapi_channels;
-			break;
+	case 2: // Stereo
+	case 4: // Surround 3.1
+	case 6: // Surround 5.1
+	case 8: // Surround 7.1
+		channels = wasapi_channels;
+		break;
 
-		default:
-			WARN_PRINTS("WASAPI: Unsupported number of channels: " + itos(wasapi_channels));
-			channels = 2;
-			break;
+	default:
+		WARN_PRINTS("WASAPI: Unsupported number of channels: " + itos(wasapi_channels));
+		channels = 2;
+		break;
 	}
 
 	if (format_tag == WAVE_FORMAT_EXTENSIBLE) {
@@ -99,33 +157,36 @@ Error AudioDriverWASAPI::init_device(bool reinit) {
 
 		if (wfex->SubFormat == KSDATAFORMAT_SUBTYPE_PCM) {
 			format_tag = WAVE_FORMAT_PCM;
-		} else if (wfex->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
+		}
+		else if (wfex->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
 			format_tag = WAVE_FORMAT_IEEE_FLOAT;
-		} else {
+		}
+		else {
 			ERR_PRINT("WASAPI: Format not supported");
 			ERR_FAIL_V(ERR_CANT_OPEN);
 		}
-	} else {
+	}
+	else {
 		if (format_tag != WAVE_FORMAT_PCM && format_tag != WAVE_FORMAT_IEEE_FLOAT) {
 			ERR_PRINT("WASAPI: Format not supported");
 			ERR_FAIL_V(ERR_CANT_OPEN);
 		}
 	}
 
-	hr = audio_client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 0, 0, pwfex, NULL);
+	hr = audio_out_client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 0, 0, pwfex, NULL);
 	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
 
 	event = CreateEvent(NULL, FALSE, FALSE, NULL);
 	ERR_FAIL_COND_V(event == NULL, ERR_CANT_OPEN);
 
-	hr = audio_client->SetEventHandle(event);
+	hr = audio_out_client->SetEventHandle(event);
 	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
 
-	hr = audio_client->GetService(IID_IAudioRenderClient, (void **)&render_client);
+	hr = audio_out_client->GetService(IID_IAudioRenderClient, (void **)&render_client);
 	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
 
 	UINT32 max_frames;
-	hr = audio_client->GetBufferSize(&max_frames);
+	hr = audio_out_client->GetBufferSize(&max_frames);
 	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
 
 	// Due to WASAPI Shared Mode we have no control of the buffer size
@@ -140,27 +201,103 @@ Error AudioDriverWASAPI::init_device(bool reinit) {
 		print_line("WASAPI: audio buffer frames: " + itos(buffer_frames) + " calculated latency: " + itos(buffer_frames * 1000 / mix_rate) + "ms");
 	}
 
+	// Free memory
+	CoTaskMemFree(pwfex);
+
+	return OK;
+}
+
+Error AudioDriverWASAPI::init_in_device(bool reinit) {
+
+	WAVEFORMATEX *pwfex;
+	IMMDeviceEnumerator *enumerator = NULL;
+	IMMDevice *device = NULL;
+
+	HRESULT hr = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void **)&enumerator);
+	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+	hr = enumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &device);
+	SAFE_RELEASE(enumerator)
+
+	if (reinit) {
+		// In case we're trying to re-initialize the device prevent throwing this error on the console,
+		// otherwise if there is currently no devie available this will spam the console.
+		if (hr != S_OK) {
+			return ERR_CANT_OPEN;
+		}
+	}
+	else {
+		ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+	}
+
+	hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void **)&audio_in_client);
+	SAFE_RELEASE(device)
+
+	if (reinit) {
+		if (hr != S_OK) {
+			return ERR_CANT_OPEN;
+		}
+	}
+	else {
+		ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+	}
+
+	hr = audio_in_client->GetMixFormat(&pwfex);
+	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+	hr = audio_in_client->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, REFTIMES_PER_SEC, 0, pwfex, NULL);
+	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+	UINT32 max_frames;
+	hr = audio_in_client->GetBufferSize(&max_frames);
+	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+	hr = audio_in_client->GetService(IID_IAudioCaptureClient, (void **)&capture_client);
+	ERR_FAIL_COND_V(hr != S_OK, ERR_CANT_OPEN);
+
+	// TODO: set audio write stream to correct format
+
+	REFERENCE_TIME hns_actual_duration;
+	hns_actual_duration = (double)REFTIMES_PER_SEC * max_frames / pwfex->nSamplesPerSec;
+
+	// Free memory
+	CoTaskMemFree(pwfex);
+
+	return OK;
+}
+
+Error AudioDriverWASAPI::init_device(bool reinit) {
+
+	Error err = OK;
+
+	CoInitialize(NULL);
+
+	err = init_out_device(reinit);
+	if (err != OK)
+		return err;
+
+	err = init_in_device(reinit);
+	if (err != OK)
+		return err;
+
+	get_input_devices();
+
 	return OK;
 }
 
 Error AudioDriverWASAPI::finish_device() {
 
-	if (audio_client) {
+	if (audio_out_client) {
 		if (active) {
-			audio_client->Stop();
+			audio_out_client->Stop();
 			active = false;
 		}
 	}
 
-	if (render_client) {
-		render_client->Release();
-		render_client = NULL;
-	}
-
-	if (audio_client) {
-		audio_client->Release();
-		audio_client = NULL;
-	}
+	SAFE_RELEASE(render_client)
+	SAFE_RELEASE(audio_out_client)
+	SAFE_RELEASE(capture_client)
+	SAFE_RELEASE(audio_in_client)
 
 	return OK;
 }
@@ -256,11 +393,11 @@ void AudioDriverWASAPI::thread_func(void *p_udata) {
 
 		unsigned int left_frames = ad->buffer_frames;
 		unsigned int buffer_idx = 0;
-		while (left_frames > 0 && ad->audio_client) {
+		while (left_frames > 0 && ad->audio_out_client) {
 			WaitForSingleObject(ad->event, 1000);
 
 			UINT32 cur_frames;
-			HRESULT hr = ad->audio_client->GetCurrentPadding(&cur_frames);
+			HRESULT hr = ad->audio_out_client->GetCurrentPadding(&cur_frames);
 			if (hr == S_OK) {
 				// Check how much frames are available on the WASAPI buffer
 				UINT32 avail_frames = ad->buffer_frames - cur_frames;
@@ -323,7 +460,7 @@ void AudioDriverWASAPI::thread_func(void *p_udata) {
 			}
 		}
 
-		if (!ad->audio_client) {
+		if (!ad->audio_out_client) {
 			Error err = ad->init_device(true);
 			if (err == OK) {
 				ad->start();
@@ -336,8 +473,8 @@ void AudioDriverWASAPI::thread_func(void *p_udata) {
 
 void AudioDriverWASAPI::start() {
 
-	if (audio_client) {
-		HRESULT hr = audio_client->Start();
+	if (audio_out_client) {
+		HRESULT hr = audio_out_client->Start();
 		if (hr != S_OK) {
 			ERR_PRINT("WASAPI: Start failed");
 		} else {
@@ -378,8 +515,10 @@ void AudioDriverWASAPI::finish() {
 
 AudioDriverWASAPI::AudioDriverWASAPI() {
 
-	audio_client = NULL;
+	audio_out_client = NULL;
 	render_client = NULL;
+	audio_in_client = NULL;
+	capture_client = NULL;
 	mutex = NULL;
 	thread = NULL;
 

@@ -39,13 +39,19 @@
 
 #include <audioclient.h>
 #include <mmdeviceapi.h>
+#include <Functiondiscoverykeys_devpkey.h>
 #include <windows.h>
 
 class AudioDriverWASAPI : public AudioDriver {
 
 	HANDLE event;
-	IAudioClient *audio_client;
+	// Audio out
+	IAudioClient *audio_out_client;
 	IAudioRenderClient *render_client;
+	// Audio in
+	IAudioClient *audio_in_client;
+	IAudioCaptureClient *capture_client;
+	//
 	Mutex *mutex;
 	Thread *thread;
 
@@ -66,6 +72,11 @@ class AudioDriverWASAPI : public AudioDriver {
 
 	_FORCE_INLINE_ void write_sample(AudioDriverWASAPI *ad, BYTE *buffer, int i, int32_t sample);
 	static void thread_func(void *p_udata);
+
+	Error get_input_devices();
+
+	Error init_out_device(bool reinit);
+	Error init_in_device(bool reinit);
 
 	Error init_device(bool reinit = false);
 	Error finish_device();
