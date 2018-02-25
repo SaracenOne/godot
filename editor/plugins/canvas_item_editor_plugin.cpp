@@ -463,6 +463,8 @@ void CanvasItemEditor::_find_canvas_items_at_pos(const Point2 &p_pos, Node *p_no
 		return;
 	if (Object::cast_to<Viewport>(p_node))
 		return;
+	if (Object::cast_to<SpatialCanvas>(p_node))
+		return;
 
 	const real_t grab_distance = EDITOR_DEF("editors/poly_editor/point_grab_radius", 8);
 	CanvasItem *canvas_item = Object::cast_to<CanvasItem>(p_node);
@@ -695,7 +697,7 @@ List<CanvasItem *> CanvasItemEditor::_get_edited_canvas_items(bool retreive_lock
 	List<CanvasItem *> selection;
 	for (Map<Node *, Object *>::Element *E = editor_selection->get_selection().front(); E; E = E->next()) {
 		CanvasItem *canvas_item = Object::cast_to<CanvasItem>(E->key());
-		if (canvas_item && canvas_item->is_visible_in_tree() && canvas_item->get_viewport() == EditorNode::get_singleton()->get_scene_root() && (!retreive_locked || !canvas_item->has_meta("_edit_lock_"))) {
+		if (canvas_item && canvas_item->is_visible_in_tree() && canvas_item->get_viewport() == EditorNode::get_singleton()->get_scene_root() && canvas_item->get_spatial_canvas() == NULL && (!retreive_locked || !canvas_item->has_meta("_edit_lock_"))) {
 			CanvasItemEditorSelectedItem *se = editor_selection->get_node_editor_data<CanvasItemEditorSelectedItem>(canvas_item);
 			if (se) {
 				selection.push_back(canvas_item);
@@ -3523,6 +3525,8 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 					continue;
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
 					continue;
+				if (canvas_item->get_spatial_canvas() != NULL)
+					continue;
 
 				canvas_item->set_meta("_edit_lock_", true);
 				emit_signal("item_lock_status_changed");
@@ -3536,6 +3540,8 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 				if (!canvas_item || !canvas_item->is_inside_tree())
 					continue;
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
+					continue;
+				if (canvas_item->get_spatial_canvas() != NULL)
 					continue;
 
 				canvas_item->set_meta("_edit_lock_", Variant());
@@ -3551,6 +3557,8 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 					continue;
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
 					continue;
+				if (canvas_item->get_spatial_canvas() != NULL)
+					continue;
 
 				canvas_item->set_meta("_edit_group_", true);
 				emit_signal("item_group_status_changed");
@@ -3564,6 +3572,8 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 				if (!canvas_item || !canvas_item->is_inside_tree())
 					continue;
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
+					continue;
+				if (canvas_item->get_spatial_canvas() != NULL)
 					continue;
 
 				canvas_item->set_meta("_edit_group_", Variant());
@@ -3685,6 +3695,9 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
 					continue;
 
+				if (canvas_item->get_spatial_canvas() != NULL)
+					continue;
+
 				if (Object::cast_to<Node2D>(canvas_item)) {
 					Node2D *n2d = Object::cast_to<Node2D>(canvas_item);
 
@@ -3770,6 +3783,9 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
 					continue;
 
+				if (canvas_item->get_spatial_canvas() != NULL)
+					continue;
+
 				if (Object::cast_to<Node2D>(canvas_item)) {
 
 					Node2D *n2d = Object::cast_to<Node2D>(canvas_item);
@@ -3815,6 +3831,9 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 					continue;
 
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
+					continue;
+
+				if (canvas_item->get_spatial_canvas() != NULL)
 					continue;
 
 				if (Object::cast_to<Node2D>(canvas_item)) {
@@ -3899,6 +3918,9 @@ void CanvasItemEditor::_popup_callback(int p_op) {
 				if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
 					continue;
 
+				if (canvas_item->get_spatial_canvas() != NULL)
+					continue;
+
 				canvas_item->set_meta("_edit_ik_", true);
 				if (!skeleton_show_bones)
 					skeleton_menu->get_popup()->activate_item(skeleton_menu->get_popup()->get_item_index(SKELETON_SHOW_BONES));
@@ -3939,6 +3961,8 @@ void CanvasItemEditor::_focus_selection(int p_op) {
 		CanvasItem *canvas_item = Object::cast_to<CanvasItem>(E->key());
 		if (!canvas_item) continue;
 		if (canvas_item->get_viewport() != EditorNode::get_singleton()->get_scene_root())
+			continue;
+		if (canvas_item->get_spatial_canvas() != NULL)
 			continue;
 
 		// counting invisible items, for now

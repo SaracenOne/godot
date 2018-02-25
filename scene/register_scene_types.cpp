@@ -188,6 +188,7 @@
 #include "scene/3d/remote_transform.h"
 #include "scene/3d/room_instance.h"
 #include "scene/3d/skeleton.h"
+#include "scene/3d/spatial_canvas.h"
 #include "scene/3d/sprite_3d.h"
 #include "scene/3d/vehicle_body.h"
 #include "scene/3d/visibility_notifier.h"
@@ -361,6 +362,7 @@ void register_scene_types() {
 	ClassDB::register_class<ARVRAnchor>();
 	ClassDB::register_class<ARVROrigin>();
 	ClassDB::register_class<InterpolatedCamera>();
+	ClassDB::register_class<SpatialCanvas>();
 	ClassDB::register_class<MeshInstance>();
 	ClassDB::register_class<ImmediateGeometry>();
 	ClassDB::register_virtual_class<SpriteBase3D>();
