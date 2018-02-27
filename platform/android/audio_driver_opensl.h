@@ -74,7 +74,8 @@ class AudioDriverOpenSL : public AudioDriver {
 			/*   SLuint32 eventFlags,
 	    const void * pBuffer,
 	    SLuint32 bufferSize,
-	    SLuint32 dataUsed*/);
+	    SLuint32 dataUsed*/
+	);
 
 	static void _buffer_callbacks(
 			SLAndroidSimpleBufferQueueItf queueItf,
@@ -96,6 +97,11 @@ public:
 	virtual void lock();
 	virtual void unlock();
 	virtual void finish();
+
+	virtual bool capture_device_start(StringName p_name);
+	virtual bool capture_device_stop(StringName p_name);
+	virtual PoolStringArray capture_device_get_names();
+	virtual StringName capture_device_get_default_name();
 
 	virtual void set_pause(bool p_pause);
 
