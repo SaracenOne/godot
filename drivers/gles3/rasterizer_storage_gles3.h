@@ -53,6 +53,8 @@ void glTexStorage2DCustom(GLenum target, GLsizei levels, GLenum internalformat, 
 
 class RasterizerStorageGLES3 : public RasterizerStorage {
 public:
+	struct Shader;
+
 	RasterizerCanvasGLES3 *canvas;
 	RasterizerSceneGLES3 *scene;
 	static GLuint system_fbo; //on some devices, such as apple, screen is rendered to yet another fbo.
@@ -457,6 +459,39 @@ public:
 
 			int depth_draw_mode;
 
+			enum StencilComparison {
+				STENCIL_COMPARISON_ALWAYS,
+				STENCIL_COMPARISON_NEVER,
+				STENCIL_COMPARISON_LESS,
+				STENCIL_COMPARISON_EQUAL,
+				STENCIL_COMPARISON_LEQUAL,
+				STENCIL_COMPARISON_GREATER,
+				STENCIL_COMPARISON_NOTEQUAL,
+				STENCIL_COMPARISON_GEQUAL,
+				STENCIL_COMPARISON_COUNT
+			};
+
+			enum StencilOperation {
+				STENCIL_OP_KEEP,
+				STENCIL_OP_ZERO,
+				STENCIL_OP_REPLACE,
+				STENCIL_OP_INCREMENT_SATURATE,
+				STENCIL_OP_INCREMENT_WRAP,
+				STENCIL_OP_DECREMENT_SATURATE,
+				STENCIL_OP_DECREMENT_WRAP,
+				STENCIL_OP_INVERT,
+				STENCIL_OP_COUNT
+			};
+
+			uint8_t stencil_ref_value = 0x00;
+			uint8_t stencil_read_mask = 0x00;
+			uint8_t stencil_write_mask = 0x00;
+
+			int stencil_comparision_function = STENCIL_COMPARISON_ALWAYS;
+			int stencil_option_sfail = STENCIL_OP_KEEP;
+			int stencil_option_dpfail = STENCIL_OP_KEEP;
+			int stencil_option_dppass = STENCIL_OP_KEEP;
+
 			enum CullMode {
 				CULL_MODE_FRONT,
 				CULL_MODE_BACK,
@@ -516,6 +551,52 @@ public:
 
 	virtual void shader_set_default_texture_param(RID p_shader, const StringName &p_name, RID p_texture);
 	virtual RID shader_get_default_texture_param(RID p_shader, const StringName &p_name) const;
+
+	_FORCE_INLINE_ static GLuint get_stencil_option(const int p_option) {
+		switch (p_option) {
+			case Shader::Spatial::STENCIL_OP_KEEP:
+				return GL_KEEP;
+			case Shader::Spatial::STENCIL_OP_ZERO:
+				return GL_ZERO;
+			case Shader::Spatial::STENCIL_OP_REPLACE:
+				return GL_REPLACE;
+			case Shader::Spatial::STENCIL_OP_INCREMENT_SATURATE:
+				return GL_INCR;
+			case Shader::Spatial::STENCIL_OP_INCREMENT_WRAP:
+				return GL_INCR_WRAP;
+			case Shader::Spatial::STENCIL_OP_DECREMENT_SATURATE:
+				return GL_DECR;
+			case Shader::Spatial::STENCIL_OP_DECREMENT_WRAP:
+				return GL_DECR_WRAP;
+			case Shader::Spatial::STENCIL_OP_INVERT:
+				return GL_INVERT;
+			default:
+				return GL_KEEP;
+		};
+	}
+
+	_FORCE_INLINE_ static GLuint get_stencil_comparison(const int p_option) {
+		switch (p_option) {
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_ALWAYS:
+				return GL_ALWAYS;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_NEVER:
+				return GL_NEVER;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_LESS:
+				return GL_LESS;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_EQUAL:
+				return GL_EQUAL;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_LEQUAL:
+				return GL_LEQUAL;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_GREATER:
+				return GL_GREATER;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_NOTEQUAL:
+				return GL_NOTEQUAL;
+			case RasterizerStorageGLES3::Shader::Spatial::STENCIL_COMPARISON_GEQUAL:
+				return GL_GEQUAL;
+			default:
+				return GL_NEVER;
+		};
+	}
 
 	void _update_shader(Shader *p_shader) const;
 

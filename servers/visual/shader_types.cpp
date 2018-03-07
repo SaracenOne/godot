@@ -152,6 +152,42 @@ ShaderTypes::ShaderTypes() {
 
 	shader_modes[VS::SHADER_SPATIAL].modes.insert("depth_test_disable");
 
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_comparison_never");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_comparison_less");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_comparison_equal");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_comparison_lequal");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_comparison_greater");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_comparison_notequal");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_comparison_gequal");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_comparison_always");
+
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_sfail_keep");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_sfail_zero");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_sfail_replace");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_sfail_increment_saturate");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_sfail_increment_wrap");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_sfail_decrement_saturate");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_sfail_decrement_wrap");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_sfail_invert");
+
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dpfail_keep");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dpfail_zero");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dpfail_replace");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dpfail_increment_saturate");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dpfail_increment_wrap");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dpfail_decrement_saturate");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dpfail_decrement_wrap");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dpfail_invert");
+
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dppass_keep");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dppass_zero");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dppass_replace");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dppass_increment_saturate");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dppass_increment_wrap");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dppass_decrement_saturate");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dppass_decrement_wrap");
+	shader_modes[VS::SHADER_SPATIAL].modes.insert("stencil_option_dppass_invert");
+
 	shader_modes[VS::SHADER_SPATIAL].modes.insert("disable_channel_r");
 	shader_modes[VS::SHADER_SPATIAL].modes.insert("disable_channel_g");
 	shader_modes[VS::SHADER_SPATIAL].modes.insert("disable_channel_b");

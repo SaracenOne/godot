@@ -101,6 +101,14 @@ public:
 		bool current_depth_test;
 		GLuint current_main_tex;
 
+		uint8_t stencil_ref_value;
+		uint8_t stencil_read_mask;
+		uint8_t stencil_write_mask;
+		int stencil_comparision_function;
+		int stencil_option_sfail;
+		int stencil_option_dpfail;
+		int stencil_option_dppass;
+
 		SceneShaderGLES3 scene_shader;
 		CubeToDpShaderGLES3 cube_to_dp_shader;
 		ResolveShaderGLES3 resolve_shader;

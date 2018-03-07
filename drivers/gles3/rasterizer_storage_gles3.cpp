@@ -1650,6 +1650,13 @@ void RasterizerStorageGLES3::_update_shader(Shader *p_shader) const {
 			p_shader->spatial.disable_channel_g = false;
 			p_shader->spatial.disable_channel_b = false;
 			p_shader->spatial.disable_channel_a = false;
+			p_shader->spatial.stencil_comparision_function = p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_ALWAYS;
+			p_shader->spatial.stencil_option_dpfail = p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_OP_KEEP;
+			p_shader->spatial.stencil_option_dppass = p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_OP_KEEP;
+			p_shader->spatial.stencil_option_sfail = p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_OP_KEEP;
+			p_shader->spatial.stencil_read_mask = 0;
+			p_shader->spatial.stencil_write_mask = 0;
+			p_shader->spatial.stencil_ref_value = 0;
 
 			shaders.actions_scene.render_mode_values["blend_add"] = Pair<int *, int>(&p_shader->spatial.blend_mode, Shader::Spatial::BLEND_MODE_ADD);
 			shaders.actions_scene.render_mode_values["blend_mix"] = Pair<int *, int>(&p_shader->spatial.blend_mode, Shader::Spatial::BLEND_MODE_MIX);
@@ -1660,6 +1667,42 @@ void RasterizerStorageGLES3::_update_shader(Shader *p_shader) const {
 			shaders.actions_scene.render_mode_values["depth_draw_always"] = Pair<int *, int>(&p_shader->spatial.depth_draw_mode, Shader::Spatial::DEPTH_DRAW_ALWAYS);
 			shaders.actions_scene.render_mode_values["depth_draw_never"] = Pair<int *, int>(&p_shader->spatial.depth_draw_mode, Shader::Spatial::DEPTH_DRAW_NEVER);
 			shaders.actions_scene.render_mode_values["depth_draw_alpha_prepass"] = Pair<int *, int>(&p_shader->spatial.depth_draw_mode, Shader::Spatial::DEPTH_DRAW_ALPHA_PREPASS);
+
+			shaders.actions_scene.render_mode_values["stencil_comparison_always"] = Pair<int *, int>(&p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_ALWAYS);
+			shaders.actions_scene.render_mode_values["stencil_comparison_never"] = Pair<int *, int>(&p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_NEVER);
+			shaders.actions_scene.render_mode_values["stencil_comparison_less"] = Pair<int *, int>(&p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_LESS);
+			shaders.actions_scene.render_mode_values["stencil_comparison_equal"] = Pair<int *, int>(&p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_EQUAL);
+			shaders.actions_scene.render_mode_values["stencil_comparison_lequal"] = Pair<int *, int>(&p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_LEQUAL);
+			shaders.actions_scene.render_mode_values["stencil_comparison_greater"] = Pair<int *, int>(&p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_GREATER);
+			shaders.actions_scene.render_mode_values["stencil_comparison_notequal"] = Pair<int *, int>(&p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_NOTEQUAL);
+			shaders.actions_scene.render_mode_values["stencil_comparison_gequal"] = Pair<int *, int>(&p_shader->spatial.stencil_comparision_function, Shader::Spatial::STENCIL_COMPARISON_GEQUAL);
+
+			shaders.actions_scene.render_mode_values["stencil_option_sfail_keep"] = Pair<int *, int>(&p_shader->spatial.stencil_option_sfail, Shader::Spatial::STENCIL_OP_KEEP);
+			shaders.actions_scene.render_mode_values["stencil_option_sfail_zero"] = Pair<int *, int>(&p_shader->spatial.stencil_option_sfail, Shader::Spatial::STENCIL_OP_ZERO);
+			shaders.actions_scene.render_mode_values["stencil_option_sfail_replace"] = Pair<int *, int>(&p_shader->spatial.stencil_option_sfail, Shader::Spatial::STENCIL_OP_REPLACE);
+			shaders.actions_scene.render_mode_values["stencil_option_sfail_increment_saturate"] = Pair<int *, int>(&p_shader->spatial.stencil_option_sfail, Shader::Spatial::STENCIL_OP_INCREMENT_SATURATE);
+			shaders.actions_scene.render_mode_values["stencil_option_sfail_increment_wrap"] = Pair<int *, int>(&p_shader->spatial.stencil_option_sfail, Shader::Spatial::STENCIL_OP_INCREMENT_WRAP);
+			shaders.actions_scene.render_mode_values["stencil_option_sfail_decrement_saturate"] = Pair<int *, int>(&p_shader->spatial.stencil_option_sfail, Shader::Spatial::STENCIL_OP_DECREMENT_SATURATE);
+			shaders.actions_scene.render_mode_values["stencil_option_sfail_decrement_wrap"] = Pair<int *, int>(&p_shader->spatial.stencil_option_sfail, Shader::Spatial::STENCIL_OP_DECREMENT_WRAP);
+			shaders.actions_scene.render_mode_values["stencil_option_sfail_invert"] = Pair<int *, int>(&p_shader->spatial.stencil_option_sfail, Shader::Spatial::STENCIL_OP_INVERT);
+
+			shaders.actions_scene.render_mode_values["stencil_option_dpfail_keep"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dpfail, Shader::Spatial::STENCIL_OP_KEEP);
+			shaders.actions_scene.render_mode_values["stencil_option_dpfail_zero"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dpfail, Shader::Spatial::STENCIL_OP_ZERO);
+			shaders.actions_scene.render_mode_values["stencil_option_dpfail_replace"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dpfail, Shader::Spatial::STENCIL_OP_REPLACE);
+			shaders.actions_scene.render_mode_values["stencil_option_dpfail_increment_saturate"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dpfail, Shader::Spatial::STENCIL_OP_INCREMENT_SATURATE);
+			shaders.actions_scene.render_mode_values["stencil_option_dpfail_increment_wrap"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dpfail, Shader::Spatial::STENCIL_OP_INCREMENT_WRAP);
+			shaders.actions_scene.render_mode_values["stencil_option_dpfail_decrement_saturate"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dpfail, Shader::Spatial::STENCIL_OP_DECREMENT_SATURATE);
+			shaders.actions_scene.render_mode_values["stencil_option_dpfail_decrement_wrap"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dpfail, Shader::Spatial::STENCIL_OP_DECREMENT_WRAP);
+			shaders.actions_scene.render_mode_values["stencil_option_dpfail_invert"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dpfail, Shader::Spatial::STENCIL_OP_INVERT);
+
+			shaders.actions_scene.render_mode_values["stencil_option_dppass_keep"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dppass, Shader::Spatial::STENCIL_OP_KEEP);
+			shaders.actions_scene.render_mode_values["stencil_option_dppass_zero"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dppass, Shader::Spatial::STENCIL_OP_ZERO);
+			shaders.actions_scene.render_mode_values["stencil_option_dppass_replace"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dppass, Shader::Spatial::STENCIL_OP_REPLACE);
+			shaders.actions_scene.render_mode_values["stencil_option_dppass_increment_saturate"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dppass, Shader::Spatial::STENCIL_OP_INCREMENT_SATURATE);
+			shaders.actions_scene.render_mode_values["stencil_option_dppass_increment_wrap"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dppass, Shader::Spatial::STENCIL_OP_INCREMENT_WRAP);
+			shaders.actions_scene.render_mode_values["stencil_option_dppass_decrement_saturate"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dppass, Shader::Spatial::STENCIL_OP_DECREMENT_SATURATE);
+			shaders.actions_scene.render_mode_values["stencil_option_dppass_decrement_wrap"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dppass, Shader::Spatial::STENCIL_OP_DECREMENT_WRAP);
+			shaders.actions_scene.render_mode_values["stencil_option_dppass_invert"] = Pair<int *, int>(&p_shader->spatial.stencil_option_dppass, Shader::Spatial::STENCIL_OP_INVERT);
 
 			shaders.actions_scene.render_mode_flags["disable_channel_r"] = &p_shader->spatial.disable_channel_r;
 			shaders.actions_scene.render_mode_flags["disable_channel_g"] = &p_shader->spatial.disable_channel_g;
@@ -1689,6 +1732,10 @@ void RasterizerStorageGLES3::_update_shader(Shader *p_shader) const {
 			shaders.actions_scene.write_flag_pointers["MODELVIEW_MATRIX"] = &p_shader->spatial.writes_modelview_or_projection;
 			shaders.actions_scene.write_flag_pointers["PROJECTION_MATRIX"] = &p_shader->spatial.writes_modelview_or_projection;
 			shaders.actions_scene.write_flag_pointers["VERTEX"] = &p_shader->spatial.uses_vertex;
+
+			shaders.actions_scene.stencil_ref_value_pointer = &p_shader->spatial.stencil_ref_value;
+			shaders.actions_scene.stencil_write_mask_pointer = &p_shader->spatial.stencil_write_mask;
+			shaders.actions_scene.stencil_read_mask_pointer = &p_shader->spatial.stencil_read_mask;
 
 			actions = &shaders.actions_scene;
 			actions->uniforms = &p_shader->uniforms;
@@ -6172,7 +6219,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
 				GL_TEXTURE_2D, rt->depth, 0);
 
 		glGenTextures(1, &rt->color);
@@ -6237,7 +6284,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 		else
 			glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaa, GL_DEPTH24_STENCIL8, rt->width, rt->height);
 
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rt->buffers.depth);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rt->buffers.depth);
 
 		glGenRenderbuffers(1, &rt->buffers.diffuse);
 		glBindRenderbuffer(GL_RENDERBUFFER, rt->buffers.diffuse);
@@ -6454,7 +6501,7 @@ void RasterizerStorageGLES3::_render_target_allocate(RenderTarget *rt) {
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, rt->effects.mip_maps[i].color, j);
 				bool used_depth = false;
 				if (j == 0 && i == 0) { //use always
-					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, rt->depth, 0);
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, rt->depth, 0);
 					used_depth = true;
 				}
 

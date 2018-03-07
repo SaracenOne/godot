@@ -85,6 +85,8 @@ public:
 		Transform2D extra_matrix;
 		Transform2D final_transform;
 
+		uint8_t mask_depth = 0x00;
+
 	} state;
 
 	RasterizerStorageGLES3 *storage;

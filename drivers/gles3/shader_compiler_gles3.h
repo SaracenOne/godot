@@ -44,6 +44,9 @@ public:
 		Map<StringName, bool *> render_mode_flags;
 		Map<StringName, bool *> usage_flag_pointers;
 		Map<StringName, bool *> write_flag_pointers;
+		uint8_t *stencil_ref_value_pointer;
+		uint8_t *stencil_read_mask_pointer;
+		uint8_t *stencil_write_mask_pointer;
 
 		Map<StringName, ShaderLanguage::ShaderNode::Uniform> *uniforms;
 	};

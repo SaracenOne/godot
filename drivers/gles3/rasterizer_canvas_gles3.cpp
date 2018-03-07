@@ -146,7 +146,7 @@ void RasterizerCanvasGLES3::canvas_begin() {
 		// a clear request may be pending, so do it
 
 		glClearColor(storage->frame.clear_request_color.r, storage->frame.clear_request_color.g, storage->frame.clear_request_color.b, storage->frame.clear_request_color.a);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		storage->frame.clear_request = false;
 	}
 
@@ -1069,6 +1069,15 @@ void RasterizerCanvasGLES3::canvas_render_items(Item *p_item_list, int p_z, cons
 
 	bool prev_distance_field = false;
 
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+
+	glStencilMask(0xFF);
+	glClear(GL_STENCIL_BUFFER_BIT);
+
+	glDepthMask(false);
+	glDepthFunc(GL_ALWAYS);
+
 	while (p_item_list) {
 
 		Item *ci = p_item_list;
@@ -1094,6 +1103,17 @@ void RasterizerCanvasGLES3::canvas_render_items(Item *p_item_list, int p_z, cons
 
 				glDisable(GL_SCISSOR_TEST);
 			}
+		}
+
+		if (ci->mask && ci->stencil_id > 0x00) {
+			glStencilMask(0xFF);
+			glStencilFunc(GL_EQUAL, ci->stencil_id - 1, 0xFF);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+		}
+		else {
+			glStencilMask(0x00);
+			glStencilFunc(GL_EQUAL, ci->stencil_id, 0xFF);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 		}
 
 		if (ci->copy_back_buffer) {
@@ -1425,6 +1445,9 @@ void RasterizerCanvasGLES3::canvas_render_items(Item *p_item_list, int p_z, cons
 	if (current_clip) {
 		glDisable(GL_SCISSOR_TEST);
 	}
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
 }
 
 void RasterizerCanvasGLES3::canvas_debug_viewport_shadows(Light *p_lights_with_shadow) {
@@ -1591,6 +1614,7 @@ void RasterizerCanvasGLES3::reset_canvas() {
 	glBindVertexArray(0);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
 	glDisable(GL_SCISSOR_TEST);
 	glDisable(GL_DITHER);
 	glEnable(GL_BLEND);
@@ -1642,6 +1666,8 @@ void RasterizerCanvasGLES3::reset_canvas() {
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	state.canvas_texscreen_used = false;
+
+	state.mask_depth = 0x00;
 }
 
 void RasterizerCanvasGLES3::draw_generic_textured_rect(const Rect2 &p_rect, const Rect2 &p_src) {
