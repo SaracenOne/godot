@@ -188,6 +188,25 @@ bool ResourceImporterScene::get_option_visibility(const String &p_option, const 
 			if (clip >= max_clip)
 				return false;
 		}
+
+		if (p_option.begins_with("animation/animation_extra_data_")) {
+			int max_animation_extra_data = p_options["animation/animations_extra_data/amount"];
+			int animation_extra_data_index = p_option.get_slice("/", 1).get_slice("_", 3).to_int() - 1;
+			if (animation_extra_data_index >= max_animation_extra_data)
+				return false;
+			if (p_option.begins_with(String("animation/animation_extra_data_") + itos(animation_extra_data_index + 1) + String("/call_func_keyframe_"))) {
+				int max_call_func_keyframes = p_options[String("animation/animation_extra_data_") + itos(animation_extra_data_index + 1) + String("/call_func_keyframes/amount")];
+				int call_func_keyframe_index = p_option.get_slice("/", 2).get_slice("_", 3).to_int() - 1;
+				if (call_func_keyframe_index >= max_call_func_keyframes)
+					return false;
+				if (p_option.begins_with(String("animation/animation_extra_data_") + itos(animation_extra_data_index + 1) + String("/call_func_keyframe_") + itos(call_func_keyframe_index + 1) + String("/arg_"))) {
+					int max_args = p_options[String("animation/animation_extra_data_") + itos(animation_extra_data_index + 1) + String("/call_func_keyframe_") + itos(call_func_keyframe_index + 1) + String("/args/amount")];
+					int arg_index = p_option.get_slice("/", 3).get_slice("_", 1).to_int() - 1;
+					if (arg_index >= max_args)
+						return false;
+				}
+			}
+		}
 	}
 
 	if (p_option == "materials/keep_on_reimport" && int(p_options["materials/storage"]) == 0) {
@@ -1067,6 +1086,22 @@ void ResourceImporterScene::get_import_options(List<ImportOption> *r_options, in
 		r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "animation/clip_" + itos(i + 1) + "/start_frame"), 0));
 		r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "animation/clip_" + itos(i + 1) + "/end_frame"), 0));
 		r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "animation/clip_" + itos(i + 1) + "/loops"), false));
+	}
+
+	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "animation/animations_extra_data/amount", PROPERTY_HINT_RANGE, "0,256,1", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), 0));
+	for (int i = 0; i < 256; i++) {
+		r_options->push_back(ImportOption(PropertyInfo(Variant::STRING, "animation/animation_extra_data_" + itos(i + 1) + "/name"), ""));
+		r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "animation/animation_extra_data_" + itos(i + 1) + "/call_func_keyframes/amount", PROPERTY_HINT_RANGE, "0,256,1", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), 0));
+		for (int j = 0; j < 256; j++) {
+			r_options->push_back(ImportOption(PropertyInfo(Variant::STRING, "animation/animation_extra_data_" + itos(i + 1) + "/call_func_keyframe_" + itos(j + 1) + "/path"), "."));
+			r_options->push_back(ImportOption(PropertyInfo(Variant::STRING, "animation/animation_extra_data_" + itos(i + 1) + "/call_func_keyframe_" + itos(j + 1) + "/name"), ""));
+			r_options->push_back(ImportOption(PropertyInfo(Variant::REAL, "animation/animation_extra_data_" + itos(i + 1) + "/call_func_keyframe_" + itos(j + 1) + "/time"), 0.0));
+
+			r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "animation/animation_extra_data_" + itos(i + 1) + "/call_func_keyframe_" + itos(j + 1) + "/args/amount", PROPERTY_HINT_RANGE, "0,5,1", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), 0));
+			for (int k = 0; k < 5; k++) {
+				r_options->push_back(ImportOption(PropertyInfo(Variant::REAL, "animation/animation_extra_data_" + itos(i + 1) + "/call_func_keyframe_" + itos(j + 1) + "/arg_" + itos(k + 1) + "/time"), 0));
+			}
+		}
 	}
 }
 
