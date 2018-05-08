@@ -86,6 +86,9 @@ void VisualServerViewport::_draw_viewport(Viewport *p_viewport, ARVRInterface::E
 
 		for (Map<RID, Viewport::CanvasData>::Element *E = p_viewport->canvas_map.front(); E; E = E->next()) {
 
+			if (E->get().eyes != p_eye)
+				continue;
+
 			Transform2D xf = p_viewport->global_transform * E->get().transform;
 
 			VisualServerCanvas::Canvas *canvas = static_cast<VisualServerCanvas::Canvas *>(E->get().canvas);
@@ -498,6 +501,7 @@ void VisualServerViewport::viewport_attach_canvas(RID p_viewport, RID p_canvas) 
 	viewport->canvas_map[p_canvas] = Viewport::CanvasData();
 	viewport->canvas_map[p_canvas].layer = 0;
 	viewport->canvas_map[p_canvas].canvas = canvas;
+	viewport->canvas_map[p_canvas].eyes = ARVRInterface::EYE_MONO;
 }
 
 void VisualServerViewport::viewport_remove_canvas(RID p_viewport, RID p_canvas) {
@@ -542,6 +546,15 @@ void VisualServerViewport::viewport_set_canvas_layer(RID p_viewport, RID p_canva
 
 	ERR_FAIL_COND(!viewport->canvas_map.has(p_canvas));
 	viewport->canvas_map[p_canvas].layer = p_layer;
+}
+
+void VisualServerViewport::viewport_set_canvas_eyes(RID p_viewport, RID p_canvas, int p_eyes) {
+
+	Viewport *viewport = viewport_owner.getornull(p_viewport);
+	ERR_FAIL_COND(!viewport);
+
+	ERR_FAIL_COND(!viewport->canvas_map.has(p_canvas));
+	viewport->canvas_map[p_canvas].eyes = static_cast<ARVRInterface::Eyes>(p_eyes);
 }
 
 void VisualServerViewport::viewport_set_shadow_atlas_size(RID p_viewport, int p_size) {

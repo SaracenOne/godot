@@ -313,7 +313,7 @@ bool Camera::is_position_behind(const Vector3 &p_pos) const {
 	return eyedir.dot(p_pos) < (eyedir.dot(t.origin) + near);
 }
 
-Point2 Camera::unproject_position(const Vector3 &p_pos) const {
+Point2 Camera::unproject_position(const Vector3 &p_pos, ARVRInterface::Eyes p_eye) const {
 
 	if (!is_inside_tree()) {
 		ERR_EXPLAIN("Camera is not inside scene.");
@@ -341,7 +341,7 @@ Point2 Camera::unproject_position(const Vector3 &p_pos) const {
 	return res;
 }
 
-Vector3 Camera::project_position(const Point2 &p_point) const {
+Vector3 Camera::project_position(const Point2 &p_point, ARVRInterface::Eyes p_eye) const {
 
 	if (!is_inside_tree()) {
 		ERR_EXPLAIN("Camera is not inside scene.");
@@ -436,9 +436,9 @@ void Camera::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("project_ray_normal", "screen_point"), &Camera::project_ray_normal);
 	ClassDB::bind_method(D_METHOD("project_local_ray_normal", "screen_point"), &Camera::project_local_ray_normal);
 	ClassDB::bind_method(D_METHOD("project_ray_origin", "screen_point"), &Camera::project_ray_origin);
-	ClassDB::bind_method(D_METHOD("unproject_position", "world_point"), &Camera::unproject_position);
+	ClassDB::bind_method(D_METHOD("unproject_position", "world_point", "eye"), &Camera::unproject_position, DEFVAL(ARVRInterface::EYE_MONO));
 	ClassDB::bind_method(D_METHOD("is_position_behind", "world_point"), &Camera::is_position_behind);
-	ClassDB::bind_method(D_METHOD("project_position", "screen_point"), &Camera::project_position);
+	ClassDB::bind_method(D_METHOD("project_position", "screen_point", "eye"), &Camera::project_position, DEFVAL(ARVRInterface::EYE_MONO));
 	ClassDB::bind_method(D_METHOD("set_perspective", "fov", "z_near", "z_far"), &Camera::set_perspective);
 	ClassDB::bind_method(D_METHOD("set_orthogonal", "size", "z_near", "z_far"), &Camera::set_orthogonal);
 	ClassDB::bind_method(D_METHOD("make_current"), &Camera::make_current);

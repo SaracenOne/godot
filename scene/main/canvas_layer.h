@@ -33,6 +33,7 @@
 
 #include "scene/main/node.h"
 #include "scene/resources/world_2d.h"
+#include "servers/arvr/arvr_interface.h"
 
 class Viewport;
 class CanvasLayer : public Node {
@@ -45,6 +46,7 @@ class CanvasLayer : public Node {
 	real_t rot;
 	int layer;
 	Transform2D transform;
+	ARVRInterface::Eyes eyes;
 	RID canvas;
 
 	ObjectID custom_viewport_id; // to check validity
@@ -80,6 +82,9 @@ public:
 
 	void set_scale(const Size2 &p_scale);
 	Size2 get_scale() const;
+
+	void set_eyes(ARVRInterface::Eyes p_eyes);
+	ARVRInterface::Eyes get_eyes() const;
 
 	Size2 get_viewport_size() const;
 

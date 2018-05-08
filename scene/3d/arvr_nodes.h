@@ -53,8 +53,8 @@ public:
 	String get_configuration_warning() const;
 
 	virtual Vector3 project_local_ray_normal(const Point2 &p_pos) const;
-	virtual Point2 unproject_position(const Vector3 &p_pos) const;
-	virtual Vector3 project_position(const Point2 &p_point) const;
+	virtual Point2 unproject_position(const Vector3 &p_pos, ARVRInterface::Eyes p_eye = ARVRInterface::EYE_MONO) const;
+	virtual Vector3 project_position(const Point2 &p_point, ARVRInterface::Eyes p_eye = ARVRInterface::EYE_MONO) const;
 	virtual Vector<Plane> get_frustum() const;
 
 	ARVRCamera();

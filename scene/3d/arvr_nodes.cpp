@@ -92,7 +92,7 @@ Vector3 ARVRCamera::project_local_ray_normal(const Point2 &p_pos) const {
 	return ray;
 };
 
-Point2 ARVRCamera::unproject_position(const Vector3 &p_pos) const {
+Point2 ARVRCamera::unproject_position(const Vector3 &p_pos, ARVRInterface::Eyes p_eye) const {
 	// get our ARVRServer
 	ARVRServer *arvr_server = ARVRServer::get_singleton();
 	ERR_FAIL_NULL_V(arvr_server, Vector2());
@@ -105,9 +105,14 @@ Point2 ARVRCamera::unproject_position(const Vector3 &p_pos) const {
 		ERR_FAIL_COND_V(!is_inside_tree(), Vector2());
 	};
 
-	Size2 viewport_size = get_viewport()->get_visible_rect().size;
+	Size2 viewport_size;
+	if (p_eye != ARVRInterface::EYE_MONO) {
+		viewport_size = arvr_interface->get_render_targetsize();
+	} else {
+		viewport_size = get_viewport()->get_visible_rect().size;
+	}
 
-	CameraMatrix cm = arvr_interface->get_projection_for_eye(ARVRInterface::EYE_MONO, viewport_size.aspect(), get_znear(), get_zfar());
+	CameraMatrix cm = arvr_interface->get_projection_for_eye(p_eye, viewport_size.aspect(), get_znear(), get_zfar());
 
 	Plane p(get_camera_transform().xform_inv(p_pos), 1.0);
 
@@ -121,7 +126,7 @@ Point2 ARVRCamera::unproject_position(const Vector3 &p_pos) const {
 	return res;
 };
 
-Vector3 ARVRCamera::project_position(const Point2 &p_point) const {
+Vector3 ARVRCamera::project_position(const Point2 &p_point, ARVRInterface::Eyes p_eye) const {
 	// get our ARVRServer
 	ARVRServer *arvr_server = ARVRServer::get_singleton();
 	ERR_FAIL_NULL_V(arvr_server, Vector3());
@@ -134,9 +139,14 @@ Vector3 ARVRCamera::project_position(const Point2 &p_point) const {
 		ERR_FAIL_COND_V(!is_inside_tree(), Vector3());
 	};
 
-	Size2 viewport_size = get_viewport()->get_visible_rect().size;
+	Size2 viewport_size;
+	if (p_eye != ARVRInterface::EYE_MONO) {
+		viewport_size = arvr_interface->get_render_targetsize();
+	} else {
+		viewport_size = get_viewport()->get_visible_rect().size;
+	}
 
-	CameraMatrix cm = arvr_interface->get_projection_for_eye(ARVRInterface::EYE_MONO, viewport_size.aspect(), get_znear(), get_zfar());
+	CameraMatrix cm = arvr_interface->get_projection_for_eye(p_eye, viewport_size.aspect(), get_znear(), get_zfar());
 
 	Size2 vp_size;
 	cm.get_viewport_size(vp_size.x, vp_size.y);

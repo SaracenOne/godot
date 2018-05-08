@@ -96,6 +96,7 @@ public:
 			CanvasBase *canvas;
 			Transform2D transform;
 			int layer;
+			ARVRInterface::Eyes eyes;
 		};
 
 		Transform2D global_transform;
@@ -177,6 +178,7 @@ public:
 
 	void viewport_set_global_canvas_transform(RID p_viewport, const Transform2D &p_transform);
 	void viewport_set_canvas_layer(RID p_viewport, RID p_canvas, int p_layer);
+	void viewport_set_canvas_eyes(RID p_viewport, RID p_canvas, int p_eyes);
 
 	void viewport_set_shadow_atlas_size(RID p_viewport, int p_size);
 	void viewport_set_shadow_atlas_quadrant_subdivision(RID p_viewport, int p_quadrant, int p_subdiv);

@@ -151,6 +151,12 @@ Transform ARVRServer::get_hmd_transform() {
 void ARVRServer::add_interface(const Ref<ARVRInterface> &p_interface) {
 	ERR_FAIL_COND(p_interface.is_null());
 
+#ifdef TOOLS_ENABLED
+	if (Engine::get_singleton()->is_editor_hint()) {
+		return;
+	}
+#endif
+
 	for (int i = 0; i < interfaces.size(); i++) {
 
 		if (interfaces[i] == p_interface) {

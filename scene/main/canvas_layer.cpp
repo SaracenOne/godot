@@ -133,6 +133,16 @@ Vector2 CanvasLayer::get_scale() const {
 	return scale;
 }
 
+void CanvasLayer::set_eyes(ARVRInterface::Eyes p_eyes) {
+	eyes = p_eyes;
+	if (viewport.is_valid())
+		VisualServer::get_singleton()->viewport_set_canvas_eyes(viewport, canvas, eyes);
+}
+
+ARVRInterface::Eyes CanvasLayer::get_eyes() const {
+	return eyes;
+}
+
 void CanvasLayer::_notification(int p_what) {
 
 	switch (p_what) {
@@ -151,6 +161,7 @@ void CanvasLayer::_notification(int p_what) {
 			VisualServer::get_singleton()->viewport_attach_canvas(viewport, canvas);
 			VisualServer::get_singleton()->viewport_set_canvas_layer(viewport, canvas, layer);
 			VisualServer::get_singleton()->viewport_set_canvas_transform(viewport, canvas, transform);
+			VisualServer::get_singleton()->viewport_set_canvas_eyes(viewport, canvas, eyes);
 
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
@@ -203,6 +214,7 @@ void CanvasLayer::set_custom_viewport(Node *p_viewport) {
 		VisualServer::get_singleton()->viewport_attach_canvas(viewport, canvas);
 		VisualServer::get_singleton()->viewport_set_canvas_layer(viewport, canvas, layer);
 		VisualServer::get_singleton()->viewport_set_canvas_transform(viewport, canvas, transform);
+		VisualServer::get_singleton()->viewport_set_canvas_eyes(viewport, canvas, eyes);
 	}
 }
 
@@ -232,6 +244,9 @@ void CanvasLayer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_transform", "transform"), &CanvasLayer::set_transform);
 	ClassDB::bind_method(D_METHOD("get_transform"), &CanvasLayer::get_transform);
 
+	ClassDB::bind_method(D_METHOD("set_eyes", "eyes"), &CanvasLayer::set_eyes);
+	ClassDB::bind_method(D_METHOD("get_eyes"), &CanvasLayer::get_eyes);
+
 	ClassDB::bind_method(D_METHOD("set_offset", "offset"), &CanvasLayer::set_offset);
 	ClassDB::bind_method(D_METHOD("get_offset"), &CanvasLayer::get_offset);
 
@@ -257,6 +272,7 @@ void CanvasLayer::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "rotation", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), "set_rotation", "get_rotation");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "scale"), "set_scale", "get_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::TRANSFORM2D, "transform"), "set_transform", "get_transform");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "eyes", PROPERTY_HINT_ENUM, "Mono,Left,Right"), "set_eyes", "get_eyes");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "custom_viewport", PROPERTY_HINT_RESOURCE_TYPE, "Viewport", 0), "set_custom_viewport", "get_custom_viewport");
 }
 
@@ -271,6 +287,7 @@ CanvasLayer::CanvasLayer() {
 	custom_viewport = NULL;
 	custom_viewport_id = 0;
 	sort_index = 0;
+	eyes = ARVRInterface::EYE_MONO;
 }
 
 CanvasLayer::~CanvasLayer() {
