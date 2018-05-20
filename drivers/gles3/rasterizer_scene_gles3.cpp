@@ -1457,6 +1457,109 @@ static const GLenum gl_primitive[] = {
 	GL_TRIANGLE_FAN
 };
 
+void RasterizerSceneGLES3::_render_canvas_item(VisualServerCanvas::Item *p_canvas_item, const Transform2D &p_transform, const Rect2 &p_clip_rect, const Color &p_modulate, int p_z, RasterizerCanvas::Item **z_list, RasterizerCanvas::Item **z_last_list, VisualServerCanvas::Item *p_canvas_clip, VisualServerCanvas::Item *p_material_owner) {
+
+	VisualServerCanvas::Item *ci = p_canvas_item;
+
+	if (!ci->visible)
+		return;
+
+	if (p_canvas_item->children_order_dirty) {
+
+		p_canvas_item->child_items.sort_custom<VisualServerCanvas::ItemIndexSort>();
+		p_canvas_item->children_order_dirty = false;
+	}
+
+	Rect2 rect = ci->get_rect();
+	Transform2D xform = p_transform * ci->xform;
+	Rect2 global_rect = xform.xform(rect);
+	global_rect.position += p_clip_rect.position;
+
+	if (ci->use_parent_material && p_material_owner)
+		ci->material_owner = p_material_owner;
+	else {
+		p_material_owner = ci;
+		ci->material_owner = NULL;
+	}
+
+	Color modulate(ci->modulate.r * p_modulate.r, ci->modulate.g * p_modulate.g, ci->modulate.b * p_modulate.b, ci->modulate.a * p_modulate.a);
+
+	if (modulate.a < 0.007)
+		return;
+
+	int child_item_count = ci->child_items.size();
+	VisualServerCanvas::Item **child_items = (VisualServerCanvas::Item **)alloca(child_item_count * sizeof(VisualServerCanvas::Item *));
+	copymem(child_items, ci->child_items.ptr(), child_item_count * sizeof(VisualServerCanvas::Item *));
+
+	if (ci->clip) {
+		if (p_canvas_clip != NULL) {
+			ci->final_clip_rect = p_canvas_clip->final_clip_rect.clip(global_rect);
+		} else {
+			ci->final_clip_rect = global_rect;
+		}
+		ci->final_clip_owner = ci;
+
+	} else {
+		ci->final_clip_owner = p_canvas_clip;
+	}
+
+	if (ci->sort_y) {
+
+		SortArray<VisualServerCanvas::Item *, VisualServerCanvas::ItemPtrSort> sorter;
+		sorter.sort(child_items, child_item_count);
+	}
+
+	if (ci->z_relative)
+		p_z = CLAMP(p_z + ci->z_index, VS::CANVAS_ITEM_Z_MIN, VS::CANVAS_ITEM_Z_MAX);
+	else
+		p_z = ci->z_index;
+
+	for (int i = 0; i < child_item_count; i++) {
+
+		if (!child_items[i]->behind)
+			continue;
+		_render_canvas_item(child_items[i], xform, p_clip_rect, modulate, p_z, z_list, z_last_list, (VisualServerCanvas::Item *)ci->final_clip_owner, p_material_owner);
+	}
+
+	if (ci->copy_back_buffer) {
+
+		ci->copy_back_buffer->screen_rect =
+				xform.xform(ci->copy_back_buffer->rect).clip(p_clip_rect);
+	}
+
+	if ((!ci->commands.empty() && p_clip_rect.intersects(global_rect)) ||
+			ci->vp_render || ci->copy_back_buffer) {
+		// something to draw?
+		ci->final_transform = xform;
+		ci->final_modulate = Color(
+				modulate.r * ci->self_modulate.r, modulate.g * ci->self_modulate.g,
+				modulate.b * ci->self_modulate.b, modulate.a * ci->self_modulate.a);
+		ci->global_rect_cache = global_rect;
+		ci->global_rect_cache.position -= p_clip_rect.position;
+		ci->light_masked = false;
+
+		int zidx = p_z - VS::CANVAS_ITEM_Z_MIN;
+
+		if (z_last_list[zidx]) {
+			z_last_list[zidx]->next = ci;
+			z_last_list[zidx] = ci;
+
+		} else {
+			z_list[zidx] = ci;
+			z_last_list[zidx] = ci;
+		}
+
+		ci->next = NULL;
+	}
+
+	for (int i = 0; i < child_item_count; i++) {
+
+		if (child_items[i]->behind)
+			continue;
+		_render_canvas_item(child_items[i], xform, p_clip_rect, modulate, p_z, z_list, z_last_list, (VisualServerCanvas::Item *)ci->final_clip_owner, p_material_owner);
+	}
+}
+
 void RasterizerSceneGLES3::_render_geometry(RenderList::Element *e) {
 
 	switch (e->instance->base_type) {
@@ -1757,6 +1860,48 @@ void RasterizerSceneGLES3::_render_geometry(RenderList::Element *e) {
 			}
 
 		} break;
+		case VS::INSTANCE_SPATIAL_CANVAS: {
+
+			RasterizerStorageGLES3::SpatialCanvas *spatial_canvas = storage->spatial_canvas_owner.getptr(e->instance->base);
+			if (spatial_canvas) {
+				VisualServerCanvas::Canvas *current_canvas = VSG::canvas->canvas_owner.getornull(spatial_canvas->canvas);
+
+				Rect2 clip_rect(0, 0, storage->frame.current_rt->width, storage->frame.current_rt->height);
+
+				canvas->canvas_begin(true);
+
+				if (current_canvas->children_order_dirty) {
+
+					current_canvas->child_items.sort();
+					current_canvas->children_order_dirty = false;
+				}
+
+				int l = current_canvas->child_items.size();
+				VisualServerCanvas::Canvas::ChildItem *ci =
+						current_canvas->child_items.ptrw();
+
+				static const int z_range = VS::CANVAS_ITEM_Z_MAX - VS::CANVAS_ITEM_Z_MIN + 1;
+				RasterizerCanvas::Item *z_list[z_range];
+				RasterizerCanvas::Item *z_last_list[z_range];
+
+				memset(z_list, 0, z_range * sizeof(RasterizerCanvas::Item *));
+				memset(z_last_list, 0, z_range * sizeof(RasterizerCanvas::Item *));
+
+				for (int i = 0; i < l; i++) {
+					_render_canvas_item(ci[i].item, Transform2D(), clip_rect, Color(1, 1, 1, 1), 0, z_list, z_last_list, NULL, NULL);
+				}
+
+				for (int i = 0; i < z_range; i++) {
+					if (!z_list[i])
+						continue;
+
+					VSG::canvas_render->canvas_render_items(z_list[i], VS::CANVAS_ITEM_Z_MIN + i, current_canvas->modulate, NULL, Transform2D());
+				}
+
+				canvas->canvas_end();
+			}
+
+		} break;
 	}
 }
 
@@ -1958,6 +2103,7 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 
 	bool first = true;
 	bool prev_use_instancing = false;
+	bool prev_use_canvas = false;
 
 	storage->info.render.draw_call_count += p_element_count;
 	bool prev_opaque_prepass = false;
@@ -1971,6 +2117,23 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 		bool rebind = first;
 
 		int shading = (e->sort_key >> RenderList::SORT_KEY_SHADING_SHIFT) & RenderList::SORT_KEY_SHADING_MASK;
+
+		// Canvas
+		bool use_canvas = e->instance->base_type == VS::INSTANCE_SPATIAL_CANVAS;
+		if (use_canvas != prev_use_canvas) {
+			if (use_canvas) {
+				canvas->canvas_set_render_mode(RasterizerCanvas::CANVAS_RENDER_MODE_WORLDSPACE);
+				canvas->canvas_setup_matrices(p_projection, p_view_transform, e->instance->transform);
+			} else {
+				glBindBufferBase(GL_UNIFORM_BUFFER, 0, state.scene_ubo); // bind globals ubo
+
+				state.current_depth_test = true;
+				glEnable(GL_DEPTH_TEST);
+				glEnable(GL_CULL_FACE);
+
+				rebind = true;
+			}
+		}
 
 		if (!p_shadow) {
 
@@ -2160,6 +2323,7 @@ void RasterizerSceneGLES3::_render_list(RenderList::Element **p_elements, int p_
 		prev_shading = shading;
 		prev_skeleton = skeleton;
 		prev_use_instancing = use_instancing;
+		prev_use_canvas = use_canvas;
 		prev_opaque_prepass = use_opaque_prepass;
 		first = false;
 	}
@@ -2232,7 +2396,7 @@ void RasterizerSceneGLES3::_add_geometry_with_material(RasterizerStorageGLES3::G
 
 	bool has_base_alpha = (p_material->shader->spatial.uses_alpha && !p_material->shader->spatial.uses_alpha_scissor) || p_material->shader->spatial.uses_screen_texture || p_material->shader->spatial.uses_depth_texture;
 	bool has_blend_alpha = p_material->shader->spatial.blend_mode != RasterizerStorageGLES3::Shader::Spatial::BLEND_MODE_MIX;
-	bool has_alpha = has_base_alpha || has_blend_alpha;
+	bool has_alpha = has_base_alpha || has_blend_alpha || p_instance->base_type == VS::INSTANCE_SPATIAL_CANVAS;
 
 	bool mirror = p_instance->mirror;
 	bool no_cull = false;
@@ -3172,6 +3336,14 @@ void RasterizerSceneGLES3::_fill_render_list(InstanceBase **p_cull_result, int p
 					}
 				}
 
+			} break;
+			case VS::INSTANCE_SPATIAL_CANVAS: {
+				if (p_depth_pass == false && p_shadow_pass == false) {
+					RasterizerStorageGLES3::SpatialCanvas *spatial_canvas = storage->spatial_canvas_owner.getptr(inst->base);
+					ERR_CONTINUE(!spatial_canvas);
+
+					_add_geometry(spatial_canvas, inst, NULL, -1, p_depth_pass, p_shadow_pass);
+				}
 			} break;
 		}
 	}

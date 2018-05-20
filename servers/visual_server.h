@@ -537,6 +537,14 @@ public:
 
 	virtual void particles_set_emission_transform(RID p_particles, const Transform &p_transform) = 0; //this is only used for 2D, in 3D it's automatic
 
+	/* SPATIAL CANVAS API */
+
+	virtual RID spatial_canvas_create() = 0;
+	virtual void spatial_canvas_set_aabb(RID p_spatial_canvas, const AABB &p_aabb) = 0;
+	virtual AABB spatial_canvas_get_aabb(RID p_spatial_canvas) const = 0;
+
+	virtual void spatial_canvas_set_canvas(RID p_spatial_canvas, RID p_current_canvas) = 0;
+
 	/* CAMERA API */
 
 	virtual RID camera_create() = 0;
@@ -751,13 +759,14 @@ public:
 		INSTANCE_MULTIMESH,
 		INSTANCE_IMMEDIATE,
 		INSTANCE_PARTICLES,
+		INSTANCE_SPATIAL_CANVAS,
 		INSTANCE_LIGHT,
 		INSTANCE_REFLECTION_PROBE,
 		INSTANCE_GI_PROBE,
 		INSTANCE_LIGHTMAP_CAPTURE,
 		INSTANCE_MAX,
 
-		INSTANCE_GEOMETRY_MASK = (1 << INSTANCE_MESH) | (1 << INSTANCE_MULTIMESH) | (1 << INSTANCE_IMMEDIATE) | (1 << INSTANCE_PARTICLES)
+		INSTANCE_GEOMETRY_MASK = (1 << INSTANCE_MESH) | (1 << INSTANCE_MULTIMESH) | (1 << INSTANCE_IMMEDIATE) | (1 << INSTANCE_PARTICLES) | (1 << INSTANCE_SPATIAL_CANVAS)
 	};
 
 	virtual RID instance_create2(RID p_base, RID p_scenario);

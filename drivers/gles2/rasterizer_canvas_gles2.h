@@ -94,7 +94,9 @@ public:
 
 	void _set_uniforms();
 
-	virtual void canvas_begin();
+	virtual void canvas_set_render_mode(const CanvasRenderMode p_canvas_render_mode);
+	virtual void canvas_setup_matrices(const CameraMatrix &p_cam_projection, const Transform &p_cam_transform, const Transform &p_world_transform);
+	virtual void canvas_begin(bool ignore_clear_request = false);
 	virtual void canvas_end();
 
 	_FORCE_INLINE_ void _set_texture_rect_mode(bool p_enable, bool p_ninepatch = false);
@@ -111,7 +113,7 @@ public:
 
 	virtual void canvas_light_shadow_buffer_update(RID p_buffer, const Transform2D &p_light_xform, int p_light_mask, float p_near, float p_far, LightOccluderInstance *p_occluders, CameraMatrix *p_xform_cache);
 
-	virtual void reset_canvas();
+	virtual void reset_canvas(bool ignore_clear_request);
 
 	RasterizerStorageGLES2::Texture *_bind_canvas_texture(const RID &p_texture, const RID &p_normal_map);
 

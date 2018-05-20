@@ -203,7 +203,7 @@ void RasterizerGLES2::initialize() {
 
 #endif // GLAD_ENABLED
 
-		// For debugging
+	// For debugging
 #ifdef GLES_OVER_GL
 	if (GLAD_GL_ARB_debug_output) {
 		glDebugMessageControlARB(_EXT_DEBUG_SOURCE_API_ARB, _EXT_DEBUG_TYPE_ERROR_ARB, _EXT_DEBUG_SEVERITY_HIGH_ARB, 0, NULL, GL_TRUE);
@@ -450,6 +450,7 @@ RasterizerGLES2::RasterizerGLES2() {
 	canvas->scene_render = scene;
 	storage->canvas = canvas;
 	scene->storage = storage;
+	scene->canvas = canvas;
 	storage->scene = scene;
 
 	prev_ticks = 0;

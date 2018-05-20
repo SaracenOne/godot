@@ -527,6 +527,14 @@ public:
 	virtual void render_target_clear_used(RID p_render_target) = 0;
 	virtual void render_target_set_msaa(RID p_render_target, VS::ViewportMSAA p_msaa) = 0;
 
+	/* SPATIAL_CANVAS */
+
+	virtual RID spatial_canvas_create() = 0;
+	virtual void spatial_canvas_set_aabb(RID p_spatial_canvas, const AABB &p_aabb) = 0;
+	virtual AABB spatial_canvas_get_aabb(RID p_spatial_canvas) const = 0;
+
+	virtual void spatial_canvas_set_canvas(RID p_spatial_canvas, RID p_current_canvas) = 0;
+
 	/* CANVAS SHADOW */
 
 	virtual RID canvas_light_shadow_buffer_create(int p_width) = 0;
@@ -558,6 +566,11 @@ public:
 
 class RasterizerCanvas {
 public:
+	enum CanvasRenderMode {
+		CANVAS_RENDER_MODE_SCREENSPACE = 0,
+		CANVAS_RENDER_MODE_WORLDSPACE
+	};
+
 	enum CanvasRectFlags {
 
 		CANVAS_RECT_REGION = 1,
@@ -1018,7 +1031,9 @@ public:
 		}
 	};
 
-	virtual void canvas_begin() = 0;
+	virtual void canvas_set_render_mode(const CanvasRenderMode p_canvas_render_mode) = 0;
+	virtual void canvas_setup_matrices(const CameraMatrix &p_cam_projection, const Transform &p_cam_transform, const Transform &p_world_transform) = 0;
+	virtual void canvas_begin(bool ignore_clear_request = false) = 0;
 	virtual void canvas_end() = 0;
 
 	virtual void canvas_render_items(Item *p_item_list, int p_z, const Color &p_modulate, Light *p_light, const Transform2D &p_base_transform) = 0;
@@ -1048,7 +1063,7 @@ public:
 
 	virtual void canvas_light_shadow_buffer_update(RID p_buffer, const Transform2D &p_light_xform, int p_light_mask, float p_near, float p_far, LightOccluderInstance *p_occluders, CameraMatrix *p_xform_cache) = 0;
 
-	virtual void reset_canvas() = 0;
+	virtual void reset_canvas(bool ignore_clear_request) = 0;
 
 	virtual void draw_window_margins(int *p_margins, RID *p_margin_textures) = 0;
 

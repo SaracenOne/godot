@@ -53,6 +53,7 @@
 class RasterizerSceneGLES2 : public RasterizerScene {
 public:
 	RasterizerStorageGLES2 *storage;
+	RasterizerCanvasGLES2 *canvas;
 	struct State {
 
 		bool texscreen_copied;

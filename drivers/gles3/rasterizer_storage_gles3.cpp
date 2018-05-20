@@ -5993,6 +5993,43 @@ void RasterizerStorageGLES3::update_particles() {
 	glDisable(GL_RASTERIZER_DISCARD);
 }
 
+///////
+
+RID RasterizerStorageGLES3::spatial_canvas_create() {
+
+	SpatialCanvas *spatial_canvas = memnew(SpatialCanvas);
+
+	spatial_canvas->aabb = AABB(Vector3(), Vector3(1, 1, 1));
+	spatial_canvas->canvas = RID();
+	spatial_canvas->version = 1;
+
+	return spatial_canvas_owner.make_rid(spatial_canvas);
+}
+
+void RasterizerStorageGLES3::spatial_canvas_set_aabb(RID p_spatial_canvas, const AABB &p_aabb) {
+
+	SpatialCanvas *sc = spatial_canvas_owner.getornull(p_spatial_canvas);
+	ERR_FAIL_COND(!sc);
+
+	sc->aabb = p_aabb;
+	sc->version++;
+	sc->instance_change_notify();
+}
+AABB RasterizerStorageGLES3::spatial_canvas_get_aabb(RID p_spatial_canvas) const {
+
+	const SpatialCanvas *sc = spatial_canvas_owner.getornull(p_spatial_canvas);
+	ERR_FAIL_COND_V(!sc, AABB());
+
+	return sc->aabb;
+}
+
+void RasterizerStorageGLES3::spatial_canvas_set_canvas(RID p_spatial_canvas, RID p_canvas) {
+	SpatialCanvas *sc = spatial_canvas_owner.getornull(p_spatial_canvas);
+	ERR_FAIL_COND(!sc);
+
+	sc->canvas = p_canvas;
+}
+
 ////////
 
 void RasterizerStorageGLES3::instance_add_skeleton(RID p_skeleton, RasterizerScene::InstanceBase *p_instance) {
@@ -6029,6 +6066,10 @@ void RasterizerStorageGLES3::instance_add_dependency(RID p_base, RasterizerScene
 		} break;
 		case VS::INSTANCE_PARTICLES: {
 			inst = particles_owner.getornull(p_base);
+			ERR_FAIL_COND(!inst);
+		} break;
+		case VS::INSTANCE_SPATIAL_CANVAS: {
+			inst = spatial_canvas_owner.getornull(p_base);
 			ERR_FAIL_COND(!inst);
 		} break;
 		case VS::INSTANCE_REFLECTION_PROBE: {
@@ -6076,6 +6117,10 @@ void RasterizerStorageGLES3::instance_remove_dependency(RID p_base, RasterizerSc
 		} break;
 		case VS::INSTANCE_PARTICLES: {
 			inst = particles_owner.getornull(p_base);
+			ERR_FAIL_COND(!inst);
+		} break;
+		case VS::INSTANCE_SPATIAL_CANVAS: {
+			inst = spatial_canvas_owner.getornull(p_base);
 			ERR_FAIL_COND(!inst);
 		} break;
 		case VS::INSTANCE_REFLECTION_PROBE: {
@@ -6830,6 +6875,10 @@ VS::InstanceType RasterizerStorageGLES3::get_base_type(RID p_rid) const {
 
 	if (particles_owner.owns(p_rid)) {
 		return VS::INSTANCE_PARTICLES;
+	}
+
+	if (spatial_canvas_owner.owns(p_rid)) {
+		return VS::INSTANCE_SPATIAL_CANVAS;
 	}
 
 	if (light_owner.owns(p_rid)) {

@@ -42,6 +42,8 @@
 #include "shaders/cubemap_filter.glsl.gen.h"
 #include "shaders/particles.glsl.gen.h"
 
+#include "servers/visual/visual_server_canvas.h"
+
 class RasterizerCanvasGLES3;
 class RasterizerSceneGLES3;
 
@@ -218,6 +220,7 @@ public:
 			GEOMETRY_SURFACE,
 			GEOMETRY_IMMEDIATE,
 			GEOMETRY_MULTISURFACE,
+			GEOMETRY_SPATIAL_CANVAS,
 		};
 
 		Type type;
@@ -1243,6 +1246,28 @@ public:
 
 	virtual int particles_get_draw_passes(RID p_particles) const;
 	virtual RID particles_get_draw_pass_mesh(RID p_particles, int p_pass) const;
+
+	/* SPATIAL CANVAS */
+
+	struct SpatialCanvas : Geometry {
+
+		AABB aabb;
+		RID canvas;
+		uint64_t version;
+
+		SpatialCanvas() {
+			type = GEOMETRY_SPATIAL_CANVAS;
+		}
+	};
+
+	mutable RID_Owner<SpatialCanvas> spatial_canvas_owner;
+
+	virtual RID spatial_canvas_create();
+
+	virtual void spatial_canvas_set_aabb(RID p_spatial_canvas, const AABB &p_bounds);
+	virtual AABB spatial_canvas_get_aabb(RID p_spatial_canvas) const;
+
+	virtual void spatial_canvas_set_canvas(RID p_spatial_canvas, RID p_current_canvas);
 
 	/* INSTANCE */
 

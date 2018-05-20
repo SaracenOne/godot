@@ -29,6 +29,7 @@
 /*************************************************************************/
 #include "spatial_canvas.h"
 #include "../main/viewport.h"
+#include "scene/gui/control.h"
 
 Size2 SpatialCanvas::get_size() const {
 	return size;
@@ -37,8 +38,13 @@ Size2 SpatialCanvas::get_size() const {
 void SpatialCanvas::set_size(const Size2 &p_size) {
 	size = p_size;
 	if (is_inside_tree()) {
-		VS::get_singleton()->spatial_canvas_set_size(spatial_canvas, p_size);
-		VS::get_singleton()->spatial_canvas_set_aabb(spatial_canvas, AABB(Vector3(0.0, -get_size().y, 0.0), Vector3(get_size().x, get_size().y, 0.0)));
+		for (int i = 0; i < get_child_count(); i++) {
+			Control *control = Object::cast_to<Control>(get_child(i));
+			if (control) {
+				control->set_margin(MARGIN_TOP, control->get_margin(MARGIN_TOP)); // HACK
+			}
+		}
+		VS::get_singleton()->spatial_canvas_set_aabb(spatial_canvas, get_aabb());
 	}
 
 #if TOOLS_ENABLED
@@ -72,8 +78,7 @@ void SpatialCanvas::_notification(int p_what) {
 
 		case NOTIFICATION_ENTER_TREE: {
 			VS::get_singleton()->spatial_canvas_set_canvas(spatial_canvas, current_canvas);
-			VS::get_singleton()->spatial_canvas_set_size(spatial_canvas, Size2());
-			VS::get_singleton()->spatial_canvas_set_aabb(spatial_canvas, AABB(Vector3(0.0, -get_size().y, 0.0), Vector3(get_size().x, get_size().y, 0.0)));
+			VS::get_singleton()->spatial_canvas_set_aabb(spatial_canvas, get_aabb());
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
 			VS::get_singleton()->spatial_canvas_set_canvas(spatial_canvas, RID());
@@ -82,6 +87,7 @@ void SpatialCanvas::_notification(int p_what) {
 }
 
 AABB SpatialCanvas::get_aabb() const {
+	return AABB();
 	return AABB(Vector3(0.0, -get_size().y, 0.0), Vector3(get_size().x, get_size().y, 0.0));
 }
 

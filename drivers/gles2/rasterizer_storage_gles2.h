@@ -45,6 +45,8 @@
 #include "shaders/particles.glsl.gen.h"
 */
 
+#include "servers/visual/visual_server_canvas.h"
+
 class RasterizerCanvasGLES2;
 class RasterizerSceneGLES2;
 
@@ -710,6 +712,15 @@ public:
 
 	virtual int particles_get_draw_passes(RID p_particles) const;
 	virtual RID particles_get_draw_pass_mesh(RID p_particles, int p_pass) const;
+
+	/* SPATIAL CANVAS */
+
+	virtual RID spatial_canvas_create();
+
+	virtual void spatial_canvas_set_aabb(RID p_spatial_canvas, const AABB &p_bounds);
+	virtual AABB spatial_canvas_get_aabb(RID p_spatial_canvas) const;
+
+	virtual void spatial_canvas_set_canvas(RID p_spatial_canvas, RID p_current_canvas);
 
 	/* INSTANCE */
 

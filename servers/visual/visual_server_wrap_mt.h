@@ -344,6 +344,15 @@ public:
 
 	FUNC1R(AABB, particles_get_current_aabb, RID)
 
+	/* SPATIAL CANVAS */
+
+	FUNCRID(spatial_canvas)
+
+	FUNC2(spatial_canvas_set_aabb, RID, const AABB &)
+	FUNC1RC(AABB, spatial_canvas_get_aabb, RID)
+
+	FUNC2(spatial_canvas_set_canvas, RID, RID)
+
 	/* CAMERA API */
 
 	FUNCRID(camera)

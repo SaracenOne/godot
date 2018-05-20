@@ -410,6 +410,15 @@ public:
 	BIND1R(AABB, particles_get_current_aabb, RID)
 	BIND2(particles_set_emission_transform, RID, const Transform &)
 
+	/* SPATIAL CANVAS */
+
+	BIND0R(RID, spatial_canvas_create)
+
+	BIND2(spatial_canvas_set_aabb, RID, const AABB &)
+	BIND1RC(AABB, spatial_canvas_get_aabb, RID)
+
+	BIND2(spatial_canvas_set_canvas, RID, RID)
+
 #undef BINDBASE
 //from now on, calls forwarded to this singleton
 #define BINDBASE VSG::scene

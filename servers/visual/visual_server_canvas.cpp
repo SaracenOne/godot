@@ -174,6 +174,7 @@ void VisualServerCanvas::_light_mask_canvas_items(int p_z, RasterizerCanvas::Ite
 
 void VisualServerCanvas::render_canvas(Canvas *p_canvas, const Transform2D &p_transform, RasterizerCanvas::Light *p_lights, RasterizerCanvas::Light *p_masked_lights, const Rect2 &p_clip_rect) {
 
+	VSG::canvas_render->canvas_set_render_mode(RasterizerCanvas::CANVAS_RENDER_MODE_SCREENSPACE);
 	VSG::canvas_render->canvas_begin();
 
 	if (p_canvas->children_order_dirty) {

@@ -56,23 +56,25 @@ void RasterizerCanvasGLES2::_set_uniforms() {
 	state.canvas_shader.set_uniform(CanvasShaderGLES2::FINAL_MODULATE, state.uniforms.final_modulate);
 }
 
-void RasterizerCanvasGLES2::canvas_begin() {
+void RasterizerCanvasGLES2::canvas_set_render_mode(const CanvasRenderMode p_canvas_render_mode) {
+}
 
-	if (storage->frame.clear_request) {
-		glClearColor(storage->frame.clear_request_color.r,
-				storage->frame.clear_request_color.g,
-				storage->frame.clear_request_color.b,
-				storage->frame.clear_request_color.a);
-		glClear(GL_COLOR_BUFFER_BIT);
-		storage->frame.clear_request = false;
+void RasterizerCanvasGLES2::canvas_setup_matrices(const CameraMatrix &p_cam_projection, const Transform &p_cam_transform, const Transform &p_world_transform) {
+}
+
+void RasterizerCanvasGLES2::canvas_begin(bool p_ignore_clear_request) {
+
+	if (p_ignore_clear_request == false) {
+		if (storage->frame.current_rt && storage->frame.clear_request) {
+			// a clear request may be pending, so do it
+
+			glClearColor(storage->frame.clear_request_color.r, storage->frame.clear_request_color.g, storage->frame.clear_request_color.b, storage->frame.clear_request_color.a);
+			glClear(GL_COLOR_BUFFER_BIT);
+			storage->frame.clear_request = false;
+		}
 	}
 
-	if (storage->frame.current_rt) {
-		glBindFramebuffer(GL_FRAMEBUFFER, storage->frame.current_rt->fbo);
-		glColorMask(1, 1, 1, 1);
-	}
-
-	reset_canvas();
+	reset_canvas(p_ignore_clear_request);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, storage->resources.white_tex);
@@ -986,18 +988,20 @@ void RasterizerCanvasGLES2::canvas_debug_viewport_shadows(Light *p_lights_with_s
 void RasterizerCanvasGLES2::canvas_light_shadow_buffer_update(RID p_buffer, const Transform2D &p_light_xform, int p_light_mask, float p_near, float p_far, LightOccluderInstance *p_occluders, CameraMatrix *p_xform_cache) {
 }
 
-void RasterizerCanvasGLES2::reset_canvas() {
+void RasterizerCanvasGLES2::reset_canvas(bool ignore_clear_request) {
 
 	glDisable(GL_CULL_FACE);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_SCISSOR_TEST);
-	glDisable(GL_DITHER);
-	glEnable(GL_BLEND);
+	if (!ignore_clear_request) {
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_SCISSOR_TEST);
+		glDisable(GL_DITHER);
+		glEnable(GL_BLEND);
 
-	if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
-		glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	} else {
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		if (storage->frame.current_rt && storage->frame.current_rt->flags[RasterizerStorage::RENDER_TARGET_TRANSPARENT]) {
+			glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		} else {
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
 	}
 
 	// bind the back buffer to a texture so shaders can use it.

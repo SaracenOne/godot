@@ -1278,8 +1278,10 @@ Size2 Control::get_parent_area_size() const {
 
 		parent_size = data.parent_canvas_item->_edit_get_rect().size;
 	} else {
-
-		parent_size = get_viewport()->get_visible_rect().size;
+		if (get_spatial_canvas())
+			parent_size = get_spatial_canvas()->get_size();
+		else
+			parent_size = get_viewport()->get_visible_rect().size;
 	}
 
 	return parent_size;
