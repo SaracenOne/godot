@@ -1085,6 +1085,7 @@ void _OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_window_per_pixel_transparency_enabled"), &_OS::get_window_per_pixel_transparency_enabled);
 	ClassDB::bind_method(D_METHOD("set_window_per_pixel_transparency_enabled", "enabled"), &_OS::set_window_per_pixel_transparency_enabled);
 
+	ClassDB::bind_method(D_METHOD("set_ime_active", "active"), &_OS::set_ime_active);
 	ClassDB::bind_method(D_METHOD("set_ime_position", "position"), &_OS::set_ime_position);
 
 	ClassDB::bind_method(D_METHOD("set_screen_orientation", "orientation"), &_OS::set_screen_orientation);
