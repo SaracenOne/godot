@@ -47,6 +47,7 @@ class AudioDriverPulseAudio : public AudioDriver {
 	pa_mainloop *pa_ml;
 	pa_context *pa_ctx;
 	pa_stream *pa_str;
+	pa_stream *pa_rec_str;
 	pa_channel_map pa_map;
 
 	String device_name;
@@ -58,6 +59,7 @@ class AudioDriverPulseAudio : public AudioDriver {
 
 	unsigned int mix_rate;
 	unsigned int buffer_frames;
+	unsigned int input_buffer_frames;
 	unsigned int pa_buffer_size;
 	int channels;
 	int pa_ready;
@@ -99,6 +101,9 @@ public:
 	virtual void finish();
 
 	virtual float get_latency();
+
+	virtual Error capture_start();
+	virtual Error capture_stop();
 
 	AudioDriverPulseAudio();
 	~AudioDriverPulseAudio();

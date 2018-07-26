@@ -38,6 +38,8 @@
 #include "variant.h"
 
 class AudioDriverDummy;
+class AudioStream;
+class AudioStreamSample;
 
 class AudioDriver {
 
@@ -51,6 +53,9 @@ class AudioDriver {
 #endif
 
 protected:
+	Vector<int32_t> audio_input_buffer;
+	unsigned int audio_input_position;
+
 	void audio_server_process(int p_frames, int32_t *p_buffer, bool p_update_mix_time = true);
 	void update_mix_time(int p_frames);
 
@@ -91,10 +96,19 @@ public:
 	virtual void unlock() = 0;
 	virtual void finish() = 0;
 
+	virtual Error capture_start() { return FAILED; }
+	virtual Error capture_stop() { return FAILED; }
+	virtual void capture_set_device(const String &p_name) {}
+	virtual String capture_get_device() { return "Default"; }
+	virtual Array capture_get_device_list(); // TODO: convert this and get_device_list to PoolStringArray
+
 	virtual float get_latency() { return 0; }
 
 	SpeakerMode get_speaker_mode_by_total_channels(int p_channels) const;
 	int get_total_channels_by_speaker_mode(SpeakerMode) const;
+
+	Vector<int32_t> get_audio_input_buffer() { return audio_input_buffer; }
+	unsigned int get_audio_input_position() { return audio_input_position; }
 
 #ifdef DEBUG_ENABLED
 	uint64_t get_profiling_time() const { return prof_time; }
@@ -222,6 +236,18 @@ private:
 
 	void _mix_step();
 
+#if 0
+	struct AudioInBlock {
+
+		Ref<AudioStreamSample> audio_stream;
+		int current_position;
+		bool loops;
+	};
+
+	Map<StringName, AudioInBlock *> audio_in_block_map;
+	Vector<AudioInBlock *> audio_in_blocks;
+#endif
+
 	struct CallbackItem {
 
 		AudioCallback callback;
@@ -335,8 +361,11 @@ public:
 	String get_device();
 	void set_device(String device);
 
-	float get_output_latency() { return output_latency; }
+	Array capture_get_device_list();
+	String capture_get_device();
+	void capture_set_device(const String &p_name);
 
+	float get_output_latency() { return output_latency; }
 	AudioServer();
 	virtual ~AudioServer();
 };
