@@ -99,6 +99,7 @@ public:
 
 	virtual Error capture_start() { return FAILED; }
 	virtual Error capture_stop() { return FAILED; }
+	virtual int capture_get_mix_rate() { return get_mix_rate(); }
 	virtual void capture_set_device(const String &p_name) {}
 	virtual String capture_get_device() { return "Default"; }
 	virtual Array capture_get_device_list(); // TODO: convert this and get_device_list to PoolStringArray

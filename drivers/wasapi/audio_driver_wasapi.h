@@ -52,6 +52,7 @@ class AudioDriverWASAPI : public AudioDriver {
 
 		WORD format_tag;
 		WORD bits_per_sample;
+		int mix_rate;
 		unsigned int channels;
 		unsigned int frame_size;
 
@@ -81,7 +82,6 @@ class AudioDriverWASAPI : public AudioDriver {
 	Vector<int32_t> samples_in;
 
 	unsigned int channels;
-	int mix_rate;
 	int buffer_frames;
 
 	bool thread_exited;
@@ -120,6 +120,7 @@ public:
 	virtual Error capture_start();
 	virtual Error capture_stop();
 	virtual Array capture_get_device_list();
+	virtual int capture_get_mix_rate() const;
 	virtual void capture_set_device(const String &p_name);
 	virtual String capture_get_device();
 

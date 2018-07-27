@@ -170,7 +170,7 @@ void AudioStreamPlaybackMicrophone::mix(AudioFrame *p_buffer, float p_rate_scale
 }
 
 float AudioStreamPlaybackMicrophone::get_stream_sampling_rate() {
-	return AudioDriver::get_singleton()->get_mix_rate();
+	return AudioDriver::get_singleton()->capture_get_mix_rate();
 }
 
 void AudioStreamPlaybackMicrophone::start(float p_from_pos) {
