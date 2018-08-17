@@ -612,6 +612,8 @@ ShaderLanguage::Token ShaderLanguage::_get_token() {
 	}
 	ERR_PRINT("BUG");
 	return Token();
+
+#undef GETCHAR
 }
 
 String ShaderLanguage::token_debug(const String &p_code) {
@@ -1375,6 +1377,15 @@ const ShaderLanguage::BuiltinFuncDef ShaderLanguage::builtin_func_defs[] = {
 	{ "bvec4", TYPE_BVEC4, { TYPE_IVEC4, TYPE_VOID } },
 	{ "bvec4", TYPE_BVEC4, { TYPE_UVEC4, TYPE_VOID } },
 	{ "bvec4", TYPE_BVEC4, { TYPE_VEC4, TYPE_VOID } },
+
+	//conversion between matrixes
+
+	{ "mat2", TYPE_MAT2, { TYPE_MAT3, TYPE_VOID } },
+	{ "mat2", TYPE_MAT2, { TYPE_MAT4, TYPE_VOID } },
+	{ "mat3", TYPE_MAT3, { TYPE_MAT2, TYPE_VOID } },
+	{ "mat3", TYPE_MAT3, { TYPE_MAT4, TYPE_VOID } },
+	{ "mat4", TYPE_MAT4, { TYPE_MAT2, TYPE_VOID } },
+	{ "mat4", TYPE_MAT4, { TYPE_MAT3, TYPE_VOID } },
 
 	//builtins - trigonometry
 
@@ -2460,7 +2471,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 						//add to current function as dependency
 						for (int j = 0; j < shader->functions.size(); j++) {
 							if (shader->functions[j].name == current_function) {
-								shader->functions[j].uses_function.insert(name);
+								shader->functions.write[j].uses_function.insert(name);
 								break;
 							}
 						}
@@ -3010,8 +3021,8 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 				}
 				op->arguments.push_back(expression[i + 1].node);
 
-				expression[i].is_op = false;
-				expression[i].node = op;
+				expression.write[i].is_op = false;
+				expression.write[i].node = op;
 
 				if (!_validate_operator(op, &op->return_cache)) {
 
@@ -3045,8 +3056,8 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 			op->arguments.push_back(expression[next_op + 1].node);
 			op->arguments.push_back(expression[next_op + 3].node);
 
-			expression[next_op - 1].is_op = false;
-			expression[next_op - 1].node = op;
+			expression.write[next_op - 1].is_op = false;
+			expression.write[next_op - 1].node = op;
 			if (!_validate_operator(op, &op->return_cache)) {
 
 				String at;
@@ -3096,7 +3107,7 @@ ShaderLanguage::Node *ShaderLanguage::_parse_expression(BlockNode *p_block, cons
 
 			op->arguments.push_back(expression[next_op - 1].node); //expression goes as left
 			op->arguments.push_back(expression[next_op + 1].node); //next expression goes as right
-			expression[next_op - 1].node = op;
+			expression.write[next_op - 1].node = op;
 
 			//replace all 3 nodes by this operator and make it an expression
 
@@ -3138,7 +3149,7 @@ ShaderLanguage::Node *ShaderLanguage::_reduce_expression(BlockNode *p_block, Sha
 
 		for (int i = 1; i < op->arguments.size(); i++) {
 
-			op->arguments[i] = _reduce_expression(p_block, op->arguments[i]);
+			op->arguments.write[i] = _reduce_expression(p_block, op->arguments[i]);
 			if (op->arguments[i]->type == Node::TYPE_CONSTANT) {
 				ConstantNode *cn = static_cast<ConstantNode *>(op->arguments[i]);
 
@@ -3178,7 +3189,7 @@ ShaderLanguage::Node *ShaderLanguage::_reduce_expression(BlockNode *p_block, Sha
 		return cn;
 	} else if (op->op == OP_NEGATE) {
 
-		op->arguments[0] = _reduce_expression(p_block, op->arguments[0]);
+		op->arguments.write[0] = _reduce_expression(p_block, op->arguments[0]);
 		if (op->arguments[0]->type == Node::TYPE_CONSTANT) {
 
 			ConstantNode *cn = static_cast<ConstantNode *>(op->arguments[0]);
@@ -4064,13 +4075,58 @@ Error ShaderLanguage::_parse_shader(const Map<StringName, FunctionInfo> &p_funct
 	return OK;
 }
 
+// skips over whitespace and /* */ and // comments
+static int _get_first_ident_pos(const String &p_code) {
+
+	int idx = 0;
+
+#define GETCHAR(m_idx) (((idx + m_idx) < p_code.length()) ? p_code[idx + m_idx] : CharType(0))
+
+	while (true) {
+		if (GETCHAR(0) == '/' && GETCHAR(1) == '/') {
+			idx += 2;
+			while (true) {
+				if (GETCHAR(0) == 0) return 0;
+				if (GETCHAR(0) == '\n') {
+					idx++;
+					break; // loop
+				}
+				idx++;
+			}
+		} else if (GETCHAR(0) == '/' && GETCHAR(1) == '*') {
+			idx += 2;
+			while (true) {
+				if (GETCHAR(0) == 0) return 0;
+				if (GETCHAR(0) == '*' && GETCHAR(1) == '/') {
+					idx += 2;
+					break; // loop
+				}
+				idx++;
+			}
+		} else {
+			switch (GETCHAR(0)) {
+				case ' ':
+				case '\t':
+				case '\r':
+				case '\n': {
+					idx++;
+				} break; // switch
+				default:
+					return idx;
+			}
+		}
+	}
+
+#undef GETCHAR
+}
+
 String ShaderLanguage::get_shader_type(const String &p_code) {
 
 	bool reading_type = false;
 
 	String cur_identifier;
 
-	for (int i = 0; i < p_code.length(); i++) {
+	for (int i = _get_first_ident_pos(p_code); i < p_code.length(); i++) {
 
 		if (p_code[i] == ';') {
 			break;

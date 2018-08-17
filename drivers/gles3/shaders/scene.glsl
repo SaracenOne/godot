@@ -91,6 +91,7 @@ layout(std140) uniform SceneData { //ubo:0
 	mediump float subsurface_scatter_width;
 	mediump float ambient_occlusion_affect_light;
 	mediump float ambient_occlusion_affect_ao_channel;
+	mediump float opaque_prepass_threshold;
 
 	bool fog_depth_enabled;
 	highp float fog_depth_begin;
@@ -571,11 +572,6 @@ in vec3 normal_interp;
 
 /* PBR CHANNELS */
 
-//used on forward mainly
-uniform bool no_ambient_light;
-
-
-
 #ifdef USE_RADIANCE_MAP
 
 
@@ -684,6 +680,7 @@ layout(std140) uniform SceneData {
 	mediump float subsurface_scatter_width;
 	mediump float ambient_occlusion_affect_light;
 	mediump float ambient_occlusion_affect_ao_channel;
+	mediump float opaque_prepass_threshold;
 
 	bool fog_depth_enabled;
 	highp float fog_depth_begin;
@@ -1031,12 +1028,11 @@ LIGHT_SHADER_CODE
 		diffuse_brdf_NL = cNdotL * (1.0 / M_PI);
 #endif
 
-#if defined(TRANSMISSION_USED)
-		diffuse_light += light_color * diffuse_color * mix(vec3(diffuse_brdf_NL), vec3(M_PI), transmission) * attenuation;
-#else
 		diffuse_light += light_color * diffuse_color * diffuse_brdf_NL * attenuation;
-#endif
 
+#if defined(TRANSMISSION_USED)
+		diffuse_light += light_color * diffuse_color * (vec3(1.0 / M_PI) - diffuse_brdf_NL) * transmission * attenuation;
+#endif
 
 
 #if defined(LIGHT_USE_RIM)
@@ -1633,7 +1629,7 @@ void main() {
 	float alpha = 1.0;
 
 #if defined(DO_SIDE_CHECK)
-	float side=float(gl_FrontFacing)*2.0-1.0;
+	float side=gl_FrontFacing ? 1.0 : -1.0;
 #else
 	float side=1.0;
 #endif
@@ -1695,9 +1691,10 @@ FRAGMENT_SHADER_CODE
 
 #ifdef USE_OPAQUE_PREPASS
 
-	if (alpha<0.99) {
+	if (alpha<opaque_prepass_threshold) {
 		discard;
 	}
+
 #endif
 
 #if defined(ENABLE_NORMALMAP)
@@ -1752,42 +1749,43 @@ FRAGMENT_SHADER_CODE
 
 #ifdef USE_RADIANCE_MAP
 
-	if (no_ambient_light) {
-		ambient_light=vec3(0.0,0.0,0.0);
-	} else {
-		{
+#ifdef AMBIENT_LIGHT_DISABLED
+	ambient_light=vec3(0.0,0.0,0.0);
+#else
+	{
 
-			{ //read radiance from dual paraboloid
+		{ //read radiance from dual paraboloid
 
-				vec3 ref_vec = reflect(-eye_vec,normal); //2.0 * ndotv * normal - view; // reflect(v, n);
-				ref_vec=normalize((radiance_inverse_xform * vec4(ref_vec,0.0)).xyz);
-				vec3 radiance = textureDualParaboloid(radiance_map,ref_vec,roughness) * bg_energy;
-				env_reflection_light = radiance;
-
-			}
-			//no longer a cubemap
-			//vec3 radiance = textureLod(radiance_cube, r, lod).xyz * ( brdf.x + brdf.y);
+			vec3 ref_vec = reflect(-eye_vec,normal); //2.0 * ndotv * normal - view; // reflect(v, n);
+			ref_vec=normalize((radiance_inverse_xform * vec4(ref_vec,0.0)).xyz);
+			vec3 radiance = textureDualParaboloid(radiance_map,ref_vec,roughness) * bg_energy;
+			env_reflection_light = radiance;
 
 		}
-#ifndef USE_LIGHTMAP
-		{
+		//no longer a cubemap
+		//vec3 radiance = textureLod(radiance_cube, r, lod).xyz * ( brdf.x + brdf.y);
 
-			vec3 ambient_dir=normalize((radiance_inverse_xform * vec4(normal,0.0)).xyz);
-			vec3 env_ambient=textureDualParaboloid(radiance_map,ambient_dir,1.0) * bg_energy;
-
-			ambient_light=mix(ambient_light_color.rgb,env_ambient,radiance_ambient_contribution);
-			//ambient_light=vec3(0.0,0.0,0.0);
-		}
-#endif
 	}
+#ifndef USE_LIGHTMAP
+	{
+
+		vec3 ambient_dir=normalize((radiance_inverse_xform * vec4(normal,0.0)).xyz);
+		vec3 env_ambient=textureDualParaboloid(radiance_map,ambient_dir,1.0) * bg_energy;
+
+		ambient_light=mix(ambient_light_color.rgb,env_ambient,radiance_ambient_contribution);
+		//ambient_light=vec3(0.0,0.0,0.0);
+	}
+#endif
+#endif //AMBIENT_LIGHT_DISABLED
 
 #else
 
-	if (no_ambient_light){
-		ambient_light=vec3(0.0,0.0,0.0);
-	} else {
-		ambient_light=ambient_light_color.rgb;
-	}
+#ifdef AMBIENT_LIGHT_DISABLED
+	ambient_light=vec3(0.0,0.0,0.0);
+#else
+	ambient_light=ambient_light_color.rgb;
+#endif //AMBIENT_LIGHT_DISABLED
+
 #endif
 
 	ambient_light*=ambient_energy;
@@ -2142,6 +2140,8 @@ FRAGMENT_SHADER_CODE
 
 #else
 
+
+
 	//approximate ambient scale for SSAO, since we will lack full ambient
 	float max_emission=max(emission.r,max(emission.g,emission.b));
 	float max_ambient=max(ambient_light.r,max(ambient_light.g,ambient_light.b));
@@ -2172,7 +2172,6 @@ FRAGMENT_SHADER_CODE
 #else
 	frag_color=vec4(emission+ambient_light+diffuse_light+specular_light,alpha);
 #endif //SHADELESS
-
 
 #endif //USE_MULTIPLE_RENDER_TARGETS
 

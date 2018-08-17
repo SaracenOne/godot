@@ -4,11 +4,10 @@
 void AnimationNodeBlendSpace2D::set_tree(AnimationTree *p_player) {
 	AnimationRootNode::set_tree(p_player);
 
-	for(int i=0;i<blend_points_used;i++) {
+	for (int i = 0; i < blend_points_used; i++) {
 		blend_points[i].node->set_tree(p_player);
 	}
 }
-
 
 void AnimationNodeBlendSpace2D::add_blend_point(const Ref<AnimationRootNode> &p_node, const Vector2 &p_position, int p_at_index) {
 	ERR_FAIL_COND(blend_points_used >= MAX_BLEND_POINTS);
@@ -25,7 +24,7 @@ void AnimationNodeBlendSpace2D::add_blend_point(const Ref<AnimationRootNode> &p_
 		for (int i = 0; i < triangles.size(); i++) {
 			for (int j = 0; j < 3; j++) {
 				if (triangles[i].points[j] >= p_at_index) {
-					triangles[i].points[j]++;
+					triangles.write[i].points[j]++;
 				}
 			}
 		}
@@ -82,7 +81,7 @@ void AnimationNodeBlendSpace2D::remove_blend_point(int p_point) {
 				erase = true;
 				break;
 			} else if (triangles[i].points[j] > p_point) {
-				triangles[i].points[j]--;
+				triangles.write[i].points[j]--;
 			}
 		}
 		if (erase) {
@@ -265,9 +264,9 @@ Vector<int> AnimationNodeBlendSpace2D::_get_triangles() const {
 
 	t.resize(triangles.size() * 3);
 	for (int i = 0; i < triangles.size(); i++) {
-		t[i * 3 + 0] = triangles[i].points[0];
-		t[i * 3 + 1] = triangles[i].points[1];
-		t[i * 3 + 2] = triangles[i].points[2];
+		t.write[i * 3 + 0] = triangles[i].points[0];
+		t.write[i * 3 + 1] = triangles[i].points[1];
+		t.write[i * 3 + 2] = triangles[i].points[2];
 	}
 	return t;
 }
@@ -285,7 +284,7 @@ void AnimationNodeBlendSpace2D::_update_triangles() {
 	Vector<Vector2> points;
 	points.resize(blend_points_used);
 	for (int i = 0; i < blend_points_used; i++) {
-		points[i] = blend_points[i].position;
+		points.write[i] = blend_points[i].position;
 	}
 
 	Vector<Delaunay2D::Triangle> triangles = Delaunay2D::triangulate(points);

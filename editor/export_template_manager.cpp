@@ -123,7 +123,6 @@ void ExportTemplateManager::_update_template_list() {
 
 void ExportTemplateManager::_download_template(const String &p_version) {
 
-	print_line("download " + p_version);
 	while (template_list->get_child_count()) {
 		memdelete(template_list->get_child(0));
 	}
@@ -228,7 +227,10 @@ void ExportTemplateManager::_install_from_file(const String &p_file, bool p_use_
 			version = data_str;
 		}
 
-		fc++;
+		if (file.get_file().size() != 0) {
+			fc++;
+		}
+
 		ret = unzGoToNextFile(pkg);
 	}
 
@@ -267,6 +269,11 @@ void ExportTemplateManager::_install_from_file(const String &p_file, bool p_use_
 		unzGetCurrentFileInfo(pkg, &info, fname, 16384, NULL, 0, NULL, 0);
 
 		String file = String(fname).get_file();
+
+		if (file.size() == 0) {
+			ret = unzGoToNextFile(pkg);
+			continue;
+		}
 
 		Vector<uint8_t> data;
 		data.resize(info.uncompressed_size);
@@ -344,7 +351,6 @@ void ExportTemplateManager::_http_download_mirror_completed(int p_status, int p_
 	bool mirrors_found = false;
 
 	Dictionary d = r;
-	print_line(r);
 	if (d.has("mirrors")) {
 		Array mirrors = d["mirrors"];
 		for (int i = 0; i < mirrors.size(); i++) {
@@ -499,7 +505,6 @@ void ExportTemplateManager::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_VISIBILITY_CHANGED) {
 		if (!is_visible_in_tree()) {
-			print_line("closed");
 			set_process(false);
 		}
 	}

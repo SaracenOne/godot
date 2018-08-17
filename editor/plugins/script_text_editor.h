@@ -138,12 +138,7 @@ protected:
 	void _goto_line(int p_line) { goto_line(p_line); }
 	void _lookup_symbol(const String &p_symbol, int p_row, int p_column);
 
-	enum CaseStyle {
-		UPPER,
-		LOWER,
-		CAPITALIZE,
-	};
-	void _convert_case(CaseStyle p_case);
+	void _convert_case(CodeTextEditor::CaseStyle p_case);
 
 	Variant get_drag_data_fw(const Point2 &p_point, Control *p_from);
 	bool can_drop_data_fw(const Point2 &p_point, const Variant &p_data, Control *p_from) const;
@@ -154,14 +149,13 @@ public:
 	virtual void set_syntax_highlighter(SyntaxHighlighter *p_highlighter);
 
 	virtual void apply_code();
-	virtual Ref<Script> get_edited_script() const;
+	virtual RES get_edited_resource() const;
+	virtual void set_edited_resource(const RES &p_res);
 	virtual Vector<String> get_functions();
-	virtual void set_edited_script(const Ref<Script> &p_script);
 	virtual void reload_text();
 	virtual String get_name();
 	virtual Ref<Texture> get_icon();
 	virtual bool is_unsaved();
-
 	virtual Variant get_edit_state();
 	virtual void set_edit_state(const Variant &p_state);
 	virtual void ensure_focus();

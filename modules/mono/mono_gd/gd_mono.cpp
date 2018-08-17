@@ -77,12 +77,12 @@ void setup_runtime_main_args() {
 	Vector<char *> main_args;
 	main_args.resize(cmdline_args.size() + 1);
 
-	main_args[0] = execpath.ptrw();
+	main_args.write[0] = execpath.ptrw();
 
 	int i = 1;
 	for (List<String>::Element *E = cmdline_args.front(); E; E = E->next()) {
 		CharString &stored = cmdline_args_utf8.push_back(E->get().utf8())->get();
-		main_args[i] = stored.ptrw();
+		main_args.write[i] = stored.ptrw();
 		i++;
 	}
 
@@ -805,9 +805,9 @@ void GDMono::_domain_assemblies_cleanup(uint32_t p_domain_id) {
 
 void GDMono::unhandled_exception_hook(MonoObject *p_exc, void *) {
 
-// This method will be called by the runtime when a thrown exception is not handled.
-// It won't be called when we manually treat a thrown exception as unhandled.
-// We assume the exception was already printed before calling this hook.
+	// This method will be called by the runtime when a thrown exception is not handled.
+	// It won't be called when we manually treat a thrown exception as unhandled.
+	// We assume the exception was already printed before calling this hook.
 
 #ifdef DEBUG_ENABLED
 	GDMonoUtils::debug_send_unhandled_exception_error((MonoException *)p_exc);

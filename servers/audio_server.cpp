@@ -117,6 +117,10 @@ AudioDriver::AudioDriver() {
 
 	_last_mix_time = 0;
 	_mix_amount = 0;
+
+#ifdef DEBUG_ENABLED
+	prof_time = 0;
+#endif
 }
 
 AudioDriver *AudioDriverManager::drivers[MAX_DRIVERS];
@@ -184,6 +188,10 @@ void AudioServer::_driver_process(int p_frames, int32_t *p_buffer) {
 
 	int todo = p_frames;
 
+#ifdef DEBUG_ENABLED
+	uint64_t prof_ticks = OS::get_singleton()->get_ticks_usec();
+#endif
+
 	if (channel_count != get_channel_count()) {
 		// Amount of channels changed due to a device change
 		// reinitialize the buses channels and buffers
@@ -241,6 +249,10 @@ void AudioServer::_driver_process(int p_frames, int32_t *p_buffer) {
 		output_latency = (ticks - output_latency_ticks) / 1000000.f;
 		output_latency_ticks = ticks;
 	}
+
+#ifdef DEBUG_ENABLED
+	prof_time += OS::get_singleton()->get_ticks_usec() - prof_ticks;
+#endif
 }
 
 void AudioServer::_mix_step() {
@@ -252,7 +264,7 @@ void AudioServer::_mix_step() {
 		bus->index_cache = i; //might be moved around by editor, so..
 		for (int k = 0; k < bus->channels.size(); k++) {
 
-			bus->channels[k].used = false;
+			bus->channels.write[k].used = false;
 		}
 
 		if (bus->solo) {
@@ -298,7 +310,7 @@ void AudioServer::_mix_step() {
 
 			if (bus->channels[k].active && !bus->channels[k].used) {
 				//buffer was not used, but it's still active, so it must be cleaned
-				AudioFrame *buf = bus->channels[k].buffer.ptrw();
+				AudioFrame *buf = bus->channels.write[k].buffer.ptrw();
 
 				for (uint32_t j = 0; j < buffer_size; j++) {
 
@@ -314,20 +326,28 @@ void AudioServer::_mix_step() {
 				if (!bus->effects[j].enabled)
 					continue;
 
+#ifdef DEBUG_ENABLED
+				uint64_t ticks = OS::get_singleton()->get_ticks_usec();
+#endif
+
 				for (int k = 0; k < bus->channels.size(); k++) {
 
-					if (!bus->channels[k].active)
+					if (!(bus->channels[k].active || bus->channels[k].effect_instances[j]->process_silence()))
 						continue;
-					bus->channels[k].effect_instances[j]->process(bus->channels[k].buffer.ptr(), temp_buffer[k].ptrw(), buffer_size);
+					bus->channels.write[k].effect_instances.write[j]->process(bus->channels[k].buffer.ptr(), temp_buffer.write[k].ptrw(), buffer_size);
 				}
 
 				//swap buffers, so internal buffer always has the right data
 				for (int k = 0; k < bus->channels.size(); k++) {
 
-					if (!buses[i]->channels[k].active)
+					if (!(buses[i]->channels[k].active || bus->channels[k].effect_instances[j]->process_silence()))
 						continue;
-					SWAP(bus->channels[k].buffer, temp_buffer[k]);
+					SWAP(bus->channels.write[k].buffer, temp_buffer.write[k]);
 				}
+
+#ifdef DEBUG_ENABLED
+				bus->effects.write[j].prof_time += OS::get_singleton()->get_ticks_usec() - ticks;
+#endif
 			}
 		}
 
@@ -352,7 +372,7 @@ void AudioServer::_mix_step() {
 			if (!bus->channels[k].active)
 				continue;
 
-			AudioFrame *buf = bus->channels[k].buffer.ptrw();
+			AudioFrame *buf = bus->channels.write[k].buffer.ptrw();
 
 			AudioFrame peak = AudioFrame(0, 0);
 
@@ -383,15 +403,15 @@ void AudioServer::_mix_step() {
 				}
 			}
 
-			bus->channels[k].peak_volume = AudioFrame(Math::linear2db(peak.l + 0.0000000001), Math::linear2db(peak.r + 0.0000000001));
+			bus->channels.write[k].peak_volume = AudioFrame(Math::linear2db(peak.l + 0.0000000001), Math::linear2db(peak.r + 0.0000000001));
 
 			if (!bus->channels[k].used) {
 				//see if any audio is contained, because channel was not used
 
 				if (MAX(peak.r, peak.l) > Math::db2linear(channel_disable_threshold_db)) {
-					bus->channels[k].last_mix_with_audio = mix_frames;
+					bus->channels.write[k].last_mix_with_audio = mix_frames;
 				} else if (mix_frames - bus->channels[k].last_mix_with_audio > channel_disable_frames) {
-					bus->channels[k].active = false;
+					bus->channels.write[k].active = false;
 					continue; //went inactive, don't mix.
 				}
 			}
@@ -416,12 +436,12 @@ AudioFrame *AudioServer::thread_get_channel_mix_buffer(int p_bus, int p_buffer) 
 	ERR_FAIL_INDEX_V(p_bus, buses.size(), NULL);
 	ERR_FAIL_INDEX_V(p_buffer, buses[p_bus]->channels.size(), NULL);
 
-	AudioFrame *data = buses[p_bus]->channels[p_buffer].buffer.ptrw();
+	AudioFrame *data = buses.write[p_bus]->channels.write[p_buffer].buffer.ptrw();
 
 	if (!buses[p_bus]->channels[p_buffer].used) {
-		buses[p_bus]->channels[p_buffer].used = true;
-		buses[p_bus]->channels[p_buffer].active = true;
-		buses[p_bus]->channels[p_buffer].last_mix_with_audio = mix_frames;
+		buses.write[p_bus]->channels.write[p_buffer].used = true;
+		buses.write[p_bus]->channels.write[p_buffer].active = true;
+		buses.write[p_bus]->channels.write[p_buffer].last_mix_with_audio = mix_frames;
 		for (uint32_t i = 0; i < buffer_size; i++) {
 			data[i] = AudioFrame(0, 0);
 		}
@@ -486,10 +506,10 @@ void AudioServer::set_bus_count(int p_count) {
 			}
 		}
 
-		buses[i] = memnew(Bus);
-		buses[i]->channels.resize(channel_count);
+		buses.write[i] = memnew(Bus);
+		buses.write[i]->channels.resize(channel_count);
 		for (int j = 0; j < channel_count; j++) {
-			buses[i]->channels[j].buffer.resize(buffer_size);
+			buses.write[i]->channels.write[j].buffer.resize(buffer_size);
 		}
 		buses[i]->name = attempt;
 		buses[i]->solo = false;
@@ -561,7 +581,7 @@ void AudioServer::add_bus(int p_at_pos) {
 	Bus *bus = memnew(Bus);
 	bus->channels.resize(channel_count);
 	for (int j = 0; j < channel_count; j++) {
-		bus->channels[j].buffer.resize(buffer_size);
+		bus->channels.write[j].buffer.resize(buffer_size);
 	}
 	bus->name = attempt;
 	bus->solo = false;
@@ -744,13 +764,13 @@ bool AudioServer::is_bus_bypassing_effects(int p_bus) const {
 void AudioServer::_update_bus_effects(int p_bus) {
 
 	for (int i = 0; i < buses[p_bus]->channels.size(); i++) {
-		buses[p_bus]->channels[i].effect_instances.resize(buses[p_bus]->effects.size());
+		buses.write[p_bus]->channels.write[i].effect_instances.resize(buses[p_bus]->effects.size());
 		for (int j = 0; j < buses[p_bus]->effects.size(); j++) {
-			Ref<AudioEffectInstance> fx = buses[p_bus]->effects[j].effect->instance();
+			Ref<AudioEffectInstance> fx = buses.write[p_bus]->effects.write[j].effect->instance();
 			if (Object::cast_to<AudioEffectCompressorInstance>(*fx)) {
 				Object::cast_to<AudioEffectCompressorInstance>(*fx)->set_current_channel(i);
 			}
-			buses[p_bus]->channels[i].effect_instances[j] = fx;
+			buses.write[p_bus]->channels.write[i].effect_instances.write[j] = fx;
 		}
 	}
 }
@@ -768,6 +788,9 @@ void AudioServer::add_bus_effect(int p_bus, const Ref<AudioEffect> &p_effect, in
 	fx.effect = p_effect;
 	//fx.instance=p_effect->instance();
 	fx.enabled = true;
+#ifdef DEBUG_ENABLED
+	fx.prof_time = 0;
+#endif
 
 	if (p_at_pos >= buses[p_bus]->effects.size() || p_at_pos < 0) {
 		buses[p_bus]->effects.push_back(fx);
@@ -818,7 +841,7 @@ void AudioServer::swap_bus_effects(int p_bus, int p_effect, int p_by_effect) {
 	MARK_EDITED
 
 	lock();
-	SWAP(buses[p_bus]->effects[p_effect], buses[p_bus]->effects[p_by_effect]);
+	SWAP(buses.write[p_bus]->effects.write[p_effect], buses.write[p_bus]->effects.write[p_by_effect]);
 	_update_bus_effects(p_bus);
 	unlock();
 }
@@ -830,7 +853,7 @@ void AudioServer::set_bus_effect_enabled(int p_bus, int p_effect, bool p_enabled
 
 	MARK_EDITED
 
-	buses[p_bus]->effects[p_effect].enabled = p_enabled;
+	buses.write[p_bus]->effects.write[p_effect].enabled = p_enabled;
 }
 bool AudioServer::is_bus_effect_enabled(int p_bus, int p_effect) const {
 
@@ -867,21 +890,21 @@ void AudioServer::init_channels_and_buffers() {
 	temp_buffer.resize(channel_count);
 
 	for (int i = 0; i < temp_buffer.size(); i++) {
-		temp_buffer[i].resize(buffer_size);
+		temp_buffer.write[i].resize(buffer_size);
 	}
 
 	for (int i = 0; i < buses.size(); i++) {
 		buses[i]->channels.resize(channel_count);
 		for (int j = 0; j < channel_count; j++) {
-			buses[i]->channels[j].buffer.resize(buffer_size);
+			buses.write[i]->channels.write[j].buffer.resize(buffer_size);
 		}
 	}
 }
 
 void AudioServer::init() {
 
-	channel_disable_threshold_db = GLOBAL_DEF("audio/channel_disable_threshold_db", -60.0);
-	channel_disable_frames = float(GLOBAL_DEF("audio/channel_disable_time", 2.0)) * get_mix_rate();
+	channel_disable_threshold_db = GLOBAL_DEF_RST("audio/channel_disable_threshold_db", -60.0);
+	channel_disable_frames = float(GLOBAL_DEF_RST("audio/channel_disable_time", 2.0)) * get_mix_rate();
 	buffer_size = 1024; //hardcoded for now
 
 	init_channels_and_buffers();
@@ -897,7 +920,69 @@ void AudioServer::init() {
 	set_edited(false); //avoid editors from thinking this was edited
 #endif
 
-	GLOBAL_DEF("audio/video_delay_compensation_ms", 0);
+	GLOBAL_DEF_RST("audio/video_delay_compensation_ms", 0);
+}
+
+void AudioServer::update() {
+#ifdef DEBUG_ENABLED
+	if (ScriptDebugger::get_singleton() && ScriptDebugger::get_singleton()->is_profiling()) {
+
+		// Driver time includes server time + effects times
+		// Server time includes effects times
+		uint64_t driver_time = AudioDriver::get_singleton()->get_profiling_time();
+		uint64_t server_time = prof_time;
+
+		// Substract the server time from the driver time
+		if (driver_time > server_time)
+			driver_time -= server_time;
+
+		Array values;
+
+		for (int i = buses.size() - 1; i >= 0; i--) {
+			Bus *bus = buses[i];
+			if (bus->bypass)
+				continue;
+
+			for (int j = 0; j < bus->effects.size(); j++) {
+				if (!bus->effects[j].enabled)
+					continue;
+
+				values.push_back(String(bus->name) + bus->effects[j].effect->get_name());
+				values.push_back(USEC_TO_SEC(bus->effects[j].prof_time));
+
+				// Substract the effect time from the driver and server times
+				if (driver_time > bus->effects[j].prof_time)
+					driver_time -= bus->effects[j].prof_time;
+				if (server_time > bus->effects[j].prof_time)
+					server_time -= bus->effects[j].prof_time;
+			}
+		}
+
+		values.push_back("audio_server");
+		values.push_back(USEC_TO_SEC(server_time));
+		values.push_back("audio_driver");
+		values.push_back(USEC_TO_SEC(driver_time));
+
+		ScriptDebugger::get_singleton()->add_profiling_frame_data("audio_thread", values);
+	}
+
+	// Reset profiling times
+	for (int i = buses.size() - 1; i >= 0; i--) {
+		Bus *bus = buses[i];
+		if (bus->bypass)
+			continue;
+
+		for (int j = 0; j < bus->effects.size(); j++) {
+			if (!bus->effects[j].enabled)
+				continue;
+
+			bus->effects.write[j].prof_time = 0;
+		}
+	}
+
+	AudioDriver::get_singleton()->reset_profiling_time();
+	prof_time = 0;
+#endif
 }
 
 void AudioServer::load_default_bus_layout() {
@@ -1061,11 +1146,11 @@ void AudioServer::set_bus_layout(const Ref<AudioBusLayout> &p_bus_layout) {
 		}
 
 		bus_map[bus->name] = bus;
-		buses[i] = bus;
+		buses.write[i] = bus;
 
 		buses[i]->channels.resize(channel_count);
 		for (int j = 0; j < channel_count; j++) {
-			buses[i]->channels[j].buffer.resize(buffer_size);
+			buses.write[i]->channels.write[j].buffer.resize(buffer_size);
 		}
 		_update_bus_effects(i);
 	}
@@ -1084,17 +1169,17 @@ Ref<AudioBusLayout> AudioServer::generate_bus_layout() const {
 
 	for (int i = 0; i < buses.size(); i++) {
 
-		state->buses[i].name = buses[i]->name;
-		state->buses[i].send = buses[i]->send;
-		state->buses[i].mute = buses[i]->mute;
-		state->buses[i].solo = buses[i]->solo;
-		state->buses[i].bypass = buses[i]->bypass;
-		state->buses[i].volume_db = buses[i]->volume_db;
+		state->buses.write[i].name = buses[i]->name;
+		state->buses.write[i].send = buses[i]->send;
+		state->buses.write[i].mute = buses[i]->mute;
+		state->buses.write[i].solo = buses[i]->solo;
+		state->buses.write[i].bypass = buses[i]->bypass;
+		state->buses.write[i].volume_db = buses[i]->volume_db;
 		for (int j = 0; j < buses[i]->effects.size(); j++) {
 			AudioBusLayout::Bus::Effect fx;
 			fx.effect = buses[i]->effects[j].effect;
 			fx.enabled = buses[i]->effects[j].enabled;
-			state->buses[i].effects.push_back(fx);
+			state->buses.write[i].effects.push_back(fx);
 		}
 	}
 
@@ -1187,6 +1272,9 @@ AudioServer::AudioServer() {
 	to_mix = 0;
 	output_latency = 0;
 	output_latency_ticks = 0;
+#ifdef DEBUG_ENABLED
+	prof_time = 0;
+#endif
 }
 
 AudioServer::~AudioServer() {
@@ -1206,7 +1294,7 @@ bool AudioBusLayout::_set(const StringName &p_name, const Variant &p_value) {
 			buses.resize(index + 1);
 		}
 
-		Bus &bus = buses[index];
+		Bus &bus = buses.write[index];
 
 		String what = s.get_slice("/", 2);
 
@@ -1228,7 +1316,7 @@ bool AudioBusLayout::_set(const StringName &p_name, const Variant &p_value) {
 				bus.effects.resize(which + 1);
 			}
 
-			Bus::Effect &fx = bus.effects[which];
+			Bus::Effect &fx = bus.effects.write[which];
 
 			String fxwhat = s.get_slice("/", 4);
 			if (fxwhat == "effect") {
@@ -1322,5 +1410,5 @@ void AudioBusLayout::_get_property_list(List<PropertyInfo> *p_list) const {
 AudioBusLayout::AudioBusLayout() {
 
 	buses.resize(1);
-	buses[0].name = "Master";
+	buses.write[0].name = "Master";
 }
