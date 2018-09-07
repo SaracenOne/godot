@@ -866,10 +866,10 @@ PhysicsDirectBodyState *BulletPhysicsServer::body_get_direct_state(RID p_body) {
 	return BulletPhysicsDirectBodyState::get_singleton(body);
 }
 
-void BulletPhysicsServer::body_test_motion_light(RID p_body, const Transform &p_transform, const Vector3 &p_motion, bool p_infinite_inertia, bool p_use_margin, LightMotionResult &r_result) {
+real_t BulletPhysicsServer::body_test_motion_light(RID p_body, const Transform &p_transform, const Vector3 &p_motion, bool p_infinite_inertia, bool p_use_margin, LightMotionResult &r_result) {
 	RigidBodyBullet *body = rigid_body_owner.get(p_body);
-	ERR_FAIL_COND(!body);
-	ERR_FAIL_COND(!body->get_space());
+	ERR_FAIL_COND_V(!body, 0);
+	ERR_FAIL_COND_V(!body->get_space(), 0);
 
 	btTransform t;
 	G_TO_B(p_transform, t);
@@ -881,15 +881,20 @@ void BulletPhysicsServer::body_test_motion_light(RID p_body, const Transform &p_
 
 	body->get_space()->sweep_test_multi_shapes(body, t, motion, p_infinite_inertia, p_use_margin, btResult);
 
-	const btRigidBody *hit_bt_rigid_body = static_cast<const btRigidBody *>(btResult.m_hitCollisionObject);
-	const CollisionObjectBullet *hit_collision_object = static_cast<const CollisionObjectBullet *>(hit_bt_rigid_body->getUserPointer());
+	if (btResult.m_closestHitFraction < (1.0 - FLT_EPSILON)) {
+		const btRigidBody *hit_bt_rigid_body = static_cast<const btRigidBody *>(btResult.m_hitCollisionObject);
+		const CollisionObjectBullet *hit_collision_object = static_cast<const CollisionObjectBullet *>(hit_bt_rigid_body->getUserPointer());
 
-	B_TO_G(btResult.m_hitPointWorld, r_result.collision_point);
-	B_TO_G(btResult.m_hitNormalWorld, r_result.collision_normal);
-	r_result.collision_local_shape = btResult.shape_id;
-	r_result.collider = hit_collision_object->get_self();
-	r_result.collider_id = hit_collision_object->get_instance_id();
-	r_result.collider_shape = 0;
+		B_TO_G(btResult.m_hitPointWorld, r_result.collision_point);
+		B_TO_G(btResult.m_hitNormalWorld, r_result.collision_normal);
+		r_result.collision_local_shape = btResult.shape_id;
+		r_result.collider = hit_collision_object->get_self();
+		r_result.collider_id = hit_collision_object->get_instance_id();
+		r_result.collider_shape = 0;
+		return btResult.m_closestHitFraction;
+	} else {
+		return 1.0;
+	}
 }
 
 bool BulletPhysicsServer::body_test_motion_depenetrate(RID p_body, const Transform &p_transform, real_t p_depenetration_scale, bool p_infinite_inertia, real_t p_max_penetration, bool p_use_margin, Vector3 &r_delta_recover_movement, LightMotionResult *r_result) {

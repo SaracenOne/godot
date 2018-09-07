@@ -1187,18 +1187,18 @@ bool SpaceBullet::RFP_convex_convex_test(const btConvexShape *p_shapeA, const bt
 		if ((-p_max_penetration) > result.m_distance) {
 			// Has penetration
 			r_delta_recover_movement += result.m_normalOnBInWorld * (result.m_distance * -1 * p_recover_movement_scale);
-		}
-		if (r_recover_result) {
-			if (result.m_distance < r_recover_result->penetration_distance) {
-				r_recover_result->hasPenetration = true;
-				r_recover_result->other_collision_object = p_objectB;
-				r_recover_result->other_compound_shape_index = p_shapeId_B;
-				r_recover_result->penetration_distance = result.m_distance;
-				r_recover_result->pointWorld = result.m_pointInWorld;
-				r_recover_result->normal = result.m_normalOnBInWorld;
+			if (r_recover_result) {
+				if (result.m_distance < r_recover_result->penetration_distance) {
+					r_recover_result->hasPenetration = true;
+					r_recover_result->other_collision_object = p_objectB;
+					r_recover_result->other_compound_shape_index = p_shapeId_B;
+					r_recover_result->penetration_distance = result.m_distance;
+					r_recover_result->pointWorld = result.m_pointInWorld;
+					r_recover_result->normal = result.m_normalOnBInWorld;
+				}
 			}
+			return true;
 		}
-		return true;
 	}
 	return false;
 }
@@ -1225,18 +1225,18 @@ bool SpaceBullet::RFP_convex_world_test(const btConvexShape *p_shapeA, const btC
 		if (contactPointResult.hasHit()) {
 			if ((-p_max_penetration) > contactPointResult.m_penetration_distance) {
 				r_delta_recover_movement += contactPointResult.m_pointNormalWorld * (contactPointResult.m_penetration_distance * -1 * p_recover_movement_scale);
-			}
-			if (r_recover_result) {
-				if (contactPointResult.m_penetration_distance < r_recover_result->penetration_distance) {
-					r_recover_result->hasPenetration = true;
-					r_recover_result->other_collision_object = p_objectB;
-					r_recover_result->other_compound_shape_index = p_shapeId_B;
-					r_recover_result->penetration_distance = contactPointResult.m_penetration_distance;
-					r_recover_result->pointWorld = contactPointResult.m_pointWorld;
-					r_recover_result->normal = contactPointResult.m_pointNormalWorld;
+				if (r_recover_result) {
+					if (contactPointResult.m_penetration_distance < r_recover_result->penetration_distance) {
+						r_recover_result->hasPenetration = true;
+						r_recover_result->other_collision_object = p_objectB;
+						r_recover_result->other_compound_shape_index = p_shapeId_B;
+						r_recover_result->penetration_distance = contactPointResult.m_penetration_distance;
+						r_recover_result->pointWorld = contactPointResult.m_pointWorld;
+						r_recover_result->normal = contactPointResult.m_pointNormalWorld;
+					}
 				}
+				return true;
 			}
-			return true;
 		}
 	}
 	return false;
