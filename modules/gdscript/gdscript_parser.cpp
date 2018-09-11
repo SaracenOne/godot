@@ -496,11 +496,11 @@ GDScriptParser::Node *GDScriptParser::_parse_expression(Node *p_parent, bool p_s
 				return NULL;
 			}
 
-			Ref<GDScript> gds = res;
+			/*Ref<GDScript> gds = res;
 			if (gds.is_valid() && !gds->is_valid()) {
 				_set_error("Could not fully preload the script, possible cyclic reference or compilation error.");
 				return NULL;
-			}
+			}*/
 
 			tokenizer->advance();
 
