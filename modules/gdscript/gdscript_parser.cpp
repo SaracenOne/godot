@@ -4967,11 +4967,11 @@ void GDScriptParser::_determine_inheritance(ClassNode *p_class) {
 				_set_error("Could not load base class: " + path, p_class->line);
 				return;
 			}
-			if (!script->is_valid()) {
+			/*if (!script->is_valid()) {
 
 				_set_error("Script not fully loaded (cyclic preload?): " + path, p_class->line);
 				return;
-			}
+			}*/
 
 			if (p_class->extends_class.size()) {
 
