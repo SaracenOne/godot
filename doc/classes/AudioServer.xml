@@ -32,24 +32,11 @@
 				Adds an [AudioEffect] effect to the bus [code]bus_idx[/code] at [code]at_position[/code].
 			</description>
 		</method>
-		<method name="capture_get_device">
-			<return type="String">
-			</return>
-			<description>
-			</description>
-		</method>
 		<method name="capture_get_device_list">
 			<return type="Array">
 			</return>
 			<description>
-			</description>
-		</method>
-		<method name="capture_set_device">
-			<return type="void">
-			</return>
-			<argument index="0" name="name" type="String">
-			</argument>
-			<description>
+				Returns the names of all audio input devices detected on the system.
 			</description>
 		</method>
 		<method name="generate_bus_layout" qualifiers="const">
@@ -98,6 +85,7 @@
 			<argument index="2" name="channel" type="int" default="0">
 			</argument>
 			<description>
+				Returns the [AudioEffectInstance] at position [code]effect_idx[/code] on [code]channel[/code] in bus [code]bus_idx[/code].
 			</description>
 		</method>
 		<method name="get_bus_index" qualifiers="const">
@@ -162,7 +150,7 @@
 			<return type="Array">
 			</return>
 			<description>
-				Returns the names of all audio devices detected on the system.
+				Returns the names of all audio output devices detected on the system.
 			</description>
 		</method>
 		<method name="get_mix_rate" qualifiers="const">
@@ -190,12 +178,14 @@
 			<return type="float">
 			</return>
 			<description>
+				Return in seconds since the last audio mix occured.
 			</description>
 		</method>
 		<method name="get_time_to_next_mix" qualifiers="const">
 			<return type="float">
-			</return>
+			</return>	
 			<description>
+				Return in seconds since until the next audio mix will occur.
 			</description>
 		</method>
 		<method name="is_bus_bypassing_effects" qualifiers="const">
@@ -388,7 +378,10 @@
 			Number of available audio buses.
 		</member>
 		<member name="device" type="String" setter="set_device" getter="get_device" default="&quot;Default&quot;">
-			Name of the current device (see [method get_device_list]).
+			Name of the current device for audio output (see [method get_device_list]).
+		</member>
+		<member name="capture_device" type="String" setter="capture_set_device" getter="capture_get_device" default="&quot;Default&quot;">
+			Name of the current device for audio input (see [method capture_get_device_list]).
 		</member>
 		<member name="global_rate_scale" type="float" setter="set_global_rate_scale" getter="get_global_rate_scale" default="1.0">
 			Scales the rate at which audio is played (i.e. setting it to [code]0.5[/code] will make the audio be played twice as fast).
