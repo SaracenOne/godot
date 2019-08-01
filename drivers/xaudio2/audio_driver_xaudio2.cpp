@@ -37,15 +37,8 @@ const char *AudioDriverXAudio2::get_name() const {
 	return "XAudio2";
 }
 
-Error AudioDriverXAudio2::init() {
+Error AudioDriverXAudio2::init_render_device(bool reinit) {
 
-	active = false;
-	thread_exited = false;
-	exit_thread = false;
-	pcm_open = false;
-	samples_in = NULL;
-
-	mix_rate = GLOBAL_DEF_RST("audio/mix_rate", DEFAULT_MIX_RATE);
 	// FIXME: speaker_mode seems unused in the Xaudio2 driver so far
 	speaker_mode = SPEAKER_MODE_STEREO;
 	channels = 2;
@@ -87,8 +80,38 @@ Error AudioDriverXAudio2::init() {
 		ERR_FAIL_V(ERR_UNAVAILABLE);
 	}
 
-	mutex = Mutex::create();
-	thread = Thread::create(AudioDriverXAudio2::thread_func, this);
+	return OK;
+}
+
+Error AudioDriverXAudio2::init_capture_device(bool reinit) {
+
+	return OK;
+}
+
+Error AudioDriverXAudio2::finish_render_device() {
+}
+
+Error AudioDriverXAudio2::finish_capture_device() {
+}
+
+Error AudioDriverXAudio2::init() {
+
+	active = false;
+	pcm_open = false;
+	samples_in = NULL;
+
+	mix_rate = GLOBAL_DEF_RST("audio/mix_rate", DEFAULT_MIX_RATE);
+
+	Error err = init_render_device();
+	if (err != OK) {
+		ERR_PRINT("XAudio2: init_render_device error");
+	}
+
+	exit_thread = false;
+	thread_exited = false;
+
+	mutex = Mutex::create(true);
+	thread = Thread::create(thread_func, this);
 
 	return OK;
 }
@@ -156,6 +179,10 @@ AudioDriver::SpeakerMode AudioDriverXAudio2::get_speaker_mode() const {
 	return speaker_mode;
 }
 
+Array AudioDriverXAudio2::get_device_list() {
+	return Array();
+}
+
 float AudioDriverXAudio2::get_latency() {
 
 	XAUDIO2_PERFORMANCE_DATA perf_data;
@@ -208,6 +235,59 @@ void AudioDriverXAudio2::finish() {
 	if (mutex)
 		memdelete(mutex);
 	thread = NULL;
+
+	finish_capture_device();
+	finish_render_device();
+}
+
+Error AudioDriverXAudio2::capture_start() {
+
+	Error err = init_capture_device();
+	if (err != OK) {
+		ERR_PRINT("XAudio2: init_capture_device error");
+		return err;
+	}
+
+	if (audio_input.active) {
+		return FAILED;
+	}
+
+	audio_input.audio_client->Start();
+	audio_input.active = true;
+	return OK;
+}
+
+Error AudioDriverXAudio2::capture_stop() {
+
+	if (audio_input.active) {
+		audio_input.audio_client->Stop();
+		audio_input.active = false;
+
+		return OK;
+	}
+
+	return FAILED;
+}
+
+void AudioDriverXAudio2::capture_set_device(const String &p_name) {
+
+	lock();
+	audio_input.new_device = p_name;
+	unlock();
+}
+
+Array AudioDriverXAudio2::capture_get_device_list() {
+
+	return audio_device_get_list(true);
+}
+
+String AudioDriverXAudio2::capture_get_device() {
+
+	lock();
+	String name = audio_input.device_name;
+	unlock();
+
+	return name;
 }
 
 AudioDriverXAudio2::AudioDriverXAudio2() :

@@ -91,6 +91,13 @@ class AudioDriverXAudio2 : public AudioDriver {
 	IXAudio2SourceVoice *source_voice;
 	XAudio2DriverVoiceCallback voice_callback;
 
+private:
+	Error init_render_device(bool reinit = false);
+	Error init_capture_device(bool reinit = false);
+
+	Error finish_render_device();
+	Error finish_capture_device();
+
 public:
 	const char *get_name() const;
 
@@ -102,6 +109,12 @@ public:
 	virtual void lock();
 	virtual void unlock();
 	virtual void finish();
+
+	virtual Error capture_start();
+	virtual Error capture_stop();
+	virtual Array capture_get_device_list();
+	virtual void capture_set_device(const String &p_name);
+	virtual String capture_get_device();
 
 	AudioDriverXAudio2();
 	~AudioDriverXAudio2();
