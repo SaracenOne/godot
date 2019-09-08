@@ -623,7 +623,7 @@ bool RasterizerSceneGLES3::reflection_probe_instance_needs_redraw(RID p_instance
 	ReflectionProbeInstance *rpi = reflection_probe_instance_owner.getornull(p_instance);
 	ERR_FAIL_COND_V(!rpi, false);
 
-	return rpi->reflection_atlas_index == -1 || rpi->probe_ptr->update_mode == VS::REFLECTION_PROBE_UPDATE_ALWAYS;
+	return (rpi->reflection_atlas_index == -1 || rpi->probe_ptr->update_mode == VS::REFLECTION_PROBE_UPDATE_ALWAYS) && rpi->probe_ptr->custom_texture != RID();
 }
 
 bool RasterizerSceneGLES3::reflection_probe_instance_has_reflection(RID p_instance) {

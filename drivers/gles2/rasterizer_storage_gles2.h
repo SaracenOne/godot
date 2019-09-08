@@ -982,6 +982,7 @@ public:
 		bool enable_shadows;
 		uint32_t cull_mask;
 		int resolution;
+		RID custom_texture;
 	};
 
 	mutable RID_Owner<ReflectionProbe> reflection_probe_owner;
@@ -1001,6 +1002,7 @@ public:
 	virtual void reflection_probe_set_enable_shadows(RID p_probe, bool p_enable);
 	virtual void reflection_probe_set_cull_mask(RID p_probe, uint32_t p_layers);
 	virtual void reflection_probe_set_resolution(RID p_probe, int p_resolution);
+	virtual void reflection_probe_set_custom_texture(RID p_probe, RID p_texture);
 
 	virtual AABB reflection_probe_get_aabb(RID p_probe) const;
 	virtual VS::ReflectionProbeUpdateMode reflection_probe_get_update_mode(RID p_probe) const;

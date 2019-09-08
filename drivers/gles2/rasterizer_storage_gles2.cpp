@@ -4010,6 +4010,7 @@ RID RasterizerStorageGLES2::reflection_probe_create() {
 	reflection_probe->cull_mask = (1 << 20) - 1;
 	reflection_probe->update_mode = VS::REFLECTION_PROBE_UPDATE_ONCE;
 	reflection_probe->resolution = 128;
+	reflection_probe->custom_texture = RID();
 
 	return reflection_probe_owner.make_rid(reflection_probe);
 }
@@ -4119,6 +4120,14 @@ void RasterizerStorageGLES2::reflection_probe_set_resolution(RID p_probe, int p_
 	ERR_FAIL_COND(!reflection_probe);
 
 	reflection_probe->resolution = p_resolution;
+}
+
+void RasterizerStorageGLES2::reflection_probe_set_custom_texture(RID p_probe, RID p_texture) {
+	ReflectionProbe *reflection_probe = reflection_probe_owner.getornull(p_probe);
+	ERR_FAIL_COND(!reflection_probe);
+
+	reflection_probe->custom_texture = p_texture;
+	reflection_probe->instance_change_notify(true, false);
 }
 
 AABB RasterizerStorageGLES2::reflection_probe_get_aabb(RID p_probe) const {
