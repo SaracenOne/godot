@@ -642,10 +642,35 @@ Vector<Plane> Camera::get_frustum() const {
 	CameraMatrix cm;
 	if (mode == PROJECTION_PERSPECTIVE)
 		cm.set_perspective(fov, viewport_size.aspect(), near, far, keep_aspect == KEEP_WIDTH);
+	else if (mode == PROJECTION_FRUSTUM)
+		cm.set_frustum(size, viewport_size.aspect(), frustum_offset, near, far, keep_aspect == KEEP_WIDTH);
 	else
 		cm.set_orthogonal(size, viewport_size.aspect(), near, far, keep_aspect == KEEP_WIDTH);
 
 	return cm.get_projection_planes(get_camera_transform());
+}
+
+PoolVector3Array Camera::get_endpoints() const {
+
+	ERR_FAIL_COND_V(!is_inside_world(), PoolVector3Array());
+
+	Size2 viewport_size = get_viewport()->get_visible_rect().size;
+	CameraMatrix cm;
+	if (mode == PROJECTION_PERSPECTIVE)
+		cm.set_perspective(fov, viewport_size.aspect(), near, far, keep_aspect == KEEP_WIDTH);
+	else if (mode == PROJECTION_FRUSTUM)
+		cm.set_frustum(size, viewport_size.aspect(), frustum_offset, near, far, keep_aspect == KEEP_WIDTH);
+	else
+		cm.set_orthogonal(size, viewport_size.aspect(), near, far, keep_aspect == KEEP_WIDTH);
+
+	PoolVector3Array v8;
+	v8.resize(8);
+
+	bool endpoints_valid = cm.get_endpoints(get_camera_transform(), v8.write().ptr());
+
+	ERR_FAIL_COND_V(!endpoints_valid, PoolVector3Array());
+
+	return v8;
 }
 
 void Camera::set_v_offset(float p_offset) {

@@ -57,6 +57,7 @@ public:
 	virtual Point2 unproject_position(const Vector3 &p_pos) const;
 	virtual Vector3 project_position(const Point2 &p_point, float p_z_depth = 0) const;
 	virtual Vector<Plane> get_frustum() const;
+	virtual PoolVector3Array get_endpoints() const;
 
 	ARVRCamera();
 	~ARVRCamera();

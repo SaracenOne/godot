@@ -153,6 +153,7 @@ public:
 	bool get_cull_mask_bit(int p_layer) const;
 
 	virtual Vector<Plane> get_frustum() const;
+	PoolVector3Array get_endpoints() const;
 
 	void set_environment(const Ref<Environment> &p_environment);
 	Ref<Environment> get_environment() const;

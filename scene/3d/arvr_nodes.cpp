@@ -169,6 +169,32 @@ Vector<Plane> ARVRCamera::get_frustum() const {
 	return cm.get_projection_planes(get_camera_transform());
 };
 
+PoolVector3Array ARVRCamera::get_endpoints() const {
+	// get our ARVRServer
+	ARVRServer *arvr_server = ARVRServer::get_singleton();
+	ERR_FAIL_NULL_V(arvr_server, PoolVector3Array());
+
+	Ref<ARVRInterface> arvr_interface = arvr_server->get_primary_interface();
+	if (arvr_interface.is_null()) {
+		// we might be in the editor or have VR turned off, just call superclass
+		return Camera::get_endpoints();
+	}
+
+	ERR_FAIL_COND_V(!is_inside_world(), PoolVector3Array());
+
+	Size2 viewport_size = get_viewport()->get_visible_rect().size;
+	CameraMatrix cm = arvr_interface->get_projection_for_eye(ARVRInterface::EYE_MONO, viewport_size.aspect(), get_znear(), get_zfar());
+
+	PoolVector3Array v8;
+	v8.resize(8);
+
+	bool endpoints_valid = cm.get_endpoints(get_camera_transform(), v8.write().ptr());
+
+	ERR_FAIL_COND_V(!endpoints_valid, PoolVector3Array());
+
+	return v8;
+};
+
 ARVRCamera::ARVRCamera(){
 	// nothing to do here yet for now..
 };

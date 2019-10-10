@@ -1224,6 +1224,8 @@ CameraSpatialGizmoPlugin::CameraSpatialGizmoPlugin() {
 	create_material("camera_material", gizmo_color);
 	create_icon_material("camera_icon", SpatialEditor::get_singleton()->get_icon("GizmoCamera", "EditorIcons"));
 	create_handle_material("handles");
+
+	use_accurate_frustum = EDITOR_DEF("editors/3d_gizmos/gizmo_preferences/camera/use_accurate_frustum", false);
 }
 
 bool CameraSpatialGizmoPlugin::has_gizmo(Spatial *p_spatial) {
@@ -1338,6 +1340,12 @@ void CameraSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 	Ref<Material> material = get_material("camera_material", p_gizmo);
 	Ref<Material> icon = get_material("camera_icon", p_gizmo);
 
+#define ADD_LINE(m_a, m_b)    \
+	{                         \
+		lines.push_back(m_a); \
+		lines.push_back(m_b); \
+	}
+
 #define ADD_TRIANGLE(m_a, m_b, m_c) \
 	{                               \
 		lines.push_back(m_a);       \
@@ -1365,23 +1373,41 @@ void CameraSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 		case Camera::PROJECTION_PERSPECTIVE: {
 
 			// The real FOV is halved for accurate representation
-			float fov = camera->get_fov() / 2.0;
+			if (!use_accurate_frustum) {
+				float fov = camera->get_fov() / 2.0;
 
-			Vector3 side = Vector3(Math::sin(Math::deg2rad(fov)), 0, -Math::cos(Math::deg2rad(fov)));
-			Vector3 nside = side;
-			nside.x = -nside.x;
-			Vector3 up = Vector3(0, side.x, 0);
+				Vector3 side = Vector3(Math::sin(Math::deg2rad(fov)), 0, -Math::cos(Math::deg2rad(fov)));
+				Vector3 nside = side;
+				nside.x = -nside.x;
+				Vector3 up = Vector3(0, side.x, 0);
 
-			ADD_TRIANGLE(Vector3(), side + up, side - up);
-			ADD_TRIANGLE(Vector3(), nside + up, nside - up);
-			ADD_TRIANGLE(Vector3(), side + up, nside + up);
-			ADD_TRIANGLE(Vector3(), side - up, nside - up);
+				ADD_TRIANGLE(Vector3(), side + up, side - up);
+				ADD_TRIANGLE(Vector3(), nside + up, nside - up);
+				ADD_TRIANGLE(Vector3(), side + up, nside + up);
+				ADD_TRIANGLE(Vector3(), side - up, nside - up);
 
-			handles.push_back(side);
-			side.x *= 0.25;
-			nside.x *= 0.25;
-			Vector3 tup(0, up.y * 3 / 2, side.z);
-			ADD_TRIANGLE(tup, side + up, nside + up);
+				handles.push_back(side);
+				side.x *= 0.25;
+				nside.x *= 0.25;
+				Vector3 tup(0, up.y * 3 / 2, side.z);
+				ADD_TRIANGLE(tup, side + up, nside + up);
+			} else {
+				PoolVector3Array endspoints = camera->get_endpoints();
+
+				if (endspoints.size() == 8) {
+					Transform camera_transform = camera->get_camera_transform();
+					for (int i = 0; i < 8; i++) {
+						endspoints[i] = camera_transform.xform_inv(endspoints[i]);
+					}
+					ADD_QUAD(endspoints[0], endspoints[1], endspoints[3], endspoints[2])
+					ADD_QUAD(endspoints[4], endspoints[5], endspoints[7], endspoints[6])
+					ADD_LINE(endspoints[0], endspoints[4])
+					ADD_LINE(endspoints[1], endspoints[5])
+					ADD_LINE(endspoints[2], endspoints[6])
+					ADD_LINE(endspoints[3], endspoints[7])
+					handles.push_back(endspoints[2].linear_interpolate(endspoints[3], 0.5));
+				}
+			}
 
 		} break;
 		case Camera::PROJECTION_ORTHOGONAL: {
@@ -1407,23 +1433,41 @@ void CameraSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 		} break;
 		case Camera::PROJECTION_FRUSTUM: {
-			float hsize = camera->get_size() / 2.0;
+			if (!use_accurate_frustum) {
+				float hsize = camera->get_size() / 2.0;
 
-			Vector3 side = Vector3(hsize, 0, -camera->get_znear()).normalized();
-			Vector3 nside = side;
-			nside.x = -nside.x;
-			Vector3 up = Vector3(0, side.x, 0);
-			Vector3 offset = Vector3(camera->get_frustum_offset().x, camera->get_frustum_offset().y, 0.0);
+				Vector3 side = Vector3(hsize, 0, -camera->get_znear()).normalized();
+				Vector3 nside = side;
+				nside.x = -nside.x;
+				Vector3 up = Vector3(0, side.x, 0);
+				Vector3 offset = Vector3(camera->get_frustum_offset().x, camera->get_frustum_offset().y, 0.0);
 
-			ADD_TRIANGLE(Vector3(), side + up + offset, side - up + offset);
-			ADD_TRIANGLE(Vector3(), nside + up + offset, nside - up + offset);
-			ADD_TRIANGLE(Vector3(), side + up + offset, nside + up + offset);
-			ADD_TRIANGLE(Vector3(), side - up + offset, nside - up + offset);
+				ADD_TRIANGLE(Vector3(), side + up + offset, side - up + offset);
+				ADD_TRIANGLE(Vector3(), nside + up + offset, nside - up + offset);
+				ADD_TRIANGLE(Vector3(), side + up + offset, nside + up + offset);
+				ADD_TRIANGLE(Vector3(), side - up + offset, nside - up + offset);
 
-			side.x *= 0.25;
-			nside.x *= 0.25;
-			Vector3 tup(0, up.y * 3 / 2, side.z);
-			ADD_TRIANGLE(tup + offset, side + up + offset, nside + up + offset);
+				side.x *= 0.25;
+				nside.x *= 0.25;
+				Vector3 tup(0, up.y * 3 / 2, side.z);
+				ADD_TRIANGLE(tup + offset, side + up + offset, nside + up + offset);
+			} else {
+				PoolVector3Array endspoints = camera->get_endpoints();
+
+				if (endspoints.size() == 8) {
+					Transform camera_transform = camera->get_camera_transform();
+					for (int i = 0; i < 8; i++) {
+						endspoints[i] = camera_transform.xform_inv(endspoints[i]);
+					}
+					ADD_QUAD(endspoints[0], endspoints[1], endspoints[3], endspoints[2])
+					ADD_QUAD(endspoints[4], endspoints[5], endspoints[7], endspoints[6])
+					ADD_LINE(endspoints[0], endspoints[4])
+					ADD_LINE(endspoints[1], endspoints[5])
+					ADD_LINE(endspoints[2], endspoints[6])
+					ADD_LINE(endspoints[3], endspoints[7])
+					handles.push_back(endspoints[2].linear_interpolate(endspoints[3], 0.5));
+				}
+			}
 		}
 	}
 

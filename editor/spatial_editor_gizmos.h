@@ -76,6 +76,8 @@ class CameraSpatialGizmoPlugin : public EditorSpatialGizmoPlugin {
 
 	GDCLASS(CameraSpatialGizmoPlugin, EditorSpatialGizmoPlugin);
 
+	bool use_accurate_frustum;
+
 public:
 	bool has_gizmo(Spatial *p_spatial);
 	String get_name() const;
