@@ -56,7 +56,7 @@ void Camera::_update_camera_mode() {
 			set_orthogonal(size, near, far);
 		} break;
 		case PROJECTION_FRUSTUM: {
-			set_frustum(size, frustum_offset, near, far);
+			set_frustum(size, frustum_offset, oblique_near_plane, near, far);
 		} break;
 	}
 }
@@ -71,6 +71,10 @@ void Camera::_validate_property(PropertyInfo &p_property) const {
 			p_property.usage = PROPERTY_USAGE_NOEDITOR;
 		}
 	} else if (p_property.name == "frustum_offset") {
+		if (mode != PROJECTION_FRUSTUM) {
+			p_property.usage = PROPERTY_USAGE_NOEDITOR;
+		}
+	} else if (p_property.name == "oblique_near_plane") {
 		if (mode != PROJECTION_FRUSTUM) {
 			p_property.usage = PROPERTY_USAGE_NOEDITOR;
 		}
@@ -193,19 +197,20 @@ void Camera::set_orthogonal(float p_size, float p_z_near, float p_z_far) {
 	update_gizmo();
 }
 
-void Camera::set_frustum(float p_size, Vector2 p_offset, float p_z_near, float p_z_far) {
-	if (!force_change && size == p_size && frustum_offset == p_offset && p_z_near == near && p_z_far == far && mode == PROJECTION_FRUSTUM)
+void Camera::set_frustum(float p_size, Vector2 p_offset, Plane p_near_plane, float p_z_near, float p_z_far) {
+	if (!force_change && size == p_size && frustum_offset == p_offset && oblique_near_plane == p_near_plane && p_z_near == near && p_z_far == far && mode == PROJECTION_FRUSTUM)
 		return;
 
 	size = p_size;
 	frustum_offset = p_offset;
+	oblique_near_plane = p_near_plane;
 
 	near = p_z_near;
 	far = p_z_far;
 	mode = PROJECTION_FRUSTUM;
 	force_change = false;
 
-	VisualServer::get_singleton()->camera_set_frustum(camera, size, frustum_offset, near, far);
+	VisualServer::get_singleton()->camera_set_frustum(camera, size, frustum_offset, oblique_near_plane, near, far);
 	update_gizmo();
 }
 
@@ -497,11 +502,13 @@ void Camera::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_camera_transform"), &Camera::get_camera_transform);
 	ClassDB::bind_method(D_METHOD("get_fov"), &Camera::get_fov);
 	ClassDB::bind_method(D_METHOD("get_frustum_offset"), &Camera::get_frustum_offset);
+	ClassDB::bind_method(D_METHOD("get_oblique_near_plane"), &Camera::get_oblique_near_plane);
 	ClassDB::bind_method(D_METHOD("get_size"), &Camera::get_size);
 	ClassDB::bind_method(D_METHOD("get_zfar"), &Camera::get_zfar);
 	ClassDB::bind_method(D_METHOD("get_znear"), &Camera::get_znear);
 	ClassDB::bind_method(D_METHOD("set_fov"), &Camera::set_fov);
 	ClassDB::bind_method(D_METHOD("set_frustum_offset"), &Camera::set_frustum_offset);
+	ClassDB::bind_method(D_METHOD("set_oblique_near_plane"), &Camera::set_oblique_near_plane);
 	ClassDB::bind_method(D_METHOD("set_size"), &Camera::set_size);
 	ClassDB::bind_method(D_METHOD("set_zfar"), &Camera::set_zfar);
 	ClassDB::bind_method(D_METHOD("set_znear"), &Camera::set_znear);
@@ -538,6 +545,7 @@ void Camera::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "fov", PROPERTY_HINT_RANGE, "1,179,0.1"), "set_fov", "get_fov");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "size", PROPERTY_HINT_RANGE, "0.1,16384,0.01"), "set_size", "get_size");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "frustum_offset"), "set_frustum_offset", "get_frustum_offset");
+	ADD_PROPERTY(PropertyInfo(Variant::PLANE, "oblique_near_plane"), "set_oblique_near_plane", "get_oblique_near_plane");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "near", PROPERTY_HINT_EXP_RANGE, "0.01,8192,0.01,or_greater"), "set_znear", "get_znear");
 	ADD_PROPERTY(PropertyInfo(Variant::REAL, "far", PROPERTY_HINT_EXP_RANGE, "0.1,8192,0.1,or_greater"), "set_zfar", "get_zfar");
 
@@ -572,6 +580,10 @@ Vector2 Camera::get_frustum_offset() const {
 	return frustum_offset;
 }
 
+Plane Camera::get_oblique_near_plane() const {
+	return oblique_near_plane;
+}
+
 float Camera::get_zfar() const {
 
 	return far;
@@ -601,6 +613,11 @@ void Camera::set_znear(float p_znear) {
 
 void Camera::set_frustum_offset(Vector2 p_offset) {
 	frustum_offset = p_offset;
+	_update_camera_mode();
+}
+
+void Camera::set_oblique_near_plane(Plane p_near_plane) {
+	oblique_near_plane = p_near_plane;
 	_update_camera_mode();
 }
 
@@ -683,6 +700,7 @@ Camera::Camera() {
 	size = 1;
 	fov = 0;
 	frustum_offset = Vector2();
+	oblique_near_plane = Plane();
 	near = 0;
 	far = 0;
 	current = false;

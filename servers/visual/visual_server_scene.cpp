@@ -61,7 +61,7 @@ void VisualServerScene::camera_set_orthogonal(RID p_camera, float p_size, float 
 	camera->zfar = p_z_far;
 }
 
-void VisualServerScene::camera_set_frustum(RID p_camera, float p_size, Vector2 p_offset, float p_z_near, float p_z_far) {
+void VisualServerScene::camera_set_frustum(RID p_camera, float p_size, Vector2 p_offset, Plane p_near_plane, float p_z_near, float p_z_far) {
 	Camera *camera = camera_owner.get(p_camera);
 	ERR_FAIL_COND(!camera);
 	camera->type = Camera::FRUSTUM;

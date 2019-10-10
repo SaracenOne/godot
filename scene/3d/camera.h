@@ -69,6 +69,7 @@ private:
 	float fov;
 	float size;
 	Vector2 frustum_offset;
+	Plane oblique_near_plane;
 	float near, far;
 	float v_offset;
 	float h_offset;
@@ -111,7 +112,7 @@ public:
 
 	void set_perspective(float p_fovy_degrees, float p_z_near, float p_z_far);
 	void set_orthogonal(float p_size, float p_z_near, float p_z_far);
-	void set_frustum(float p_size, Vector2 p_offset, float p_z_near, float p_z_far);
+	void set_frustum(float p_size, Vector2 p_offset, Plane p_near_plane, float p_z_near, float p_z_far);
 	void set_projection(Camera::Projection p_mode);
 
 	void make_current();
@@ -126,6 +127,7 @@ public:
 	float get_zfar() const;
 	float get_znear() const;
 	Vector2 get_frustum_offset() const;
+	Plane get_oblique_near_plane() const;
 
 	Projection get_projection() const;
 
@@ -134,6 +136,7 @@ public:
 	void set_zfar(float p_zfar);
 	void set_znear(float p_znear);
 	void set_frustum_offset(Vector2 p_offset);
+	void set_oblique_near_plane(Plane p_near_plane);
 
 	virtual Transform get_camera_transform() const;
 
