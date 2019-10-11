@@ -1426,6 +1426,7 @@ void RasterizerStorageGLES2::_update_shader(Shader *p_shader) const {
 			p_shader->spatial.uses_vertex_lighting = false;
 			p_shader->spatial.uses_screen_texture = false;
 			p_shader->spatial.uses_depth_texture = false;
+			p_shader->spatial.uses_stereo_eye_index = false;
 			p_shader->spatial.uses_vertex = false;
 			p_shader->spatial.writes_modelview_or_projection = false;
 			p_shader->spatial.uses_world_coordinates = false;
@@ -1458,6 +1459,7 @@ void RasterizerStorageGLES2::_update_shader(Shader *p_shader) const {
 			shaders.actions_scene.usage_flag_pointers["DISCARD"] = &p_shader->spatial.uses_discard;
 			shaders.actions_scene.usage_flag_pointers["SCREEN_TEXTURE"] = &p_shader->spatial.uses_screen_texture;
 			shaders.actions_scene.usage_flag_pointers["DEPTH_TEXTURE"] = &p_shader->spatial.uses_depth_texture;
+			shaders.actions_scene.usage_flag_pointers["STEREO_EYE_INDEX"] = &p_shader->spatial.uses_stereo_eye_index;
 			shaders.actions_scene.usage_flag_pointers["TIME"] = &p_shader->spatial.uses_time;
 
 			shaders.actions_scene.write_flag_pointers["MODELVIEW_MATRIX"] = &p_shader->spatial.writes_modelview_or_projection;

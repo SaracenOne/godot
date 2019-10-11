@@ -162,6 +162,8 @@ uniform int spot_light_count;
 
 #endif
 
+uniform int stereo_eye_index;
+
 out vec4 diffuse_light_interp;
 out vec4 specular_light_interp;
 
@@ -822,6 +824,8 @@ uniform int reflection_indices[MAX_FORWARD_LIGHTS];
 uniform int reflection_count;
 
 #endif
+
+uniform int stereo_eye_index;
 
 #if defined(SCREEN_TEXTURE_USED)
 

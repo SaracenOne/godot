@@ -1029,6 +1029,7 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	actions[VS::SHADER_SPATIAL].renames["SCREEN_UV"] = "screen_uv";
 	actions[VS::SHADER_SPATIAL].renames["SCREEN_TEXTURE"] = "screen_texture";
 	actions[VS::SHADER_SPATIAL].renames["DEPTH_TEXTURE"] = "depth_texture";
+	actions[VS::SHADER_SPATIAL].renames["STEREO_EYE_INDEX"] = "stereo_eye_index";
 	// Defined in GLES3, but not available in GLES2
 	//actions[VS::SHADER_SPATIAL].renames["DEPTH"] = "gl_FragDepth";
 	actions[VS::SHADER_SPATIAL].renames["ALPHA_SCISSOR"] = "alpha_scissor";
@@ -1065,6 +1066,7 @@ ShaderCompilerGLES2::ShaderCompilerGLES2() {
 	actions[VS::SHADER_SPATIAL].usage_defines["TRANSMISSION"] = "#define TRANSMISSION_USED\n";
 	actions[VS::SHADER_SPATIAL].usage_defines["SCREEN_TEXTURE"] = "#define SCREEN_TEXTURE_USED\n";
 	actions[VS::SHADER_SPATIAL].usage_defines["DEPTH_TEXTURE"] = "#define DEPTH_TEXTURE_USED\n";
+	actions[VS::SHADER_SPATIAL].usage_defines["STEREO_EYE_INDEX"] = "#define STEREO_EYE_INDEX_USED\n";
 	actions[VS::SHADER_SPATIAL].usage_defines["SCREEN_UV"] = "#define SCREEN_UV_USED\n";
 
 	actions[VS::SHADER_SPATIAL].usage_defines["DIFFUSE_LIGHT"] = "#define USE_LIGHT_SHADER_CODE\n";

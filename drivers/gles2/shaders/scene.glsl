@@ -94,6 +94,8 @@ uniform float light_bias;
 uniform float light_normal_bias;
 #endif
 
+uniform int stereo_eye_index;
+
 //
 // varyings
 //
@@ -738,6 +740,8 @@ uniform highp sampler2D screen_texture; //texunit:-4
 #if defined(DEPTH_TEXTURE_USED)
 uniform highp sampler2D depth_texture; //texunit:-4
 #endif
+
+uniform int stereo_eye_index;
 
 #ifdef USE_REFLECTION_PROBE1
 
