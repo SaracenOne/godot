@@ -1,0 +1,3 @@
+[submodule "modules/gdsdecomp"]
+	path = modules/gdsdecomp
+	url = https://github.com/bruvzg/gdsdecomp
