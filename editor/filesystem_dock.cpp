@@ -1776,6 +1776,25 @@ void FileSystemDock::_file_option(int p_option, const Vector<String> &p_selected
 		case FILE_NEW_RESOURCE: {
 			new_resource_dialog->popup_create(true);
 		} break;
+		default: {
+			if (p_option >= CONVERT_BASE_ID) {
+				int to_type = p_option - CONVERT_BASE_ID;
+				for (int i = 0; i < p_selected.size(); i++) {
+					String current_file_type = EditorFileSystem::get_singleton()->get_file_type(p_selected[i]);
+					RES res = ResourceLoader::load(p_selected[i], current_file_type);
+					if (!res.is_null()) {
+						Vector<Ref<EditorResourceConversionPlugin> > conversions = EditorNode::get_singleton()->find_resource_conversion_plugin(res);
+						ERR_FAIL_INDEX(to_type, conversions.size());
+						Ref<Resource> new_res = conversions[to_type]->convert(static_cast<Ref<Resource> >(res));
+
+						res->set_path(""); // Clear the old resources cache
+						ResourceSaver::save(p_selected[i], new_res, ResourceSaver::FLAG_BUNDLE_RESOURCES | ResourceSaver::FLAG_REPLACE_SUBRESOURCE_PATHS);
+					}
+				}
+				_rescan();
+				break;
+			}
+		} break;
 	}
 }
 
@@ -2136,16 +2155,27 @@ void FileSystemDock::_file_and_folders_fill_popup(PopupMenu *p_popup, Vector<Str
 	bool all_folders = true;
 	bool all_favorites = true;
 	bool all_not_favorites = true;
+	bool all_file_types_consistent = true;
+	String previous_file_type = "";
 
 	for (int i = 0; i < p_paths.size(); i++) {
 		String fpath = p_paths[i];
 		if (fpath.ends_with("/")) {
 			foldernames.push_back(fpath);
 			all_files = false;
+			all_file_types_consistent = false;
 		} else {
 			filenames.push_back(fpath);
 			all_folders = false;
-			all_files_scenes &= (EditorFileSystem::get_singleton()->get_file_type(fpath) == "PackedScene");
+			String current_file_type = EditorFileSystem::get_singleton()->get_file_type(fpath);
+			all_files_scenes &= (current_file_type == "PackedScene");
+
+			if (previous_file_type != "") {
+				if (previous_file_type != current_file_type) {
+					all_file_types_consistent = false;
+				}
+			}
+			previous_file_type = current_file_type;
 		}
 
 		// Check if in favorites.
@@ -2230,6 +2260,36 @@ void FileSystemDock::_file_and_folders_fill_popup(PopupMenu *p_popup, Vector<Str
 		String fpath = p_paths[0];
 		String item_text = fpath.ends_with("/") ? TTR("Open in File Manager") : TTR("Show in File Manager");
 		p_popup->add_icon_item(get_icon("Filesystem", "EditorIcons"), item_text, FILE_SHOW_IN_EXPLORER);
+	}
+
+	if (all_file_types_consistent) {
+		// Instantiate a new blank resource based on the resource type of the selected files
+		// so that valid resource conversion plugins can be found.
+		Object *c = ClassDB::instance(previous_file_type);
+		ERR_FAIL_COND(!c);
+		Resource *r = Object::cast_to<Resource>(c);
+		ERR_FAIL_COND(!r);
+		RES res = RES(r);
+
+		if (!res.is_null()) {
+			Vector<Ref<EditorResourceConversionPlugin> > conversions = EditorNode::get_singleton()->find_resource_conversion_plugin(res);
+			if (conversions.size()) {
+				p_popup->add_separator();
+			}
+			for (int i = 0; i < conversions.size(); i++) {
+				String what = conversions[i]->converts_to();
+				Ref<Texture> icon;
+				if (has_icon(what, "EditorIcons")) {
+
+					icon = get_icon(what, "EditorIcons");
+				} else {
+
+					icon = get_icon(what, "Resource");
+				}
+
+				p_popup->add_icon_item(icon, vformat(TTR("Convert To %s"), what), CONVERT_BASE_ID + i);
+			}
+		}
 	}
 }
 
