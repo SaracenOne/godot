@@ -1229,9 +1229,11 @@ bool SpaceBullet::recover_from_penetration(RigidBodyBullet *p_body, const btTran
 
 		for (int i = recover_broad_result.results.size() - 1; 0 <= i; --i) {
 			btCollisionObject *otherObject = recover_broad_result.results[i].collision_object;
-			if (p_infinite_inertia && !otherObject->isStaticOrKinematicObject()) {
-				otherObject->activate(); // Force activation of hitten rigid, soft body
-				continue;
+			if (!otherObject->isStaticOrKinematicObject()) {
+				if (p_infinite_inertia || !GodotFilterCallback::test_collision_filters_one_way(p_body->get_collision_mask(), otherObject->getBroadphaseHandle()->m_collisionFilterGroup)) {
+					otherObject->activate(); // Force activation of hitten rigid, soft body
+					continue;
+				}
 			} else if (!p_body->get_bt_collision_object()->checkCollideWith(otherObject) || !otherObject->checkCollideWith(p_body->get_bt_collision_object()))
 				continue;
 

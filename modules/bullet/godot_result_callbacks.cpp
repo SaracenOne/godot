@@ -51,8 +51,21 @@ bool GodotFilterCallback::test_collision_filters(uint32_t body0_collision_layer,
 	return body0_collision_layer & body1_collision_mask || body1_collision_layer & body0_collision_mask;
 }
 
+bool GodotFilterCallback::test_collision_filters_one_way(uint32_t body0_collision_mask, uint32_t body1_collision_layer) {
+	return body0_collision_mask & body1_collision_layer;
+}
+
 bool GodotFilterCallback::needBroadphaseCollision(btBroadphaseProxy *proxy0, btBroadphaseProxy *proxy1) const {
-	return GodotFilterCallback::test_collision_filters(proxy0->m_collisionFilterGroup, proxy0->m_collisionFilterMask, proxy1->m_collisionFilterGroup, proxy1->m_collisionFilterMask);
+	bool needs = GodotFilterCallback::test_collision_filters(proxy0->m_collisionFilterGroup, proxy0->m_collisionFilterMask, proxy1->m_collisionFilterGroup, proxy1->m_collisionFilterMask);
+	if (needs) {
+		btCollisionObject *btObj = static_cast<btCollisionObject *>(proxy0->m_clientObject);
+		CollisionObjectBullet *gObj = static_cast<CollisionObjectBullet *>(btObj->getUserPointer());
+
+		if (!gObj->is_static()) {
+			needs = GodotFilterCallback::test_collision_filters_one_way(proxy0->m_collisionFilterMask, proxy1->m_collisionFilterGroup);
+		}
+	}
+	return needs;
 }
 
 bool GodotClosestRayResultCallback::needsCollision(btBroadphaseProxy *proxy0) const {
@@ -119,7 +132,7 @@ btScalar GodotAllConvexResultCallback::addSingleResult(btCollisionWorld::LocalCo
 }
 
 bool GodotKinClosestConvexResultCallback::needsCollision(btBroadphaseProxy *proxy0) const {
-	const bool needs = GodotFilterCallback::test_collision_filters(m_collisionFilterGroup, m_collisionFilterMask, proxy0->m_collisionFilterGroup, proxy0->m_collisionFilterMask);
+	const bool needs = GodotFilterCallback::test_collision_filters_one_way(m_collisionFilterMask, proxy0->m_collisionFilterGroup);
 	if (needs) {
 		btCollisionObject *btObj = static_cast<btCollisionObject *>(proxy0->m_clientObject);
 		CollisionObjectBullet *gObj = static_cast<CollisionObjectBullet *>(btObj->getUserPointer());

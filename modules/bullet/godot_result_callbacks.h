@@ -48,6 +48,7 @@ bool godotContactAddedCallback(btManifoldPoint &cp, const btCollisionObjectWrapp
 /// This class is required to implement custom collision behaviour in the broadphase
 struct GodotFilterCallback : public btOverlapFilterCallback {
 	static bool test_collision_filters(uint32_t body0_collision_layer, uint32_t body0_collision_mask, uint32_t body1_collision_layer, uint32_t body1_collision_mask);
+	static bool test_collision_filters_one_way(uint32_t body0_collision_mask, uint32_t body1_collision_layer);
 
 	// return true when pairs need collision
 	virtual bool needBroadphaseCollision(btBroadphaseProxy *proxy0, btBroadphaseProxy *proxy1) const;
