@@ -158,6 +158,7 @@ public:
 		BLEND_MODE_ADD,
 		BLEND_MODE_SUB,
 		BLEND_MODE_MUL,
+		BLEND_MODE_PMALPHA,
 	};
 
 	enum DepthDrawMode {
@@ -246,7 +247,7 @@ private:
 		struct {
 			uint64_t feature_mask : 12;
 			uint64_t detail_uv : 1;
-			uint64_t blend_mode : 2;
+			uint64_t blend_mode : 3;
 			uint64_t depth_draw_mode : 2;
 			uint64_t cull_mode : 2;
 			uint64_t flags : 19;
