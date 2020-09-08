@@ -325,6 +325,93 @@ void OS_Windows::_drag_event(float p_x, float p_y, int idx) {
 	curr->get() = Vector2(p_x, p_y);
 };
 
+void OS_Windows::IME_GetCompositionString(ime_data *p_data, HIMC himc, DWORD string) {
+	LONG length = ImmGetCompositionStringW(himc, string, p_data->im_composition, sizeof(p_data->im_composition) - sizeof(p_data->im_composition[0]));
+	if (length < 0)
+		length = 0;
+
+	length /= sizeof(p_data->im_composition[0]);
+	p_data->im_cursor = LOWORD(ImmGetCompositionStringW(himc, GCS_CURSORPOS, 0, 0));
+
+	int composition_size = 0;
+	for (int i = 0; i < 32; i++) {
+		if (p_data->im_composition[i] == 0) {
+			break;
+		}
+		composition_size++;
+	}
+
+	if (p_data->im_cursor < composition_size && p_data->im_composition[p_data->im_cursor] == 0x3000) {
+		for (int i = p_data->im_cursor + 1; i < length; ++i)
+			p_data->im_composition[i - 1] = p_data->im_composition[i];
+
+		--length;
+	}
+	p_data->im_composition[length] = 0;
+}
+
+bool OS_Windows::IME_HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM *lParam) {
+	bool message_processed = false;
+
+	if (!im_data.im_available)
+		return false;
+
+	HIMC himc = 0;
+	switch (uMsg) {
+		case WM_INPUTLANGCHANGE:
+			message_processed = true;
+			break;
+		case WM_IME_SETCONTEXT:
+			message_processed = true;
+			break;
+		case WM_IME_STARTCOMPOSITION:
+			message_processed = true;
+			break;
+		case WM_IME_COMPOSITION:
+			message_processed = true;
+			himc = ImmGetContext(hwnd);
+			if (*lParam & GCS_RESULTSTR) {
+				IME_GetCompositionString(&im_data, himc, GCS_RESULTSTR);
+				//IME_SendInputEvent(videodata);
+			}
+			if (*lParam & GCS_COMPSTR) {
+				if (!im_data.im_uiless)
+					im_data.im_readingstring[0] = 0;
+
+				IME_GetCompositionString(&im_data, himc, GCS_COMPSTR);
+				//ime_cursor IME_SendEditingEvent(videodata);
+			}
+			ImmReleaseContext(hwnd, himc);
+			break;
+		case WM_IME_ENDCOMPOSITION:
+			message_processed = true;
+			break;
+		case WM_IME_NOTIFY:
+			switch (wParam) {
+				case IMN_SETCONVERSIONMODE:
+				case IMN_SETOPENSTATUS:
+					message_processed = true;
+					break;
+				case IMN_OPENCANDIDATE:
+				case IMN_CHANGECANDIDATE:
+					message_processed = true;
+					break;
+				case IMN_CLOSECANDIDATE:
+					message_processed = true;
+					break;
+				case IMN_PRIVATE:
+					message_processed = true;
+					break;
+				default:
+					message_processed = true;
+					break;
+			}
+			break;
+	}
+
+	return message_processed;
+}
+//
 LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 	if (drop_events) {
@@ -336,6 +423,9 @@ LRESULT OS_Windows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			return DefWindowProcW(hWnd, uMsg, wParam, lParam);
 		}
 	};
+
+	if (IME_HandleMessage(hWnd, uMsg, wParam, &lParam))
+		return 0;
 
 	switch (uMsg) // Check For Windows Messages
 	{
@@ -1385,6 +1475,296 @@ int OS_Windows::get_current_video_driver() const {
 	return video_driver_index;
 }
 
+void OS_Windows::uiless_enable_ui_updates(ime_data *p_ime_data) {
+	ITfSource *source = 0;
+	if (!p_ime_data->im_threadmgrex || p_ime_data->im_uielemsinkcookie != TF_INVALID_COOKIE)
+		return;
+
+	if (SUCCEEDED(p_ime_data->im_threadmgrex->QueryInterface(IID_ITfSource, (LPVOID *)&source))) {
+		source->AdviseSink(IID_ITfUIElementSink, (IUnknown *)p_ime_data->im_uielemsink, &p_ime_data->im_uielemsinkcookie);
+		source->Release();
+	}
+}
+
+void OS_Windows::uiless_disable_ui_updates(ime_data *p_ime_data) {
+	ITfSource *source = 0;
+	if (!p_ime_data->im_threadmgrex || p_ime_data->im_uielemsinkcookie == TF_INVALID_COOKIE)
+		return;
+
+	if (SUCCEEDED(p_ime_data->im_threadmgrex->QueryInterface(IID_ITfSource, (LPVOID *)&source))) {
+		source->UnadviseSink(p_ime_data->im_uielemsinkcookie);
+		p_ime_data->im_uielemsinkcookie = TF_INVALID_COOKIE;
+		source->Release();
+	}
+}
+
+class TSFUIElement : public ITfUIElementSink {
+	friend class OS_Windows;
+	OS_Windows::ime_data *ime_data;
+
+	static ITfUIElement *UILess_GetUIElement(OS_Windows::ime_data *p_ime_data, DWORD dwUIElementId) {
+		ITfUIElementMgr *puiem = 0;
+		ITfUIElement *pelem = 0;
+		ITfThreadMgrEx *threadmgrex = p_ime_data->im_threadmgrex;
+
+		if (SUCCEEDED(threadmgrex->QueryInterface(IID_ITfUIElementMgr, (LPVOID *)&puiem))) {
+			puiem->GetUIElement(dwUIElementId, &pelem);
+			puiem->Release();
+		}
+		return pelem;
+	}
+
+	static void UILess_GetCandidateList(OS_Windows::ime_data *p_ime_data, ITfCandidateListUIElement *pcandlist) {
+		UINT selection = 0;
+		UINT count = 0;
+		UINT page = 0;
+		UINT pgcount = 0;
+		DWORD pgstart = 0;
+		DWORD pgsize = 0;
+		UINT i, j;
+		pcandlist->GetSelection(&selection);
+		pcandlist->GetCount(&count);
+		pcandlist->GetCurrentPage(&page);
+
+		//pcandlist->ime_candsel = selection;
+		//pcandlist->ime_candcount = count;
+		//IME_ShowCandidateList(p_ime_data);
+
+		pcandlist->GetPageIndex(0, 0, &pgcount);
+		if (pgcount > 0) {
+			UINT *idxlist = (UINT *)memalloc(sizeof(UINT) * pgcount);
+			if (idxlist) {
+				pcandlist->GetPageIndex(idxlist, pgcount, &pgcount);
+				pgstart = idxlist[page];
+				if (page < pgcount - 1)
+					pgsize = MIN(count, idxlist[page + 1]) - pgstart;
+				else
+					pgsize = count - pgstart;
+
+				memfree(idxlist);
+			}
+		}
+		//p_ime_data->im_candpgsize = MIN(pgsize, MAX_CANDLIST);
+		//p_ime_data->im_candsel = p_ime_data->im_candsel - pgstart;
+
+		/*
+		memset(p_ime_data->im_candidates, 0, sizeof(p_ime_data->im_candidates));
+		for (i = pgstart, j = 0; (DWORD)i < count && j < p_ime_data->im_candpgsize; i++, j++) {
+			BSTR bstr;
+			if (SUCCEEDED(pcandlist->GetString(i, &bstr))) {
+				if (bstr) {
+					IME_AddCandidate(videodata, j, bstr);
+					SysFreeString(bstr);
+				}
+			}
+		}
+		if (PRIMLANG() == LANG_KOREAN)
+			videodata->ime_candsel = -1;
+		*/
+	}
+
+public:
+	TSFUIElement(OS_Windows::ime_data *p_ime_data) {
+		ime_data = p_ime_data;
+		refcount = 0;
+	}
+
+	int refcount;
+
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR *__RPC_FAR *ppvObject) {
+		if (!ppvObject)
+			return E_INVALIDARG;
+
+		*ppvObject = 0;
+		if (memcmp(&riid, &IID_IUnknown, sizeof(riid)) == 0)
+			*ppvObject = (IUnknown *)&riid;
+		else if (memcmp(&riid, &IID_ITfUIElementSink, sizeof(riid)) == 0)
+			*ppvObject = (ITfUIElementSink *)&riid;
+
+		if (*ppvObject) {
+			AddRef();
+			return S_OK;
+		}
+		return E_NOINTERFACE;
+	}
+	ULONG STDMETHODCALLTYPE AddRef(void) {
+		refcount++;
+		return refcount;
+	}
+	ULONG STDMETHODCALLTYPE Release(void) {
+		--refcount;
+		return refcount;
+	}
+
+	HRESULT STDMETHODCALLTYPE BeginUIElement(DWORD dwUIElementId, BOOL *pbShow) {
+		ITfUIElement *element = UILess_GetUIElement(ime_data, dwUIElementId);
+		ITfReadingInformationUIElement *preading = 0;
+		ITfCandidateListUIElement *pcandlist = 0;
+		if (!element)
+			return E_INVALIDARG;
+
+		*pbShow = FALSE;
+		if (SUCCEEDED(element->QueryInterface(IID_ITfReadingInformationUIElement, (LPVOID *)&preading))) {
+			BSTR bstr;
+			if (SUCCEEDED(preading->GetString(&bstr)) && bstr) {
+				SysFreeString(bstr);
+			}
+			preading->Release();
+		} else if (SUCCEEDED(element->QueryInterface(IID_ITfCandidateListUIElement, (LPVOID *)&pcandlist))) {
+			//ime_data->im_candref++;
+			//UILess_GetCandidateList(videodata, pcandlist);
+			//pcandlist->Release();
+		}
+		return S_OK;
+	}
+	HRESULT STDMETHODCALLTYPE UpdateUIElement(DWORD dwUIElementId) {
+		ITfUIElement *element = UILess_GetUIElement(ime_data, dwUIElementId);
+		ITfReadingInformationUIElement *preading = 0;
+		ITfCandidateListUIElement *pcandlist = 0;
+		if (!element)
+			return E_INVALIDARG;
+
+		if (SUCCEEDED(element->QueryInterface(IID_ITfReadingInformationUIElement, (LPVOID *)&preading))) {
+			BSTR bstr;
+			if (SUCCEEDED(preading->GetString(&bstr)) && bstr) {
+				WCHAR *s = (WCHAR *)bstr;
+				//SDL_wcslcpy(videodata->ime_readingstring, s, SDL_arraysize(videodata->ime_readingstring));
+				//IME_SendEditingEvent(videodata);
+				SysFreeString(bstr);
+			}
+			preading->Release();
+		} else if (SUCCEEDED(element->QueryInterface(IID_ITfCandidateListUIElement, (LPVOID *)&pcandlist))) {
+			//UILess_GetCandidateList(pcandlist);
+			//pcandlist->Release();
+		}
+		return S_OK;
+	}
+	HRESULT STDMETHODCALLTYPE EndUIElement(DWORD dwUIElementId) {
+		ITfUIElement *element = UILess_GetUIElement(ime_data, dwUIElementId);
+		ITfReadingInformationUIElement *preading = 0;
+		ITfCandidateListUIElement *pcandlist = 0;
+		if (!element)
+			return E_INVALIDARG;
+
+		if (SUCCEEDED(element->QueryInterface(IID_ITfReadingInformationUIElement, (LPVOID *)&preading))) {
+			ime_data->im_readingstring[0] = 0;
+			//IME_SendEditingEvent(videodata);
+			//preading->Release();
+		}
+		if (SUCCEEDED(element->QueryInterface(IID_ITfCandidateListUIElement, (LPVOID *)&pcandlist))) {
+			//ime_data->im_candref--;
+			//if (ime_data->im_candref == 0)
+			//	IME_CloseCandidateList(ime_data);
+
+			pcandlist->Release();
+		}
+		return S_OK;
+	}
+};
+
+class TSFInputProcessorProfileActivation : public ITfInputProcessorProfileActivationSink {
+	friend class OS_Windows;
+	OS_Windows::ime_data *ime_data;
+
+public:
+	TSFInputProcessorProfileActivation(OS_Windows::ime_data *p_ime_data) {
+		ime_data = p_ime_data;
+		refcount = 0;
+	}
+
+	int refcount;
+
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _COM_Outptr_ void __RPC_FAR *__RPC_FAR *ppvObject) {
+		if (!ppvObject)
+			return E_INVALIDARG;
+
+		*ppvObject = 0;
+		if (memcmp(&riid, &IID_IUnknown, sizeof(riid)) == 0)
+			*ppvObject = (IUnknown *)&riid;
+		else if (memcmp(&riid, &IID_ITfInputProcessorProfileActivationSink, sizeof(riid)) == 0)
+			*ppvObject = (ITfInputProcessorProfileActivationSink *)&riid;
+
+		if (*ppvObject) {
+			AddRef();
+			return S_OK;
+		}
+		return E_NOINTERFACE;
+	}
+	ULONG STDMETHODCALLTYPE AddRef(void) {
+		refcount++;
+		return refcount;
+	}
+	ULONG STDMETHODCALLTYPE Release(void) {
+		--refcount;
+		return refcount;
+	}
+
+	HRESULT STDMETHODCALLTYPE OnActivated(
+			/* [in] */ DWORD dwProfileType,
+			/* [in] */ LANGID langid,
+			/* [in] */ __RPC__in REFCLSID clsid,
+			/* [in] */ __RPC__in REFGUID catid,
+			/* [in] */ __RPC__in REFGUID guidProfile,
+			/* [in] */ HKL hkl,
+			/* [in] */ DWORD dwFlags) {
+		static const GUID TF_PROFILE_DAYI = { 0x037B2C25, 0x480C, 0x4D7F, { 0xB0, 0x27, 0xD6, 0xCA, 0x6B, 0x69, 0x78, 0x8A } };
+		//	videodata->ime_candlistindexbase = WIN_IsEqualGUID(&TF_PROFILE_DAYI, guidProfile) ? 0 : 1;
+		//if (WIN_IsEqualIID(catid, &GUID_TFCAT_TIP_KEYBOARD) && (dwFlags & TF_IPSINK_FLAG_ACTIVE))
+		//	IME_InputLangChanged((SDL_VideoData *)sink->data);
+
+		//IME_HideCandidateList(videodata);
+		return S_OK;
+	}
+};
+
+bool OS_Windows::uiless_setup_sinks(ime_data *p_ime_data) {
+	TfClientId clientid = 0;
+	bool result = false;
+	ITfSource *source = 0;
+
+	if (FAILED(CoCreateInstance(CLSID_TF_ThreadMgr, NULL, CLSCTX_INPROC_SERVER, IID_ITfThreadMgrEx, (LPVOID *)&p_ime_data->im_threadmgrex)))
+		return false;
+
+	if (FAILED(p_ime_data->im_threadmgrex->ActivateEx(&clientid, TF_TMAE_UIELEMENTENABLEDONLY)))
+		return false;
+
+	p_ime_data->im_uielemsink = new TSFUIElement(p_ime_data);
+	p_ime_data->im_ippasink = new TSFInputProcessorProfileActivation(p_ime_data);
+
+	if (SUCCEEDED(p_ime_data->im_threadmgrex->QueryInterface(IID_ITfSource, (LPVOID *)&source))) {
+		if (SUCCEEDED(source->AdviseSink(IID_ITfUIElementSink, p_ime_data->im_uielemsink, &p_ime_data->im_uielemsinkcookie))) {
+			if (SUCCEEDED(source->AdviseSink(IID_ITfInputProcessorProfileActivationSink, p_ime_data->im_ippasink, &p_ime_data->im_alpnsinkcookie))) {
+				result = true;
+			}
+		}
+		source->Release();
+	}
+
+	return result;
+}
+
+void OS_Windows::uiless_release_sinks(ime_data *p_ime_data) {
+	ITfSource *source = 0;
+	if (p_ime_data->im_threadmgrex && SUCCEEDED(p_ime_data->im_threadmgrex->QueryInterface(IID_ITfSource, (LPVOID *)&source))) {
+		source->UnadviseSink(p_ime_data->im_uielemsinkcookie);
+		source->UnadviseSink(p_ime_data->im_alpnsinkcookie);
+		source->Release();
+
+		p_ime_data->im_threadmgrex->Deactivate();
+		p_ime_data->im_threadmgrex->Release();
+
+		if (p_ime_data->im_uielemsink) {
+			delete p_ime_data->im_uielemsink;
+			p_ime_data->im_uielemsink = NULL;
+		}
+
+		if (p_ime_data->im_ippasink) {
+			delete p_ime_data->im_ippasink;
+			p_ime_data->im_ippasink = NULL;
+		}
+	}
+}
+
 Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int p_audio_driver) {
 
 	main_loop = NULL;
@@ -1704,10 +2084,33 @@ Error OS_Windows::initialize(const VideoMode &p_desired, int p_video_driver, int
 	}
 
 	// IME
-	im_himc = ImmGetContext(hWnd);
-	ImmReleaseContext(hWnd, im_himc);
+	im_data.im_available = true;
 
-	im_position = Vector2();
+	im_data.im_himc = ImmGetContext(hWnd);
+	ImmReleaseContext(hWnd, im_data.im_himc);
+	if (!im_data.im_himc) {
+		im_data.im_available = false;
+	} else {
+		im_data.im_available = true;
+	}
+
+	im_data.im_composition[0] = 0;
+	im_data.im_readingstring[0] = 0;
+	im_data.im_cursor = 0;
+
+	im_data.im_threadmgrex = NULL;
+	im_data.im_uielemsinkcookie = TF_INVALID_COOKIE;
+	im_data.im_alpnsinkcookie = TF_INVALID_COOKIE;
+	im_data.im_openmodesinkcookie = TF_INVALID_COOKIE;
+	im_data.im_convmodesinkcookie = TF_INVALID_COOKIE;
+	im_data.im_uielemsink = NULL;
+	im_data.im_ippasink = NULL;
+
+	if (im_data.im_available) {
+		im_data.im_uiless = uiless_setup_sinks(&im_data);
+	}
+
+	im_data.im_position = Vector2();
 
 	set_ime_active(false);
 
@@ -1821,6 +2224,8 @@ void OS_Windows::finalize() {
 #ifdef WINMIDI_ENABLED
 	driver_midi.close();
 #endif
+
+	uiless_release_sinks(&im_data);
 
 	if (main_loop)
 		memdelete(main_loop);
@@ -3511,9 +3916,9 @@ String OS_Windows::get_unique_id() const {
 void OS_Windows::set_ime_active(const bool p_active) {
 
 	if (p_active) {
-		ImmAssociateContext(hWnd, im_himc);
+		ImmAssociateContext(hWnd, im_data.im_himc);
 
-		set_ime_position(im_position);
+		set_ime_position(im_data.im_position);
 	} else {
 		ImmAssociateContext(hWnd, (HIMC)0);
 	}
@@ -3521,7 +3926,7 @@ void OS_Windows::set_ime_active(const bool p_active) {
 
 void OS_Windows::set_ime_position(const Point2 &p_pos) {
 
-	im_position = p_pos;
+	im_data.im_position = p_pos;
 
 	HIMC himc = ImmGetContext(hWnd);
 	if (himc == (HIMC)0)
@@ -3529,8 +3934,8 @@ void OS_Windows::set_ime_position(const Point2 &p_pos) {
 
 	COMPOSITIONFORM cps;
 	cps.dwStyle = CFS_FORCE_POSITION;
-	cps.ptCurrentPos.x = im_position.x;
-	cps.ptCurrentPos.y = im_position.y;
+	cps.ptCurrentPos.x = im_data.im_position.x;
+	cps.ptCurrentPos.y = im_data.im_position.y;
 	ImmSetCompositionWindow(himc, &cps);
 	ImmReleaseContext(hWnd, himc);
 }

@@ -55,6 +55,10 @@
 #include <stdio.h>
 #include <windows.h>
 #include <windowsx.h>
+
+#include <msctf.h>
+#include <winerror.h>
+
 // WinTab API
 #define WT_PACKET 0x7FF0
 #define WT_PROXIMITY 0x7FF5
@@ -248,6 +252,7 @@ typedef struct {
 } ICONDIR, *LPICONDIR;
 
 class JoypadWindows;
+class IMEWindows;
 class OS_Windows : public OS {
 	String tablet_driver;
 	Vector<String> tablet_drivers;
@@ -329,8 +334,35 @@ class OS_Windows : public OS {
 	WNDPROC user_proc;
 
 	// IME
-	HIMC im_himc;
-	Vector2 im_position;
+public:
+	struct ime_data {
+		bool im_com_initialized;
+		struct ITfThreadMgr *im_threadmgr;
+		bool im_initialized;
+		bool im_enabled;
+		bool im_available;
+		HWND im_hwnd_main;
+		HWND im_hwnd_current;
+		HIMC im_himc;
+
+		Vector2 im_position;
+
+		WCHAR im_composition[32];
+		WCHAR im_readingstring[16];
+		int im_cursor;
+
+		bool im_uiless;
+		struct ITfThreadMgrEx *im_threadmgrex;
+		DWORD im_uielemsinkcookie;
+		DWORD im_alpnsinkcookie;
+		DWORD im_openmodesinkcookie;
+		DWORD im_convmodesinkcookie;
+		ITfUIElementSink *im_uielemsink;
+		ITfInputProcessorProfileActivationSink *im_ippasink;
+	};
+
+private:
+	ime_data im_data;
 
 	MouseMode mouse_mode;
 	bool alt_mem;
@@ -350,6 +382,7 @@ class OS_Windows : public OS {
 
 	InputDefault *input;
 	JoypadWindows *joypad;
+	IMEWindows *ime;
 	Map<int, Vector2> touch_state;
 
 	PowerWindows *power_manager;
@@ -407,6 +440,14 @@ protected:
 	bool window_focused;
 	bool console_visible;
 	bool was_maximized;
+
+	static void uiless_enable_ui_updates(ime_data *p_ime_data);
+	static void uiless_disable_ui_updates(ime_data *p_ime_data);
+	static bool uiless_setup_sinks(ime_data *p_ime_data);
+	static void uiless_release_sinks(ime_data *p_ime_data);
+
+	static void IME_GetCompositionString(ime_data *p_data, HIMC himc, DWORD string);
+	bool IME_HandleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM *lParam);
 
 public:
 	LRESULT WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
