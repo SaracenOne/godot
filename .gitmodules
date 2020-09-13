@@ -1,0 +1,3 @@
+[submodule "modules/renik"]
+	path = modules/renik
+	url = https://github.com/V-Sekai/renik
