@@ -965,10 +965,17 @@ EditorSceneImporterAssimp::_generate_mesh_from_surface_indices(ImportState &stat
 				Vector<float> weights;
 				weights.resize(bone_info.size());
 
+				float weight_sum = 0;
+				for (int k = 0; k < bone_info.size(); k++) {
+					weight_sum += bone_info[k].weight;
+				}
+				if (weight_sum <= 0) {
+					weight_sum = 1;
+				}
 				// todo? do we really need to loop over all bones? - assimp may have helper to find all influences on this vertex.
 				for (int k = 0; k < bone_info.size(); k++) {
 					bones.write[k] = bone_info[k].bone;
-					weights.write[k] = bone_info[k].weight;
+					weights.write[k] = bone_info[k].weight / weight_sum;
 				}
 
 				st->add_bones(bones);

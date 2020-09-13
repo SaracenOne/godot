@@ -400,6 +400,7 @@ void main() {
 
 			bone_transform += transpose(b) * bone_weights[i];
 		}
+		bone_transform[3][3] = 1.0;
 	}
 
 #endif

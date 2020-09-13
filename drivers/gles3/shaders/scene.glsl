@@ -428,6 +428,7 @@ void main() {
 					 vec4(0.0, 0.0, 0.0, 1.0)) *
 			 bone_weights.w;
 
+		m[3][3] = 1.0;
 		world_matrix = world_matrix * transpose(m);
 	}
 #endif
