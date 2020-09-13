@@ -496,6 +496,26 @@ bool Node::is_network_master() const {
 	return get_multiplayer()->get_network_unique_id() == data.network_master;
 }
 
+/***** RPC GET MODE ******/
+
+MultiplayerAPI::RPCMode Node::rpc_get_mode(const StringName &p_method) {
+
+	if (data.rpc_methods.has(p_method)) {
+		return data.rpc_methods[p_method];
+	} else {
+		return MultiplayerAPI::RPC_MODE_DISABLED;
+	}
+}
+
+MultiplayerAPI::RPCMode Node::rset_get_mode(const StringName &p_property) {
+
+	if (data.rpc_properties.has(p_property)) {
+		return data.rpc_properties[p_property];
+	} else {
+		return MultiplayerAPI::RPC_MODE_DISABLED;
+	}
+}
+
 /***** RPC CONFIG ********/
 
 void Node::rpc_config(const StringName &p_method, MultiplayerAPI::RPCMode p_mode) {
@@ -2821,6 +2841,8 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_multiplayer"), &Node::get_multiplayer);
 	ClassDB::bind_method(D_METHOD("get_custom_multiplayer"), &Node::get_custom_multiplayer);
 	ClassDB::bind_method(D_METHOD("set_custom_multiplayer", "api"), &Node::set_custom_multiplayer);
+	ClassDB::bind_method(D_METHOD("rpc_get_mode", "method"), &Node::rpc_get_mode);
+	ClassDB::bind_method(D_METHOD("rset_get_mode", "property"), &Node::rset_get_mode);
 	ClassDB::bind_method(D_METHOD("rpc_config", "method", "mode"), &Node::rpc_config);
 	ClassDB::bind_method(D_METHOD("rset_config", "property", "mode"), &Node::rset_config);
 

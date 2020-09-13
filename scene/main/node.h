@@ -427,6 +427,9 @@ public:
 	int get_network_master() const;
 	bool is_network_master() const;
 
+	MultiplayerAPI::RPCMode rpc_get_mode(const StringName &p_method);
+	MultiplayerAPI::RPCMode rset_get_mode(const StringName &p_property);
+
 	void rpc_config(const StringName &p_method, MultiplayerAPI::RPCMode p_mode); // config a local method for RPC
 	void rset_config(const StringName &p_property, MultiplayerAPI::RPCMode p_mode); // config a local property for RPC
 
