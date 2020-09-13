@@ -179,6 +179,7 @@ Error EditorRun::run(const String &p_scene, const String &p_custom_args, const L
 	}
 
 	if (p_scene != "") {
+		args.push_back("--main-scene");
 		args.push_back(p_scene);
 	}
 
