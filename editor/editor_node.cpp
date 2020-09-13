@@ -5655,7 +5655,7 @@ void EditorNode::_print_handler(void *p_this, const String &p_string, bool p_err
 }
 
 static void _execute_thread(void *p_ud) {
-
+	Thread::set_name("GODOT:EditorNode _execute_thread");
 	EditorNode::ExecuteThreadArgs *eta = (EditorNode::ExecuteThreadArgs *)p_ud;
 	Error err = OS::get_singleton()->execute(eta->path, eta->args, true, NULL, &eta->output, &eta->exitcode, true, eta->execute_output_mutex);
 	print_verbose("Thread exit status: " + itos(eta->exitcode));

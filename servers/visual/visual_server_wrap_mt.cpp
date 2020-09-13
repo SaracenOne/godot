@@ -51,6 +51,7 @@ void VisualServerWrapMT::thread_flush() {
 }
 
 void VisualServerWrapMT::_thread_callback(void *_instance) {
+	Thread::set_name("GODOT:VisualServerWrapMT::_thread_callback");
 
 	VisualServerWrapMT *vsmt = reinterpret_cast<VisualServerWrapMT *>(_instance);
 

@@ -44,6 +44,7 @@ void Physics2DServerWrapMT::thread_step(real_t p_delta) {
 }
 
 void Physics2DServerWrapMT::_thread_callback(void *_instance) {
+	Thread::set_name("GODOT:Physics2DServerWrapMT::_thread_callback");
 
 	Physics2DServerWrapMT *vsmt = reinterpret_cast<Physics2DServerWrapMT *>(_instance);
 

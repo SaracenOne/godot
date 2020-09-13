@@ -445,6 +445,7 @@ void ProceduralSky::_thread_done(const Ref<Image> &p_image) {
 }
 
 void ProceduralSky::_thread_function(void *p_ud) {
+	Thread::set_name("GODOT:ProceduralSky::_thread_function");
 
 	ProceduralSky *psky = (ProceduralSky *)p_ud;
 	psky->call_deferred("_thread_done", psky->_generate_sky());

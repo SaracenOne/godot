@@ -120,6 +120,7 @@ void NoiseTexture::_thread_done(const Ref<Image> &p_image) {
 }
 
 void NoiseTexture::_thread_function(void *p_ud) {
+	Thread::set_name("GODOT:NoiseTexture::_thread_function");
 	NoiseTexture *tex = (NoiseTexture *)p_ud;
 	tex->call_deferred("_thread_done", tex->_generate_texture());
 }

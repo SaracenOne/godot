@@ -648,7 +648,7 @@ int VideoStreamPlaybackTheora::get_mix_rate() const {
 #ifdef THEORA_USE_THREAD_STREAMING
 
 void VideoStreamPlaybackTheora::_streaming_thread(void *ud) {
-
+	Thread::set_name("GODOT:VideoStreamPlaybackTheora::_streaming_thread");
 	VideoStreamPlaybackTheora *vs = (VideoStreamPlaybackTheora *)ud;
 
 	while (!vs->thread_exit) {

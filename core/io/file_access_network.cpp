@@ -83,7 +83,7 @@ int64_t FileAccessNetworkClient::get_64() {
 }
 
 void FileAccessNetworkClient::_thread_func() {
-
+	Thread::set_name("GODOT:FileAccessNetworkClient::_thread_func");
 	client->set_no_delay(true);
 	while (!quit) {
 
@@ -177,7 +177,7 @@ void FileAccessNetworkClient::_thread_func() {
 }
 
 void FileAccessNetworkClient::_thread_func(void *s) {
-
+	Thread::set_name("GODOT:FileAccessNetworkClient");
 	FileAccessNetworkClient *self = (FileAccessNetworkClient *)s;
 
 	self->_thread_func();

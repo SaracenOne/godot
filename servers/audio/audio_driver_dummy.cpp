@@ -56,6 +56,7 @@ Error AudioDriverDummy::init() {
 };
 
 void AudioDriverDummy::thread_func(void *p_udata) {
+	Thread::set_name("GODOT:AudioDriverDummy::thread_func");
 
 	AudioDriverDummy *ad = (AudioDriverDummy *)p_udata;
 

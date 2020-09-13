@@ -613,6 +613,7 @@ Ref<Texture> EditorExportPlatformJavaScript::get_run_icon() const {
 }
 
 void EditorExportPlatformJavaScript::_server_thread_poll(void *data) {
+	Thread::set_name("GODOT:EditorExportPlatformJavaScript::_server_thread_poll");
 	EditorExportPlatformJavaScript *ej = (EditorExportPlatformJavaScript *)data;
 	while (!ej->server_quit) {
 		OS::get_singleton()->delay_usec(1000);

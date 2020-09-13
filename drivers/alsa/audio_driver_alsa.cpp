@@ -162,6 +162,7 @@ Error AudioDriverALSA::init() {
 }
 
 void AudioDriverALSA::thread_func(void *p_udata) {
+	Thread::set_name("GODOT:AudioDriverALSA::thread_func");
 
 	AudioDriverALSA *ad = (AudioDriverALSA *)p_udata;
 

@@ -2331,6 +2331,7 @@ void VisualServerScene::_gi_probe_fill_local_data(int p_idx, int p_level, int p_
 }
 
 void VisualServerScene::_gi_probe_bake_threads(void *self) {
+	Thread::set_name("GODOT:VisualServerScene::_gi_probe_bake_threads");
 
 	VisualServerScene *vss = (VisualServerScene *)self;
 	vss->_gi_probe_bake_thread();

@@ -334,7 +334,7 @@ void EditorFileSystem::_save_filesystem_cache() {
 }
 
 void EditorFileSystem::_thread_func(void *_userdata) {
-
+	Thread::set_name("GODOT:EditorFileSystem::_thread_func");
 	EditorFileSystem *sd = (EditorFileSystem *)_userdata;
 	sd->_scan_filesystem();
 }
@@ -1046,7 +1046,7 @@ void EditorFileSystem::_delete_internal_files(String p_file) {
 }
 
 void EditorFileSystem::_thread_func_sources(void *_userdata) {
-
+	Thread::set_name("GODOT:EditorFileSystem::_thread_func_sources");
 	EditorFileSystem *efs = (EditorFileSystem *)_userdata;
 	if (efs->filesystem) {
 		EditorProgressBG pr("sources", TTR("ScanSources"), 1000);

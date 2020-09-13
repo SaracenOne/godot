@@ -129,6 +129,7 @@ static void _digest_row_task(const CVTTCompressionJobParams &p_job_params, const
 }
 
 static void _digest_job_queue(void *p_job_queue) {
+	Thread::set_name("GODOT:image_compress_cvtt _digest_job_queue");
 	CVTTCompressionJobQueue *job_queue = static_cast<CVTTCompressionJobQueue *>(p_job_queue);
 
 	for (uint32_t next_task = atomic_increment(&job_queue->current_task); next_task <= job_queue->num_tasks; next_task = atomic_increment(&job_queue->current_task)) {

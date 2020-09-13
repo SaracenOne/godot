@@ -268,6 +268,7 @@ class EditorExportPlatformAndroid : public EditorExportPlatform {
 	volatile bool quit_request;
 
 	static void _check_for_changes_poll_thread(void *ud) {
+		Thread::set_name("GODOT:EditorExportPlatformAndroid::_device_poll_thread");
 		EditorExportPlatformAndroid *ea = (EditorExportPlatformAndroid *)ud;
 
 		while (!ea->quit_request) {

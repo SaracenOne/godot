@@ -129,6 +129,7 @@ Error HTTPRequest::request(const String &p_url, const Vector<String> &p_custom_h
 }
 
 void HTTPRequest::_thread_func(void *p_userdata) {
+	Thread::set_name("GODOT:HTTPRequest::_thread_func");
 
 	HTTPRequest *hr = (HTTPRequest *)p_userdata;
 

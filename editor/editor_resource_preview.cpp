@@ -102,6 +102,7 @@ EditorResourcePreviewGenerator::EditorResourcePreviewGenerator() {
 EditorResourcePreview *EditorResourcePreview::singleton = NULL;
 
 void EditorResourcePreview::_thread_func(void *ud) {
+	Thread::set_name("GODOT:EditorResourcePreview::_thread_func");
 
 	EditorResourcePreview *erp = (EditorResourcePreview *)ud;
 	erp->_thread();

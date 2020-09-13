@@ -73,6 +73,7 @@ static int get_message_size(uint8_t message) {
 }
 
 void MIDIDriverALSAMidi::thread_func(void *p_udata) {
+	Thread::set_name("GODOT:MIDIDriverALSAMidi::thread_func");
 	MIDIDriverALSAMidi *md = (MIDIDriverALSAMidi *)p_udata;
 	uint64_t timestamp = 0;
 	uint8_t buffer[256];

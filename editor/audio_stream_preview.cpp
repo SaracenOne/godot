@@ -101,7 +101,7 @@ void AudioStreamPreviewGenerator::_update_emit(ObjectID p_id) {
 }
 
 void AudioStreamPreviewGenerator::_preview_thread(void *p_preview) {
-
+	Thread::set_name("GODOT:AudioStreamPreviewGenerator::_preview_thread");
 	Preview *preview = (Preview *)p_preview;
 
 	float muxbuff_chunk_s = 0.25;

@@ -53,6 +53,7 @@ void EditorFileServer::_close_client(ClientData *cd) {
 }
 
 void EditorFileServer::_subthread_start(void *s) {
+	Thread::set_name("GODOT:EditorFileServer::_subthread_start");
 
 	ClientData *cd = (ClientData *)s;
 
@@ -271,7 +272,7 @@ void EditorFileServer::_subthread_start(void *s) {
 }
 
 void EditorFileServer::_thread_start(void *s) {
-
+	Thread::set_name("GODOT:EditorFileServer::_thread_start");
 	EditorFileServer *self = (EditorFileServer *)s;
 	while (!self->quit) {
 

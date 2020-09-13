@@ -93,6 +93,7 @@ struct _IP_ResolverPrivate {
 	}
 
 	static void _thread_function(void *self) {
+		Thread::set_name("GODOT:_IP_ResolverPrivate::_thread_function");
 
 		_IP_ResolverPrivate *ipr = (_IP_ResolverPrivate *)self;
 

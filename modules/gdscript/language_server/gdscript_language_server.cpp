@@ -74,6 +74,7 @@ void GDScriptLanguageServer::_notification(int p_what) {
 }
 
 void GDScriptLanguageServer::thread_main(void *p_userdata) {
+	Thread::set_name("GODOT:GDScriptLanguageServer::thread_main");
 	GDScriptLanguageServer *self = static_cast<GDScriptLanguageServer *>(p_userdata);
 	while (self->thread_running) {
 		// Poll 20 times per second
