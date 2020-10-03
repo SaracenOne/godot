@@ -118,6 +118,7 @@ private:
 		RES resource;
 		bool xl_remapped = false;
 		bool use_sub_threads = false;
+		bool no_cache = false;
 		bool start_next = true;
 		int requests = 0;
 		int poll_requests = 0;
@@ -136,7 +137,7 @@ private:
 	static float _dependency_get_progress(const String &p_path);
 
 public:
-	static Error load_threaded_request(const String &p_path, const String &p_type_hint = "", bool p_use_sub_threads = false, const String &p_source_resource = String());
+	static Error load_threaded_request(const String &p_path, const String &p_type_hint = "", bool p_use_sub_threads = false, const String &p_source_resource = String(), bool p_no_cache = false);
 	static ThreadLoadStatus load_threaded_get_status(const String &p_path, float *r_progress = nullptr);
 	static RES load_threaded_get(const String &p_path, Error *r_error = nullptr);
 

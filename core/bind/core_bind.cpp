@@ -68,8 +68,8 @@ static const unsigned int MONTH_DAYS_TABLE[2][12] = {
 
 _ResourceLoader *_ResourceLoader::singleton = nullptr;
 
-Error _ResourceLoader::load_threaded_request(const String &p_path, const String &p_type_hint, bool p_use_sub_threads) {
-	return ResourceLoader::load_threaded_request(p_path, p_type_hint, p_use_sub_threads);
+Error _ResourceLoader::load_threaded_request(const String &p_path, const String &p_type_hint, bool p_use_sub_threads, bool p_no_cache) {
+	return ResourceLoader::load_threaded_request(p_path, p_type_hint, p_use_sub_threads, String(), p_no_cache);
 }
 
 _ResourceLoader::ThreadLoadStatus _ResourceLoader::load_threaded_get_status(const String &p_path, Array r_progress) {
@@ -131,7 +131,7 @@ bool _ResourceLoader::exists(const String &p_path, const String &p_type_hint) {
 }
 
 void _ResourceLoader::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("load_threaded_request", "path", "type_hint", "use_sub_threads"), &_ResourceLoader::load_threaded_request, DEFVAL(""), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("load_threaded_request", "path", "type_hint", "use_sub_threads", "no_cache"), &_ResourceLoader::load_threaded_request, DEFVAL(""), DEFVAL(false), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("load_threaded_get_status", "path", "progress"), &_ResourceLoader::load_threaded_get_status, DEFVAL(Array()));
 	ClassDB::bind_method(D_METHOD("load_threaded_get", "path"), &_ResourceLoader::load_threaded_get);
 

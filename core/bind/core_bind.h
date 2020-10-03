@@ -58,7 +58,7 @@ public:
 
 	static _ResourceLoader *get_singleton() { return singleton; }
 
-	Error load_threaded_request(const String &p_path, const String &p_type_hint = "", bool p_use_sub_threads = false);
+	Error load_threaded_request(const String &p_path, const String &p_type_hint = "", bool p_use_sub_threads = false, bool p_no_cache = false);
 	ThreadLoadStatus load_threaded_get_status(const String &p_path, Array r_progress = Array());
 	RES load_threaded_get(const String &p_path);
 

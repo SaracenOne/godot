@@ -214,7 +214,7 @@ void ResourceLoader::_thread_load_function(void *p_userdata) {
 		//this is an actual thread, so wait for Ok fom semaphore
 		thread_load_semaphore->wait(); //wait until its ok to start loading
 	}
-	load_task.resource = _load(load_task.remapped_path, load_task.remapped_path != load_task.local_path ? load_task.local_path : String(), load_task.type_hint, false, &load_task.error, load_task.use_sub_threads, &load_task.progress);
+	load_task.resource = _load(load_task.remapped_path, load_task.remapped_path != load_task.local_path ? load_task.local_path : String(), load_task.type_hint, load_task.no_cache, &load_task.error, load_task.use_sub_threads, &load_task.progress);
 
 	load_task.progress = 1.0; //it was fully loaded at this point, so force progress to 1.0
 
@@ -267,7 +267,7 @@ void ResourceLoader::_thread_load_function(void *p_userdata) {
 	thread_load_mutex->unlock();
 }
 
-Error ResourceLoader::load_threaded_request(const String &p_path, const String &p_type_hint, bool p_use_sub_threads, const String &p_source_resource) {
+Error ResourceLoader::load_threaded_request(const String &p_path, const String &p_type_hint, bool p_use_sub_threads, const String &p_source_resource, bool p_no_cache) {
 	String local_path;
 	if (p_path.is_rel_path()) {
 		local_path = "res://" + p_path;
@@ -315,6 +315,7 @@ Error ResourceLoader::load_threaded_request(const String &p_path, const String &
 		load_task.local_path = local_path;
 		load_task.type_hint = p_type_hint;
 		load_task.use_sub_threads = p_use_sub_threads;
+		load_task.no_cache = p_no_cache;
 
 		{ //must check if resource is already loaded before attempting to load it in a thread
 
