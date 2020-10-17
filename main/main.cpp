@@ -266,6 +266,7 @@ void Main::print_help(const char *p_binary) {
 	OS::get_singleton()->print("\n");
 
 	OS::get_singleton()->print("Run options:\n");
+	OS::get_singleton()->print("  --main_scene <path>              The <path> to valid Godot scene file will load it as the startup scene when the game loads.\n");
 #ifdef TOOLS_ENABLED
 	OS::get_singleton()->print("  -e, --editor                     Start the editor instead of running the scene.\n");
 	OS::get_singleton()->print("  -p, --project-manager            Start the project manager, even if a project is auto-detected.\n");
@@ -1762,19 +1763,23 @@ bool Main::start() {
 		} else if (args[i].length() && args[i][0] != '-' && positional_arg == "") {
 			positional_arg = args[i];
 
-			if (args[i].ends_with(".scn") ||
-					args[i].ends_with(".tscn") ||
-					args[i].ends_with(".escn") ||
-					args[i].ends_with(".res") ||
-					args[i].ends_with(".tres")) {
-				// Only consider the positional argument to be a scene path if it ends with
-				// a file extension associated with Godot scenes. This makes it possible
-				// for projects to parse command-line arguments for custom CLI arguments
-				// or other file extensions without trouble. This can be used to implement
-				// "drag-and-drop onto executable" logic, which can prove helpful
-				// for non-game applications.
-				game_path = args[i];
+#ifdef LOAD_MAIN_SCENE_FROM_POSITIONAL_ARG
+			if (game_path == "") {
+				if (args[i].ends_with(".scn") ||
+						args[i].ends_with(".tscn") ||
+						args[i].ends_with(".escn") ||
+						args[i].ends_with(".res") ||
+						args[i].ends_with(".tres")) {
+					// Only consider the positional argument to be a scene path if it ends with
+					// a file extension associated with Godot scenes. This makes it possible
+					// for projects to parse command-line arguments for custom CLI arguments
+					// or other file extensions without trouble. This can be used to implement
+					// "drag-and-drop onto executable" logic, which can prove helpful
+					// for non-game applications.
+					game_path = args[i];
+				}
 			}
+#endif
 		}
 		//parameters that have an argument to the right
 		else if (i < (args.size() - 1)) {
@@ -1799,6 +1804,8 @@ bool Main::start() {
 				_export_preset = args[i + 1];
 				export_pack_only = true;
 #endif
+			} else if (args[i] == "--main-scene") {
+				game_path = args[i + 1];
 			} else {
 				// The parameter does not match anything known, don't skip the next argument
 				parsed_pair = false;
