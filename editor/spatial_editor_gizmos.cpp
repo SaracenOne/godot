@@ -32,6 +32,7 @@
 
 #include "core/math/geometry.h"
 #include "core/math/quick_hull.h"
+#include "editor/plugins/skeleton_editor_plugin.h"
 #include "scene/3d/audio_stream_player_3d.h"
 #include "scene/3d/baked_lightmap.h"
 #include "scene/3d/collision_polygon.h"
@@ -1633,7 +1634,12 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 	p_gizmo->clear();
 
-	Ref<Material> material = get_material("skeleton_material", p_gizmo);
+	Ref<SpatialMaterial> material = get_material("skeleton_material", p_gizmo);
+	if (p_gizmo->is_selected()) {
+		material->set_on_top_of_alpha();
+		material->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
+		material->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+	}
 
 	Ref<SurfaceTool> surface_tool(memnew(SurfaceTool));
 
@@ -1656,10 +1662,15 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 	AABB aabb;
 
-	Color bonecolor = Color(1.0, 0.4, 0.4, 0.3);
-	Color rootcolor = Color(0.4, 1.0, 0.4, 0.1);
+	Color bonecolor = Color(1.0, 0.8, 0.4, 1.0);
+	Color rootcolor = Color(0.4, 1.0, 0.4, 1.0);
 
 	for (int i_bone = 0; i_bone < skel->get_bone_count(); i_bone++) {
+		if (i_bone == skel->get_selected_bone()) {
+			bonecolor = Color(1.0, 0.0, 0.0, 1.0);
+		} else {
+			bonecolor = Color(1.0, 0.8, 0.4, 1.0);
+		}
 
 		int i = skel->get_process_order(i_bone);
 

@@ -605,6 +605,8 @@ void SkeletonEditor::_joint_tree_selection_changed() {
 		pose_editor->set_visible(true);
 		rest_editor->set_visible(true);
 		custom_pose_editor->set_visible(true);
+
+		skeleton->set_selected_bone(b_idx);
 	}
 
 	_update_properties();
@@ -714,6 +716,8 @@ void SkeletonEditor::create_editors() {
 	custom_pose_editor->set_label(TTR("Bone Custom Pose"));
 	custom_pose_editor->set_visible(false);
 	add_child(custom_pose_editor);
+
+	skeleton->set_selected_bone(-1);
 }
 
 void SkeletonEditor::_notification(int p_what) {
