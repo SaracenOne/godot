@@ -4822,6 +4822,7 @@ void SpatialEditor::_menu_item_pressed(int p_option) {
 				tool_button[i]->set_pressed(i == p_option);
 			tool_mode = (ToolMode)p_option;
 			update_transform_gizmo();
+			emit_signal("change_tool_mode");
 
 		} break;
 		case MENU_TRANSFORM_CONFIGURE_SNAP: {
@@ -5917,6 +5918,7 @@ void SpatialEditor::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("transform_key_request"));
 	ADD_SIGNAL(MethodInfo("item_lock_status_changed"));
 	ADD_SIGNAL(MethodInfo("item_group_status_changed"));
+	ADD_SIGNAL(MethodInfo("change_tool_mode"));
 }
 
 void SpatialEditor::clear() {
@@ -6012,8 +6014,6 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	tool_button[TOOL_MODE_SCALE]->set_shortcut(ED_SHORTCUT("spatial_editor/tool_scale", TTR("Scale Mode"), KEY_R));
 
 	tool_button[TOOL_MODE_OTHER] = memnew(ToolButton);
-	tool_button[TOOL_MODE_OTHER]->set_toggle_mode(true);
-	tool_button[TOOL_MODE_OTHER]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_OTHER;
 	tool_button[TOOL_MODE_OTHER]->connect("pressed", this, "_menu_item_pressed", button_binds);
 

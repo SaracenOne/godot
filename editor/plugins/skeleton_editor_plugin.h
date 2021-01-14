@@ -137,6 +137,7 @@ class SkeletonEditor : public VBoxContainer {
 		TOOL_MODE_BONE_MOVE,
 		TOOL_MODE_BONE_ROTATE,
 		TOOL_MODE_BONE_SCALE,
+		TOOL_MODE_BONE_NONE,
 		TOOL_MODE_BONE_MAX
 	};
 
@@ -145,6 +146,7 @@ class SkeletonEditor : public VBoxContainer {
 		MENU_TOOL_BONE_MOVE,
 		MENU_TOOL_BONE_ROTATE,
 		MENU_TOOL_BONE_SCALE,
+		MENU_TOOL_BONE_NONE,
 		MENU_TOOL_BONE_MAX
 	};
 

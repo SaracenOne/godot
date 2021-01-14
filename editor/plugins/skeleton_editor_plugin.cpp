@@ -660,6 +660,7 @@ void SkeletonEditor::update_editors() {
 }
 
 void SkeletonEditor::create_editors() {
+
 	set_h_size_flags(SIZE_EXPAND_FILL);
 	add_constant_override("separation", 0);
 
@@ -700,6 +701,11 @@ void SkeletonEditor::create_editors() {
 	tool_button[TOOL_MODE_BONE_SCALE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_SCALE;
 	tool_button[TOOL_MODE_BONE_SCALE]->connect("pressed", this, "_menu_item_pressed", button_binds);
+
+	tool_button[TOOL_MODE_BONE_NONE] = memnew(ToolButton);
+	button_binds.write[0] = MENU_TOOL_BONE_NONE;
+	tool_button[TOOL_MODE_BONE_NONE]->connect("pressed", this, "_menu_item_pressed", button_binds);
+	SpatialEditor::get_singleton()->connect("change_tool_mode", this, "_menu_item_pressed", button_binds);
 
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(separator);
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(options);
@@ -801,10 +807,13 @@ void SkeletonEditor::_menu_item_pressed(int p_option) {
 		case TOOL_MODE_BONE_SELECT:
 		case TOOL_MODE_BONE_MOVE:
 		case TOOL_MODE_BONE_ROTATE:
-		case TOOL_MODE_BONE_SCALE: {
+		case TOOL_MODE_BONE_SCALE:
+		case TOOL_MODE_BONE_NONE: {
+			if (p_option != TOOL_MODE_BONE_NONE && SpatialEditor::get_singleton()->get_tool_mode() != SpatialEditor::TOOL_MODE_OTHER) {
+				SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_OTHER);
+			}
 			for (int i = 0; i < TOOL_MODE_BONE_MAX; i++)
 				tool_button[i]->set_pressed(i == p_option);
-			SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_OTHER);
 			SpatialEditor::get_singleton()->update_transform_gizmo();
 		} break;
 	}
@@ -817,6 +826,7 @@ SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNo
 }
 
 SkeletonEditor::~SkeletonEditor() {
+	SpatialEditor::get_singleton()->disconnect("change_tool_mode", this, "_menu_item_pressed");
 	if (separator) {
 		SpatialEditor::get_singleton()->remove_control_from_menu_panel(separator);
 		memdelete(separator);
@@ -834,6 +844,7 @@ SkeletonEditor::~SkeletonEditor() {
 	if (SpatialEditor::get_singleton()->get_tool_mode() == SpatialEditor::TOOL_MODE_OTHER) {
 		SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_SELECT);
 	}
+
 }
 
 bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
