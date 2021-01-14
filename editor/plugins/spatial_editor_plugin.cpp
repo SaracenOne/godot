@@ -4816,8 +4816,8 @@ void SpatialEditor::_menu_item_pressed(int p_option) {
 		case MENU_TOOL_MOVE:
 		case MENU_TOOL_ROTATE:
 		case MENU_TOOL_SCALE:
-		case MENU_TOOL_LIST_SELECT: {
-
+		case MENU_TOOL_LIST_SELECT:
+		case MENU_TOOL_OTHER: {
 			for (int i = 0; i < TOOL_MAX; i++)
 				tool_button[i]->set_pressed(i == p_option);
 			tool_mode = (ToolMode)p_option;
@@ -6011,6 +6011,12 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 	tool_button[TOOL_MODE_SCALE]->connect("pressed", this, "_menu_item_pressed", button_binds);
 	tool_button[TOOL_MODE_SCALE]->set_shortcut(ED_SHORTCUT("spatial_editor/tool_scale", TTR("Scale Mode"), KEY_R));
 
+	tool_button[TOOL_MODE_OTHER] = memnew(ToolButton);
+	tool_button[TOOL_MODE_OTHER]->set_toggle_mode(true);
+	tool_button[TOOL_MODE_OTHER]->set_flat(true);
+	button_binds.write[0] = MENU_TOOL_OTHER;
+	tool_button[TOOL_MODE_OTHER]->connect("pressed", this, "_menu_item_pressed", button_binds);
+
 	hbc_menu->add_child(memnew(VSeparator));
 
 	tool_button[TOOL_MODE_LIST_SELECT] = memnew(ToolButton);
@@ -6308,6 +6314,10 @@ SpatialEditor::SpatialEditor(EditorNode *p_editor) {
 
 SpatialEditor::~SpatialEditor() {
 	memdelete(preview_node);
+}
+
+void SpatialEditor::set_tool_mode(ToolMode p_tool_mode) {
+	_menu_item_pressed(p_tool_mode);
 }
 
 void SpatialEditorPlugin::make_visible(bool p_visible) {

@@ -129,7 +129,23 @@ class SkeletonEditor : public VBoxContainer {
 	friend class SkeletonEditorPlugin;
 
 	enum Menu {
-		MENU_OPTION_CREATE_PHYSICAL_SKELETON
+		MENU_OPTION_CREATE_PHYSICAL_SKELETON,
+	};
+
+	enum ToolMode {
+		TOOL_MODE_BONE_SELECT,
+		TOOL_MODE_BONE_MOVE,
+		TOOL_MODE_BONE_ROTATE,
+		TOOL_MODE_BONE_SCALE,
+		TOOL_MODE_BONE_MAX
+	};
+
+	enum MenuOption {
+		MENU_TOOL_BONE_SELECT,
+		MENU_TOOL_BONE_MOVE,
+		MENU_TOOL_BONE_ROTATE,
+		MENU_TOOL_BONE_SCALE,
+		MENU_TOOL_BONE_MAX
 	};
 
 	struct BoneInfo {
@@ -149,13 +165,17 @@ class SkeletonEditor : public VBoxContainer {
 	BoneTransformEditor *pose_editor;
 	BoneTransformEditor *custom_pose_editor;
 
+	VSeparator *separator;
 	MenuButton *options;
+	ToolButton *tool_button[TOOL_MODE_BONE_MAX];
+
 	EditorFileDialog *file_dialog;
 
 	UndoRedo *undo_redo;
 
 	void _on_click_option(int p_option);
 	void _file_selected(const String &p_file);
+	void _menu_item_pressed(int p_option);
 
 	EditorFileDialog *file_export_lib;
 
@@ -177,6 +197,7 @@ protected:
 	static void _bind_methods();
 
 public:
+	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event);
 	void move_skeleton_bone(NodePath p_skeleton_path, int32_t p_selected_boneidx, int32_t p_target_boneidx);
 
 	Skeleton *get_skeleton() const { return skeleton; };
@@ -195,9 +216,11 @@ class EditorInspectorPluginSkeleton : public EditorInspectorPlugin {
 
 	friend class SkeletonEditorPlugin;
 
+	SkeletonEditor *skel_editor;
 	EditorNode *editor;
 
 public:
+	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) { return skel_editor->forward_spatial_gui_input(p_camera, p_event); }
 	virtual bool can_handle(Object *p_object);
 	virtual void parse_begin(Object *p_object);
 };
@@ -205,9 +228,14 @@ public:
 class SkeletonEditorPlugin : public EditorPlugin {
 	GDCLASS(SkeletonEditorPlugin, EditorPlugin);
 
+	EditorInspectorPluginSkeleton *skeleton_plugin;
 	EditorNode *editor;
 
 public:
+	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) { return skeleton_plugin->forward_spatial_gui_input(p_camera, p_event); }
+	bool has_main_screen() const { return false; }
+	virtual bool handles(Object *p_object) const { return skeleton_plugin->can_handle(p_object); }
+
 	SkeletonEditorPlugin(EditorNode *p_node);
 
 	virtual String get_name() const { return "Skeleton"; }

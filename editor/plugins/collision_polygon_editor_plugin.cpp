@@ -110,6 +110,7 @@ void Polygon3DEditor::_wip_close() {
 }
 
 bool Polygon3DEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
+	print_line("collision");
 
 	if (!node)
 		return false;

@@ -666,16 +666,46 @@ void SkeletonEditor::create_editors() {
 	set_focus_mode(FOCUS_ALL);
 
 	// Create Top Menu Bar
-	options = memnew(MenuButton);
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(options);
+	separator = memnew(VSeparator);
 
+	options = memnew(MenuButton);
 	options->set_text(TTR("Skeleton"));
 	options->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("Skeleton", "EditorIcons"));
-
 	options->get_popup()->add_item(TTR("Create physical skeleton"), MENU_OPTION_CREATE_PHYSICAL_SKELETON);
-
 	options->get_popup()->connect("id_pressed", this, "_on_click_option");
-	options->hide();
+
+	Vector<Variant> button_binds;
+	button_binds.resize(1);
+
+	tool_button[TOOL_MODE_BONE_SELECT] = memnew(ToolButton);
+	tool_button[TOOL_MODE_BONE_SELECT]->set_toggle_mode(true);
+	tool_button[TOOL_MODE_BONE_SELECT]->set_flat(true);
+	button_binds.write[0] = MENU_TOOL_BONE_SELECT;
+	tool_button[TOOL_MODE_BONE_SELECT]->connect("pressed", this, "_menu_item_pressed", button_binds);
+
+	tool_button[TOOL_MODE_BONE_MOVE] = memnew(ToolButton);
+	tool_button[TOOL_MODE_BONE_MOVE]->set_toggle_mode(true);
+	tool_button[TOOL_MODE_BONE_MOVE]->set_flat(true);
+	button_binds.write[0] = MENU_TOOL_BONE_MOVE;
+	tool_button[TOOL_MODE_BONE_MOVE]->connect("pressed", this, "_menu_item_pressed", button_binds);
+
+	tool_button[TOOL_MODE_BONE_ROTATE] = memnew(ToolButton);
+	tool_button[TOOL_MODE_BONE_ROTATE]->set_toggle_mode(true);
+	tool_button[TOOL_MODE_BONE_ROTATE]->set_flat(true);
+	button_binds.write[0] = MENU_TOOL_BONE_ROTATE;
+	tool_button[TOOL_MODE_BONE_ROTATE]->connect("pressed", this, "_menu_item_pressed", button_binds);
+
+	tool_button[TOOL_MODE_BONE_SCALE] = memnew(ToolButton);
+	tool_button[TOOL_MODE_BONE_SCALE]->set_toggle_mode(true);
+	tool_button[TOOL_MODE_BONE_SCALE]->set_flat(true);
+	button_binds.write[0] = MENU_TOOL_BONE_SCALE;
+	tool_button[TOOL_MODE_BONE_SCALE]->connect("pressed", this, "_menu_item_pressed", button_binds);
+
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(separator);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(options);
+	for (int i = 0; i < TOOL_MODE_BONE_MAX; i++) {
+		SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[i]);
+	}
 
 	const Color section_color = get_color("prop_subsection", "Editor");
 
@@ -723,6 +753,12 @@ void SkeletonEditor::create_editors() {
 void SkeletonEditor::_notification(int p_what) {
 
 	switch (p_what) {
+		case NOTIFICATION_READY: {
+			tool_button[TOOL_MODE_BONE_SELECT]->set_icon(get_icon("ToolSelect", "EditorIcons"));
+			tool_button[TOOL_MODE_BONE_MOVE]->set_icon(get_icon("ToolMove", "EditorIcons"));
+			tool_button[TOOL_MODE_BONE_ROTATE]->set_icon(get_icon("ToolRotate", "EditorIcons"));
+			tool_button[TOOL_MODE_BONE_SCALE]->set_icon(get_icon("ToolScale", "EditorIcons"));
+		} break;
 		case NOTIFICATION_ENTER_TREE: {
 			create_editors();
 			update_joint_tree();
@@ -752,11 +788,26 @@ void SkeletonEditor::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_joint_tree_rmb_select"), &SkeletonEditor::_joint_tree_rmb_select);
 	ClassDB::bind_method(D_METHOD("_update_properties"), &SkeletonEditor::_update_properties);
 	ClassDB::bind_method(D_METHOD("_on_click_option"), &SkeletonEditor::_on_click_option);
+	ClassDB::bind_method(D_METHOD("_menu_item_pressed"), &SkeletonEditor::_menu_item_pressed);
 
 	ClassDB::bind_method(D_METHOD("get_drag_data_fw"), &SkeletonEditor::get_drag_data_fw);
 	ClassDB::bind_method(D_METHOD("can_drop_data_fw"), &SkeletonEditor::can_drop_data_fw);
 	ClassDB::bind_method(D_METHOD("drop_data_fw"), &SkeletonEditor::drop_data_fw);
 	ClassDB::bind_method(D_METHOD("move_skeleton_bone"), &SkeletonEditor::move_skeleton_bone);
+}
+
+void SkeletonEditor::_menu_item_pressed(int p_option) {
+	switch (p_option) {
+		case TOOL_MODE_BONE_SELECT:
+		case TOOL_MODE_BONE_MOVE:
+		case TOOL_MODE_BONE_ROTATE:
+		case TOOL_MODE_BONE_SCALE: {
+			for (int i = 0; i < TOOL_MODE_BONE_MAX; i++)
+				tool_button[i]->set_pressed(i == p_option);
+			SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_OTHER);
+			SpatialEditor::get_singleton()->update_transform_gizmo();
+		} break;
+	}
 }
 
 SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNode *p_editor, Skeleton *p_skeleton) :
@@ -766,9 +817,36 @@ SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNo
 }
 
 SkeletonEditor::~SkeletonEditor() {
+	if (separator) {
+		SpatialEditor::get_singleton()->remove_control_from_menu_panel(separator);
+		memdelete(separator);
+	}
 	if (options) {
 		SpatialEditor::get_singleton()->remove_control_from_menu_panel(options);
+		memdelete(options);
 	}
+	for (int i = 0; i < TOOL_MODE_BONE_MAX; i++) {
+		if (tool_button[i]) {
+			SpatialEditor::get_singleton()->remove_control_from_menu_panel(tool_button[i]);
+			memdelete(tool_button[i]);
+		}
+	}
+	if (SpatialEditor::get_singleton()->get_tool_mode() == SpatialEditor::TOOL_MODE_OTHER) {
+		SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_SELECT);
+	}
+}
+
+bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
+	print_line("collision");
+	Ref<InputEventMouseButton> mb = p_event;
+	if (mb.is_valid()) {
+		print_line("edit skeleton");
+		if (mb->get_button_index() == BUTTON_LEFT && mb->is_pressed()) {
+			return true;
+		}
+		return true;
+	}
+	return false;
 }
 
 bool EditorInspectorPluginSkeleton::can_handle(Object *p_object) {
@@ -779,15 +857,14 @@ void EditorInspectorPluginSkeleton::parse_begin(Object *p_object) {
 	Skeleton *skeleton = Object::cast_to<Skeleton>(p_object);
 	ERR_FAIL_COND(!skeleton);
 
-	SkeletonEditor *skel_editor = memnew(SkeletonEditor(this, editor, skeleton));
+	skel_editor = memnew(SkeletonEditor(this, editor, skeleton));
 	add_custom_control(skel_editor);
 }
 
 SkeletonEditorPlugin::SkeletonEditorPlugin(EditorNode *p_node) {
 	editor = p_node;
 
-	Ref<EditorInspectorPluginSkeleton> skeleton_plugin;
-	skeleton_plugin.instance();
+	skeleton_plugin = memnew(EditorInspectorPluginSkeleton);
 	skeleton_plugin->editor = editor;
 
 	EditorInspector::add_inspector_plugin(skeleton_plugin);

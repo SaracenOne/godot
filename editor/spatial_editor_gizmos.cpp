@@ -1666,7 +1666,7 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 	Color rootcolor = Color(0.4, 1.0, 0.4, 1.0);
 
 	for (int i_bone = 0; i_bone < skel->get_bone_count(); i_bone++) {
-		if (i_bone == skel->get_selected_bone()) {
+		if (skel->get_bone_parent(i_bone) == skel->get_selected_bone()) {
 			bonecolor = Color(1.0, 0.0, 0.0, 1.0);
 		} else {
 			bonecolor = Color(1.0, 0.8, 0.4, 1.0);
