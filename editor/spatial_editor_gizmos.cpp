@@ -1614,6 +1614,31 @@ SkeletonSpatialGizmoPlugin::SkeletonSpatialGizmoPlugin() {
 
 	Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/skeleton", Color(1, 0.8, 0.4));
 	create_material("skeleton_material", gizmo_color);
+	selected_mat = Ref<ShaderMaterial>(memnew(ShaderMaterial));
+	selected_sh = Ref<Shader>(memnew(Shader));
+	selected_sh->set_code(" \
+					shader_type spatial; \
+					render_mode unshaded; \
+					uniform vec4 albedo : hint_color = vec4(1,1,1,1); \
+					uniform sampler2D texture_albedo : hint_albedo; \
+					uniform float point_size : hint_range(0,128) = 32; \
+					void vertex() { \
+						if (!OUTPUT_IS_SRGB) { \
+							COLOR.rgb = mix( pow((COLOR.rgb + vec3(0.055)) * (1.0 / (1.0 + 0.055)), vec3(2.4)), COLOR.rgb* (1.0 / 12.92), lessThan(COLOR.rgb,vec3(0.04045)) ); \
+						} \
+						VERTEX = VERTEX; \
+						POSITION=PROJECTION_MATRIX*INV_CAMERA_MATRIX*WORLD_MATRIX*vec4(VERTEX.xyz,1.0); \
+						POSITION.z = mix(POSITION.z, -POSITION.w, 0.998); \
+					} \
+					void fragment() { \
+						vec2 base_uv = UV; \
+						vec4 albedo_tex = texture(texture_albedo,base_uv); \
+						albedo_tex *= COLOR; \
+						if (albedo.a * albedo_tex.a < 0.5) { discard; } \
+						ALBEDO = albedo.rgb * albedo_tex.rgb; \
+					} \
+				");
+	selected_mat->set_shader(selected_sh);
 }
 
 bool SkeletonSpatialGizmoPlugin::has_gizmo(Spatial *p_spatial) {
@@ -1634,11 +1659,11 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 	p_gizmo->clear();
 
-	Ref<SpatialMaterial> material = get_material("skeleton_material", p_gizmo);
+	Ref<Material> material;
 	if (p_gizmo->is_selected()) {
-		material->set_on_top_of_alpha();
-		material->set_flag(SpatialMaterial::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
-		material->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+		material = selected_mat;
+	} else {
+		material = get_material("skeleton_material", p_gizmo);
 	}
 
 	Ref<SurfaceTool> surface_tool(memnew(SurfaceTool));

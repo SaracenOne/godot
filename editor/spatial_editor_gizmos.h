@@ -137,6 +137,8 @@ public:
 class SkeletonSpatialGizmoPlugin : public EditorSpatialGizmoPlugin {
 
 	GDCLASS(SkeletonSpatialGizmoPlugin, EditorSpatialGizmoPlugin);
+	Ref<ShaderMaterial> selected_mat;
+	Ref<Shader> selected_sh;
 
 public:
 	bool has_gizmo(Spatial *p_spatial);

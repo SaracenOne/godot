@@ -33,6 +33,7 @@
 
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
+#include "scene/3d/mesh_instance.h"
 #include "scene/3d/skeleton.h"
 
 class EditorInspectorPluginSkeleton;
@@ -171,6 +172,8 @@ class SkeletonEditor : public VBoxContainer {
 	MenuButton *options;
 	ToolButton *tool_button[TOOL_MODE_BONE_MAX];
 
+	ToolMode tool_mode = TOOL_MODE_BONE_NONE;
+
 	EditorFileDialog *file_dialog;
 
 	UndoRedo *undo_redo;
@@ -192,6 +195,13 @@ class SkeletonEditor : public VBoxContainer {
 	Variant get_drag_data_fw(const Point2 &p_point, Control *p_from);
 	bool can_drop_data_fw(const Point2 &p_point, const Variant &p_data, Control *p_from) const;
 	void drop_data_fw(const Point2 &p_point, const Variant &p_data, Control *p_from);
+
+	Ref<ShaderMaterial> handle_material;
+	Ref<Shader> handle_shader;
+	MeshInstance *pointsm;
+	Ref<ArrayMesh> am;
+	void _hide_handles();
+	void _draw_handles();
 
 protected:
 	void _notification(int p_what);

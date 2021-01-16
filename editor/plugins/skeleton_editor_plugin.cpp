@@ -706,6 +706,13 @@ void SkeletonEditor::create_editors() {
 	button_binds.write[0] = MENU_TOOL_BONE_NONE;
 	tool_button[TOOL_MODE_BONE_NONE]->connect("pressed", this, "_menu_item_pressed", button_binds);
 	SpatialEditor::get_singleton()->connect("change_tool_mode", this, "_menu_item_pressed", button_binds);
+	tool_mode = TOOL_MODE_BONE_NONE;
+
+	if (skeleton) {
+		skeleton->add_child(pointsm);
+		pointsm->set_skeleton_path(NodePath(""));
+		skeleton->connect("pose_updated", this, "_draw_handles");
+	}
 
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(separator);
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(options);
@@ -800,6 +807,8 @@ void SkeletonEditor::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("can_drop_data_fw"), &SkeletonEditor::can_drop_data_fw);
 	ClassDB::bind_method(D_METHOD("drop_data_fw"), &SkeletonEditor::drop_data_fw);
 	ClassDB::bind_method(D_METHOD("move_skeleton_bone"), &SkeletonEditor::move_skeleton_bone);
+
+	ClassDB::bind_method(D_METHOD("_draw_handles"), &SkeletonEditor::_draw_handles);
 }
 
 void SkeletonEditor::_menu_item_pressed(int p_option) {
@@ -814,6 +823,14 @@ void SkeletonEditor::_menu_item_pressed(int p_option) {
 			}
 			for (int i = 0; i < TOOL_MODE_BONE_MAX; i++)
 				tool_button[i]->set_pressed(i == p_option);
+			tool_mode = (ToolMode)p_option;
+			if (skeleton) {
+				if (p_option == TOOL_MODE_BONE_NONE) {
+					_hide_handles();
+				} else {
+					_draw_handles();
+				}
+			}
 			SpatialEditor::get_singleton()->update_transform_gizmo();
 		} break;
 	}
@@ -823,10 +840,50 @@ SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNo
 		editor(p_editor),
 		editor_plugin(e_plugin),
 		skeleton(p_skeleton) {
+				handle_material = Ref<ShaderMaterial>(memnew(ShaderMaterial));
+				handle_shader = Ref<Shader>(memnew(Shader));
+				handle_shader->set_code(" \
+					shader_type spatial; \
+					render_mode unshaded; \
+					uniform vec4 albedo : hint_color = vec4(1,1,1,1); \
+					uniform sampler2D texture_albedo : hint_albedo; \
+					uniform float point_size : hint_range(0,128) = 32; \
+					void vertex() { \
+						POINT_SIZE=point_size; \
+						VERTEX = VERTEX; \
+						POSITION=PROJECTION_MATRIX*INV_CAMERA_MATRIX*WORLD_MATRIX*vec4(VERTEX.xyz,1.0); \
+						POSITION.z = mix(POSITION.z, -POSITION.w, 0.999); \
+					} \
+					void fragment() { \
+						vec4 albedo_tex = texture(texture_albedo,POINT_COORD); \
+						if (albedo.a * albedo_tex.a < 0.5) { discard; } \
+						ALBEDO = albedo.rgb * albedo_tex.rgb; \
+					} \
+				");
+				handle_material->set_shader(handle_shader);
+				// handle_material->set_flag(SpatialMaterial::FLAG_DISABLE_DEPTH_TEST, true);
+				handle_material->set_render_priority(SpatialMaterial::RENDER_PRIORITY_MIN);
+				// handle_material->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
+				// handle_material->set_flag(SpatialMaterial::FLAG_USE_POINT_SIZE, true);
+				// handle_material->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
+				Ref<Texture> handle = editor->get_gui_base()->get_icon("Editor3DHandle", "EditorIcons");
+				handle_material->set_shader_param("point_size", handle->get_width());
+				handle_material->set_shader_param("texture_albedo", handle);
+				//handle_material->set_texture(SpatialMaterial::TEXTURE_ALBEDO, handle);
+
+				pointsm = memnew(MeshInstance);
+				am.instance();
+				pointsm->set_mesh(am);
+				pointsm->set_transform(Transform(Basis(), Vector3(0, 0, 0.00001)));
 }
 
 SkeletonEditor::~SkeletonEditor() {
 	SpatialEditor::get_singleton()->disconnect("change_tool_mode", this, "_menu_item_pressed");
+	if (skeleton) {
+		pointsm->get_parent()->remove_child(pointsm);
+		skeleton->disconnect("pose_updated", this, "_draw_handles");
+		memdelete(pointsm);
+	}
 	if (separator) {
 		SpatialEditor::get_singleton()->remove_control_from_menu_panel(separator);
 		memdelete(separator);
@@ -847,15 +904,66 @@ SkeletonEditor::~SkeletonEditor() {
 
 }
 
+void SkeletonEditor::_hide_handles() {
+	if (!skeleton)
+		return;
+	
+	pointsm->hide();
+}
+
+void SkeletonEditor::_draw_handles() {
+
+	if (!skeleton || tool_mode == TOOL_MODE_BONE_NONE)
+		return;
+
+	while (am->get_surface_count()) {
+		am->surface_remove(0);
+	}
+
+	pointsm->show();
+
+	Array a;
+	a.resize(Mesh::ARRAY_MAX);
+	PoolVector<Vector3> va;
+	{
+		va.resize(skeleton->get_bone_count());
+		PoolVector<Vector3>::Write w = va.write();
+		for (int i = 0; i < skeleton->get_bone_count(); i++) {
+			Vector3 point = skeleton->get_bone_global_pose(i).origin;
+			w[i] = point;
+		}
+	}
+	a[Mesh::ARRAY_VERTEX] = va;
+	am->add_surface_from_arrays(Mesh::PRIMITIVE_POINTS, a);
+	am->surface_set_material(0, handle_material);
+}
+
 bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
-	print_line("collision");
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {
-		print_line("edit skeleton");
-		if (mb->get_button_index() == BUTTON_LEFT && mb->is_pressed()) {
-			return true;
+		switch (mb->get_button_index()) {
+			case BUTTON_LEFT: {
+				if (mb->is_pressed()) {
+					switch (tool_mode) {
+						case TOOL_MODE_BONE_SELECT : {
+							print_line("bone select mode");
+						} break;
+						case TOOL_MODE_BONE_MOVE : {
+							print_line("bone move mode");
+						} break;
+						case TOOL_MODE_BONE_ROTATE : {
+							print_line("bone rotate mode");
+						} break;
+						case TOOL_MODE_BONE_SCALE : {
+							print_line("bone scale mode");
+						} break;
+						case TOOL_MODE_BONE_NONE: {
+						} break;
+					}
+					return true;
+				}
+			} break;
 		}
-		return true;
 	}
 	return false;
 }
