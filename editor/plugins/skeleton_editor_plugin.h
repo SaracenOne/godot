@@ -33,6 +33,7 @@
 
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
+#include "scene/3d/camera.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/3d/skeleton.h"
 

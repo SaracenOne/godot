@@ -849,6 +849,9 @@ SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNo
 					uniform sampler2D texture_albedo : hint_albedo; \
 					uniform float point_size : hint_range(0,128) = 32; \
 					void vertex() { \
+						if (!OUTPUT_IS_SRGB) { \
+							COLOR.rgb = mix( pow((COLOR.rgb + vec3(0.055)) * (1.0 / (1.0 + 0.055)), vec3(2.4)), COLOR.rgb* (1.0 / 12.92), lessThan(COLOR.rgb,vec3(0.04045)) ); \
+						} \
 						POINT_SIZE=point_size; \
 						VERTEX = VERTEX; \
 						POSITION=PROJECTION_MATRIX*INV_CAMERA_MATRIX*WORLD_MATRIX*vec4(VERTEX.xyz,1.0); \
@@ -857,7 +860,9 @@ SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNo
 					void fragment() { \
 						vec4 albedo_tex = texture(texture_albedo,POINT_COORD); \
 						if (albedo.a * albedo_tex.a < 0.5) { discard; } \
-						ALBEDO = albedo.rgb * albedo_tex.rgb; \
+						vec3 col = albedo_tex.rgb + COLOR.rgb; \
+						col = vec3(min(col.r,1.0),min(col.g,1.0),min(col.b,1.0)); \
+						ALBEDO = albedo.rgb * col; \
 					} \
 				");
 				handle_material->set_shader(handle_shader);
@@ -866,7 +871,7 @@ SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNo
 				// handle_material->set_flag(SpatialMaterial::FLAG_UNSHADED, true);
 				// handle_material->set_flag(SpatialMaterial::FLAG_USE_POINT_SIZE, true);
 				// handle_material->set_feature(SpatialMaterial::FEATURE_TRANSPARENT, true);
-				Ref<Texture> handle = editor->get_gui_base()->get_icon("Editor3DHandle", "EditorIcons");
+				Ref<Texture> handle = editor->get_gui_base()->get_icon("EditorBoneHandle", "EditorIcons");
 				handle_material->set_shader_param("point_size", handle->get_width());
 				handle_material->set_shader_param("texture_albedo", handle);
 				//handle_material->set_texture(SpatialMaterial::TEXTURE_ALBEDO, handle);
@@ -925,45 +930,91 @@ void SkeletonEditor::_draw_handles() {
 	Array a;
 	a.resize(Mesh::ARRAY_MAX);
 	PoolVector<Vector3> va;
+	PoolVector<Color> ca;
 	{
 		va.resize(skeleton->get_bone_count());
-		PoolVector<Vector3>::Write w = va.write();
+		ca.resize(skeleton->get_bone_count());
+		PoolVector<Vector3>::Write vaw = va.write();
+		PoolVector<Color>::Write caw = ca.write();
 		for (int i = 0; i < skeleton->get_bone_count(); i++) {
 			Vector3 point = skeleton->get_bone_global_pose(i).origin;
-			w[i] = point;
+			vaw[i] = point;
+			Color c;
+			if (i == skeleton->get_selected_bone()) {
+				c = Color(1,1,0);
+			} else {
+				c = Color(0,0,1);
+			}
+			caw[i] = c;
 		}
+		
 	}
 	a[Mesh::ARRAY_VERTEX] = va;
+	a[Mesh::ARRAY_COLOR] = ca;
 	am->add_surface_from_arrays(Mesh::PRIMITIVE_POINTS, a);
 	am->surface_set_material(0, handle_material);
 }
 
 bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
 	Ref<InputEventMouseButton> mb = p_event;
+	if (!skeleton)
+		return false;
 	if (mb.is_valid()) {
-		switch (mb->get_button_index()) {
-			case BUTTON_LEFT: {
-				if (mb->is_pressed()) {
-					switch (tool_mode) {
-						case TOOL_MODE_BONE_SELECT : {
-							print_line("bone select mode");
-						} break;
-						case TOOL_MODE_BONE_MOVE : {
-							print_line("bone move mode");
-						} break;
-						case TOOL_MODE_BONE_ROTATE : {
-							print_line("bone rotate mode");
-						} break;
-						case TOOL_MODE_BONE_SCALE : {
-							print_line("bone scale mode");
-						} break;
-						case TOOL_MODE_BONE_NONE: {
-						} break;
+
+		Transform gt = skeleton->get_global_transform();
+		Vector2 gpoint = mb->get_position();
+		Vector3 ray_from = p_camera->project_ray_origin(gpoint);
+		real_t grab_threshold = 4 * editor_get_scale();
+
+		switch (tool_mode) {
+			case TOOL_MODE_BONE_NONE: {
+				return false;
+			} break;
+			case TOOL_MODE_BONE_SELECT : {
+				if (mb->get_button_index() == BUTTON_LEFT) {
+					if (mb->is_pressed()) {
+						print_line("lb: bone select mode");
+
+						int closest_idx = -1;
+						real_t closest_dist = 1e10;
+						int bone_len = skeleton->get_bone_count();
+						for (int i = 0; i < bone_len; i++) {
+							
+							Vector3 joint_pos_3d = gt.xform(skeleton->get_bone_global_pose(i).origin);
+							Vector2 joint_pos_2d = p_camera->unproject_position(joint_pos_3d);
+							real_t dist_3d = ray_from.distance_to(joint_pos_3d);
+							real_t dist_2d = gpoint.distance_to(joint_pos_2d);
+							if (dist_2d < grab_threshold && dist_3d < closest_dist) {
+								closest_dist = dist_3d;
+								closest_idx = i;
+							}
+						}
+
+						if (closest_idx >= 0) {
+							print_line(skeleton->get_bone_name(closest_idx));
+						} else {
+							print_line("nothing");
+						}
 					}
-					return true;
+				}
+			} break;
+			case TOOL_MODE_BONE_MOVE : {
+				if (mb->get_button_index() == BUTTON_LEFT) {
+					print_line("lb: bone move mode");
+				}
+			} break;
+			case TOOL_MODE_BONE_ROTATE : {
+				if (mb->get_button_index() == BUTTON_LEFT) {
+					print_line("lb: bone rotate mode");
+				}
+			} break;
+			case TOOL_MODE_BONE_SCALE : {
+				if (mb->get_button_index() == BUTTON_LEFT) {
+					print_line("lb: bone scale mode");
 				}
 			} break;
 		}
+		return true;
 	}
 	return false;
 }
