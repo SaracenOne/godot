@@ -962,9 +962,9 @@ bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<Input
 	if (mb.is_valid()) {
 
 		Transform gt = skeleton->get_global_transform();
+		Vector3 ray_from = p_camera->get_global_transform().origin;
 		Vector2 gpoint = mb->get_position();
-		Vector3 ray_from = p_camera->project_ray_origin(gpoint);
-		real_t grab_threshold = 4 * editor_get_scale();
+		real_t grab_threshold = 4 * EDSCALE;
 
 		switch (tool_mode) {
 			case TOOL_MODE_BONE_NONE: {
@@ -991,7 +991,9 @@ bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<Input
 						}
 
 						if (closest_idx >= 0) {
-							print_line(skeleton->get_bone_name(closest_idx));
+							TreeItem *ti = joint_tree->get_item_with_text(skeleton->get_bone_name(closest_idx));
+							ti->select(0);
+							joint_tree->scroll_to_item(ti);
 						} else {
 							print_line("nothing");
 						}
