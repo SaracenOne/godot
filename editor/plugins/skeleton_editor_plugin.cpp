@@ -886,6 +886,7 @@ SkeletonEditor::~SkeletonEditor() {
 	SpatialEditor::get_singleton()->disconnect("change_tool_mode", this, "_menu_item_pressed");
 	if (skeleton) {
 		pointsm->get_parent()->remove_child(pointsm);
+		skeleton->set_selected_bone(-1);
 		skeleton->disconnect("pose_updated", this, "_draw_handles");
 		memdelete(pointsm);
 	}
@@ -906,6 +907,7 @@ SkeletonEditor::~SkeletonEditor() {
 	if (SpatialEditor::get_singleton()->get_tool_mode() == SpatialEditor::TOOL_MODE_OTHER) {
 		SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_SELECT);
 	}
+	
 
 }
 
@@ -956,9 +958,11 @@ void SkeletonEditor::_draw_handles() {
 }
 
 bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
-	Ref<InputEventMouseButton> mb = p_event;
-	if (!skeleton)
+
+	if (!skeleton || tool_mode == TOOL_MODE_BONE_NONE)
 		return false;
+
+	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {
 
 		Transform gt = skeleton->get_global_transform();
@@ -967,9 +971,6 @@ bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<Input
 		real_t grab_threshold = 4 * EDSCALE;
 
 		switch (tool_mode) {
-			case TOOL_MODE_BONE_NONE: {
-				return false;
-			} break;
 			case TOOL_MODE_BONE_SELECT : {
 				if (mb->get_button_index() == BUTTON_LEFT) {
 					if (mb->is_pressed()) {
@@ -1040,4 +1041,8 @@ SkeletonEditorPlugin::SkeletonEditorPlugin(EditorNode *p_node) {
 	skeleton_plugin->editor = editor;
 
 	EditorInspector::add_inspector_plugin(skeleton_plugin);
+}
+
+bool SkeletonEditorPlugin::handles(Object *p_object) const {
+	return p_object->is_class("Skeleton");
 }

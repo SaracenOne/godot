@@ -33,6 +33,7 @@
 
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
+#include "spatial_editor_plugin.h"
 #include "scene/3d/camera.h"
 #include "scene/3d/mesh_instance.h"
 #include "scene/3d/skeleton.h"
@@ -245,13 +246,18 @@ class SkeletonEditorPlugin : public EditorPlugin {
 	EditorNode *editor;
 
 public:
-	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) { return skeleton_plugin->forward_spatial_gui_input(p_camera, p_event); }
+	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
+		if (SpatialEditor::get_singleton()->get_tool_mode() != SpatialEditor::TOOL_MODE_OTHER) {
+			return false;
+		}
+		return skeleton_plugin->forward_spatial_gui_input(p_camera, p_event);
+	}
 	bool has_main_screen() const { return false; }
-	virtual bool handles(Object *p_object) const { return skeleton_plugin->can_handle(p_object); }
-
-	SkeletonEditorPlugin(EditorNode *p_node);
+	virtual bool handles(Object *p_object) const;
 
 	virtual String get_name() const { return "Skeleton"; }
+
+	SkeletonEditorPlugin(EditorNode *p_node);
 };
 
 #endif // SKELETON_EDITOR_PLUGIN_H
