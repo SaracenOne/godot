@@ -818,8 +818,8 @@ void SkeletonEditor::_menu_item_pressed(int p_option) {
 		case TOOL_MODE_BONE_ROTATE:
 		case TOOL_MODE_BONE_SCALE:
 		case TOOL_MODE_BONE_NONE: {
-			if (p_option != TOOL_MODE_BONE_NONE && SpatialEditor::get_singleton()->get_tool_mode() != SpatialEditor::TOOL_MODE_OTHER) {
-				SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_OTHER);
+			if (p_option != TOOL_MODE_BONE_NONE && SpatialEditor::get_singleton()->get_tool_mode() != SpatialEditor::TOOL_MODE_EXTERNAL) {
+				SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_EXTERNAL);
 			}
 			for (int i = 0; i < TOOL_MODE_BONE_MAX; i++)
 				tool_button[i]->set_pressed(i == p_option);
@@ -904,7 +904,7 @@ SkeletonEditor::~SkeletonEditor() {
 			memdelete(tool_button[i]);
 		}
 	}
-	if (SpatialEditor::get_singleton()->get_tool_mode() == SpatialEditor::TOOL_MODE_OTHER) {
+	if (SpatialEditor::get_singleton()->get_tool_mode() == SpatialEditor::TOOL_MODE_EXTERNAL) {
 		SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_SELECT);
 	}
 	
@@ -957,10 +957,13 @@ void SkeletonEditor::_draw_handles() {
 	am->surface_set_material(0, handle_material);
 }
 
-bool SkeletonEditor::forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
+bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, const Ref<InputEvent> &p_event) {
 
 	if (!skeleton || tool_mode == TOOL_MODE_BONE_NONE)
 		return false;
+	
+	SpatialEditor *se = SpatialEditor::get_singleton();
+	SpatialEditorViewport *sev = se->get_editor_viewport(p_index);
 
 	Ref<InputEventMouseButton> mb = p_event;
 	if (mb.is_valid()) {

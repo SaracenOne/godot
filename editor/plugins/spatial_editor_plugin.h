@@ -450,6 +450,8 @@ public:
 	void update_surface() { surface->update(); }
 	void update_transform_gizmo_view();
 
+	ViewportContainer *get_viewport_container() const { return viewport_container; }
+
 	void set_can_preview(Camera *p_preview);
 	void set_state(const Dictionary &p_state);
 	Dictionary get_state() const;
@@ -543,7 +545,7 @@ public:
 		TOOL_MODE_MOVE,
 		TOOL_MODE_ROTATE,
 		TOOL_MODE_SCALE,
-		TOOL_MODE_OTHER,
+		TOOL_MODE_EXTERNAL,
 		TOOL_MODE_LIST_SELECT,
 		TOOL_LOCK_SELECTED,
 		TOOL_UNLOCK_SELECTED,
@@ -558,7 +560,15 @@ public:
 		TOOL_OPT_USE_SNAP,
 		TOOL_OPT_OVERRIDE_CAMERA,
 		TOOL_OPT_MAX
+	};
 
+	enum ExternalToolMode {
+
+		EX_TOOL_MODE_SELECT,
+		EX_TOOL_MODE_MOVE,
+		EX_TOOL_MODE_ROTATE,
+		EX_TOOL_MODE_SCALE,
+		EX_TOOL_MAX
 	};
 
 private:
@@ -622,7 +632,7 @@ private:
 		MENU_TOOL_MOVE,
 		MENU_TOOL_ROTATE,
 		MENU_TOOL_SCALE,
-		MENU_TOOL_OTHER,
+		MENU_TOOL_EXTERNAL,
 		MENU_TOOL_LIST_SELECT,
 		MENU_TOOL_LOCAL_COORDS,
 		MENU_TOOL_USE_SNAP,
@@ -725,6 +735,8 @@ private:
 
 	void _refresh_menu_icons();
 
+	Transform external;
+
 protected:
 	void _notification(int p_what);
 	//void _gui_input(InputEvent p_event);
@@ -796,6 +808,9 @@ public:
 
 	void edit(Spatial *p_spatial);
 	void clear();
+
+	void set_external(Transform p_transform) { external = p_transform; }
+	Transform get_external() const { return external; }
 
 	SpatialEditor(EditorNode *p_editor);
 	~SpatialEditor();

@@ -211,7 +211,7 @@ protected:
 	static void _bind_methods();
 
 public:
-	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event);
+	virtual bool forward_spatial_gui_input(int p_index, Camera *p_camera, const Ref<InputEvent> &p_event);
 	void move_skeleton_bone(NodePath p_skeleton_path, int32_t p_selected_boneidx, int32_t p_target_boneidx);
 
 	Skeleton *get_skeleton() const { return skeleton; };
@@ -234,7 +234,7 @@ class EditorInspectorPluginSkeleton : public EditorInspectorPlugin {
 	EditorNode *editor;
 
 public:
-	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) { return skel_editor->forward_spatial_gui_input(p_camera, p_event); }
+	virtual bool forward_spatial_gui_input(int p_index, Camera *p_camera, const Ref<InputEvent> &p_event) { return skel_editor->forward_spatial_gui_input(p_index, p_camera, p_event); }
 	virtual bool can_handle(Object *p_object);
 	virtual void parse_begin(Object *p_object);
 };
@@ -246,11 +246,11 @@ class SkeletonEditorPlugin : public EditorPlugin {
 	EditorNode *editor;
 
 public:
-	virtual bool forward_spatial_gui_input(Camera *p_camera, const Ref<InputEvent> &p_event) {
-		if (SpatialEditor::get_singleton()->get_tool_mode() != SpatialEditor::TOOL_MODE_OTHER) {
+	virtual bool forward_spatial_gui_input(int p_index, Camera *p_camera, const Ref<InputEvent> &p_event) {
+		if (SpatialEditor::get_singleton()->get_tool_mode() != SpatialEditor::TOOL_MODE_EXTERNAL) {
 			return false;
 		}
-		return skeleton_plugin->forward_spatial_gui_input(p_camera, p_event);
+		return skeleton_plugin->forward_spatial_gui_input(p_index, p_camera, p_event);
 	}
 	bool has_main_screen() const { return false; }
 	virtual bool handles(Object *p_object) const;
