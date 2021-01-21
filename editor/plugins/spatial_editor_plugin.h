@@ -739,7 +739,7 @@ private:
 
 	void _refresh_menu_icons();
 
-	Transform external;
+	Vector<Transform> externals;
 
 protected:
 	void _notification(int p_what);
@@ -815,8 +815,10 @@ public:
 	void edit(Spatial *p_spatial);
 	void clear();
 
-	void set_external(Transform p_transform) { external = p_transform; }
-	Transform get_external() const { return external; }
+	void append_to_externals(Transform p_transform) { externals.push_back(p_transform); }
+	void append_array_to_externals(Vector<Transform> p_transforms) { externals.append_array(p_transforms); }
+	void clear_externals() { externals.clear(); }
+	Vector<Transform> get_externals() const { return externals; }
 
 	SpatialEditor(EditorNode *p_editor);
 	~SpatialEditor();

@@ -781,7 +781,7 @@ Transform SpatialEditorViewport::compute_edit_external(TransformMode p_transform
 	_edit.click_ray_pos = _get_ray_pos(Vector2(p_point.x, p_point.y));
 	_edit.plane = TRANSFORM_VIEW;
 	spatial_editor->update_transform_gizmo();
-	_edit.center = spatial_editor->get_external().origin;
+	_edit.center = spatial_editor->get_gizmo_transform().origin;
 
 	return spatial_editor->get_gizmo_transform();
 }
@@ -4410,19 +4410,28 @@ void SpatialEditor::select_gizmo_highlight_axis(int p_axis) {
 void SpatialEditor::update_transform_gizmo() {
 
 	AABB center;
+	bool first = true;
+
 	Basis gizmo_basis;
 	bool local_gizmo_coords = are_local_coords_enabled();
 
 	if (is_tool_external()) {
-		Transform xf = get_external();
-		center.position = xf.origin;
-		if (local_gizmo_coords) {
-			gizmo_basis = xf.basis;
-			gizmo_basis.orthonormalize();
+		Vector<Transform> transforms = get_externals();
+		for (int i=0; i < transforms.size(); i++) {
+			Transform xf = transforms[i];
+			if (first) {
+				center.position = xf.origin;
+				first = false;
+				if (local_gizmo_coords) {
+					gizmo_basis = xf.basis;
+					gizmo_basis.orthonormalize();
+				}
+			} else {
+				center.expand_to(xf.origin);
+				gizmo_basis = Basis();
+			}
 		}
-		gizmo.visible = true;
 	} else {
-		bool first = true;
 		List<Node *> &selection = editor_selection->get_selected_node_list();
 		for (List<Node *>::Element *E = selection.front(); E; E = E->next()) {
 
@@ -4448,12 +4457,12 @@ void SpatialEditor::update_transform_gizmo() {
 				gizmo_basis = Basis();
 			}
 		}
-		gizmo.visible = !first;
 	}
 
 	Vector3 pcenter = center.position + center.size * 0.5;
 	gizmo.transform.origin = pcenter;
 	gizmo.transform.basis = gizmo_basis;
+	gizmo.visible = !first;
 
 	for (uint32_t i = 0; i < VIEWPORTS_COUNT; i++) {
 		viewports[i]->update_transform_gizmo_view();
@@ -4861,6 +4870,7 @@ void SpatialEditor::_menu_item_pressed(int p_option) {
 			for (int i = 0; i < TOOL_MAX; i++)
 				tool_button[i]->set_pressed(i == p_option);
 			tool_mode = (ToolMode)p_option;
+			clear_externals();
 			update_transform_gizmo();
 			emit_signal("change_tool_mode");
 

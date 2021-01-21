@@ -608,7 +608,8 @@ void SkeletonEditor::_joint_tree_selection_changed() {
 
 		skeleton->set_selected_bone(b_idx);
 
-		SpatialEditor::get_singleton()->set_external(skeleton->get_bone_global_pose(b_idx));
+		SpatialEditor::get_singleton()->clear_externals();
+		SpatialEditor::get_singleton()->append_to_externals(skeleton->get_bone_global_pose(b_idx));
 		SpatialEditor::get_singleton()->update_transform_gizmo();
 	}
 
@@ -832,6 +833,10 @@ void SkeletonEditor::_menu_item_pressed(int p_option) {
 					_hide_handles();
 				} else {
 					_draw_handles();
+					if (skeleton->get_selected_bone() > 0) {
+						SpatialEditor::get_singleton()->clear_externals();
+						SpatialEditor::get_singleton()->append_to_externals(skeleton->get_bone_global_pose(skeleton->get_selected_bone()));
+					}
 				}
 			}
 			SpatialEditor::get_singleton()->update_transform_gizmo();
