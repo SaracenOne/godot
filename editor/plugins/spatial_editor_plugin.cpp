@@ -775,6 +775,17 @@ void SpatialEditorViewport::_compute_edit(const Point2 &p_point) {
 	}
 }
 
+Transform SpatialEditorViewport::compute_edit_external(TransformMode p_transform_mode, const Point2 &p_point) {
+
+	_edit.click_ray = _get_ray(Vector2(p_point.x, p_point.y));
+	_edit.click_ray_pos = _get_ray_pos(Vector2(p_point.x, p_point.y));
+	_edit.plane = TRANSFORM_VIEW;
+	spatial_editor->update_transform_gizmo();
+	_edit.center = spatial_editor->get_external().origin;
+
+	return spatial_editor->get_gizmo_transform();
+}
+
 static int _get_key_modifier_setting(const String &p_property) {
 
 	switch (EditorSettings::get_singleton()->get(p_property).operator int()) {
@@ -3192,8 +3203,7 @@ void SpatialEditorViewport::update_transform_gizmo_view() {
 	if (!is_visible_in_tree())
 		return;
 
-	Transform xform = (spatial_editor->get_tool_mode() == SpatialEditor::TOOL_MODE_EXTERNAL) ? spatial_editor->get_external() : spatial_editor->get_gizmo_transform();
-
+	Transform xform = spatial_editor->get_gizmo_transform();
 	Transform camera_xform = camera->get_transform();
 
 	if (xform.origin.distance_squared_to(camera_xform.origin) < 0.01) {
@@ -3229,18 +3239,24 @@ void SpatialEditorViewport::update_transform_gizmo_view() {
 
 	xform.basis.scale(scale);
 
-	if (spatial_editor->get_tool_mode() == SpatialEditor::TOOL_MODE_EXTERNAL) {
+	if (spatial_editor->is_tool_external()) {
+		if (spatial_editor->is_gizmo_visible()) {
+			print_line("is_gizmo_visible: true");
+		}
+		if ((spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_MOVE)) {
+			print_line("tool_mode_correct: true");
+		}
 		for (int i = 0; i < 3; i++) {
 			VisualServer::get_singleton()->instance_set_transform(move_gizmo_instance[i], xform);
-			VisualServer::get_singleton()->instance_set_visible(move_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || spatial_editor->get_tool_mode() == SpatialEditor::EX_TOOL_MODE_MOVE));
+			VisualServer::get_singleton()->instance_set_visible(move_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_MOVE));
 			VisualServer::get_singleton()->instance_set_transform(move_plane_gizmo_instance[i], xform);
-			VisualServer::get_singleton()->instance_set_visible(move_plane_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || spatial_editor->get_tool_mode() == SpatialEditor::EX_TOOL_MODE_MOVE));
+			VisualServer::get_singleton()->instance_set_visible(move_plane_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_MOVE));
 			VisualServer::get_singleton()->instance_set_transform(rotate_gizmo_instance[i], xform);
-			VisualServer::get_singleton()->instance_set_visible(rotate_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || spatial_editor->get_tool_mode() == SpatialEditor::EX_TOOL_MODE_ROTATE));
+			VisualServer::get_singleton()->instance_set_visible(rotate_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_ROTATE));
 			VisualServer::get_singleton()->instance_set_transform(scale_gizmo_instance[i], xform);
-			VisualServer::get_singleton()->instance_set_visible(scale_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_tool_mode() == SpatialEditor::EX_TOOL_MODE_SCALE));
+			VisualServer::get_singleton()->instance_set_visible(scale_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SCALE));
 			VisualServer::get_singleton()->instance_set_transform(scale_plane_gizmo_instance[i], xform);
-			VisualServer::get_singleton()->instance_set_visible(scale_plane_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_tool_mode() == SpatialEditor::EX_TOOL_MODE_SCALE));
+			VisualServer::get_singleton()->instance_set_visible(scale_plane_gizmo_instance[i], spatial_editor->is_gizmo_visible() && (spatial_editor->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SCALE));
 		}
 	} else {
 		for (int i = 0; i < 3; i++) {
@@ -4393,40 +4409,49 @@ void SpatialEditor::select_gizmo_highlight_axis(int p_axis) {
 
 void SpatialEditor::update_transform_gizmo() {
 
-	List<Node *> &selection = editor_selection->get_selected_node_list();
 	AABB center;
-	bool first = true;
-
 	Basis gizmo_basis;
 	bool local_gizmo_coords = are_local_coords_enabled();
 
-	for (List<Node *>::Element *E = selection.front(); E; E = E->next()) {
-
-		Spatial *sp = Object::cast_to<Spatial>(E->get());
-		if (!sp)
-			continue;
-
-		SpatialEditorSelectedItem *se = editor_selection->get_node_editor_data<SpatialEditorSelectedItem>(sp);
-		if (!se)
-			continue;
-
-		Transform xf = se->sp->get_global_gizmo_transform();
-
-		if (first) {
-			center.position = xf.origin;
-			first = false;
-			if (local_gizmo_coords) {
-				gizmo_basis = xf.basis;
-				gizmo_basis.orthonormalize();
-			}
-		} else {
-			center.expand_to(xf.origin);
-			gizmo_basis = Basis();
+	if (is_tool_external()) {
+		Transform xf = get_external();
+		center.position = xf.origin;
+		if (local_gizmo_coords) {
+			gizmo_basis = xf.basis;
+			gizmo_basis.orthonormalize();
 		}
+		gizmo.visible = true;
+	} else {
+		bool first = true;
+		List<Node *> &selection = editor_selection->get_selected_node_list();
+		for (List<Node *>::Element *E = selection.front(); E; E = E->next()) {
+
+			Spatial *sp = Object::cast_to<Spatial>(E->get());
+			if (!sp)
+				continue;
+
+			SpatialEditorSelectedItem *se = editor_selection->get_node_editor_data<SpatialEditorSelectedItem>(sp);
+			if (!se)
+				continue;
+
+			Transform xf = se->sp->get_global_gizmo_transform();
+
+			if (first) {
+				center.position = xf.origin;
+				first = false;
+				if (local_gizmo_coords) {
+					gizmo_basis = xf.basis;
+					gizmo_basis.orthonormalize();
+				}
+			} else {
+				center.expand_to(xf.origin);
+				gizmo_basis = Basis();
+			}
+		}
+		gizmo.visible = !first;
 	}
 
 	Vector3 pcenter = center.position + center.size * 0.5;
-	gizmo.visible = !first;
 	gizmo.transform.origin = pcenter;
 	gizmo.transform.basis = gizmo_basis;
 

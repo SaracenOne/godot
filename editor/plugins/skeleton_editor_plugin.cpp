@@ -607,6 +607,9 @@ void SkeletonEditor::_joint_tree_selection_changed() {
 		custom_pose_editor->set_visible(true);
 
 		skeleton->set_selected_bone(b_idx);
+
+		SpatialEditor::get_singleton()->set_external(skeleton->get_bone_global_pose(b_idx));
+		SpatialEditor::get_singleton()->update_transform_gizmo();
 	}
 
 	_update_properties();
@@ -818,7 +821,7 @@ void SkeletonEditor::_menu_item_pressed(int p_option) {
 		case TOOL_MODE_BONE_ROTATE:
 		case TOOL_MODE_BONE_SCALE:
 		case TOOL_MODE_BONE_NONE: {
-			if (p_option != TOOL_MODE_BONE_NONE && SpatialEditor::get_singleton()->get_tool_mode() != SpatialEditor::TOOL_MODE_EXTERNAL) {
+			if (p_option != TOOL_MODE_BONE_NONE && !SpatialEditor::get_singleton()->is_tool_external()) {
 				SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_EXTERNAL);
 			}
 			for (int i = 0; i < TOOL_MODE_BONE_MAX; i++)
@@ -904,7 +907,7 @@ SkeletonEditor::~SkeletonEditor() {
 			memdelete(tool_button[i]);
 		}
 	}
-	if (SpatialEditor::get_singleton()->get_tool_mode() == SpatialEditor::TOOL_MODE_EXTERNAL) {
+	if (SpatialEditor::get_singleton()->is_tool_external()) {
 		SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_SELECT);
 	}
 	
@@ -1001,6 +1004,7 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 						} else {
 							print_line("nothing");
 						}
+
 					}
 				}
 			} break;

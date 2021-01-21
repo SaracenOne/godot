@@ -232,6 +232,13 @@ public:
 		FREELOOK_FULLY_AXIS_LOCKED,
 	};
 
+	enum TransformMode {
+		TRANSFORM_NONE,
+		TRANSFORM_ROTATE,
+		TRANSFORM_TRANSLATE,
+		TRANSFORM_SCALE
+	};
+
 private:
 	int index;
 	String name;
@@ -332,13 +339,7 @@ private:
 		NAVIGATION_ORBIT,
 		NAVIGATION_LOOK
 	};
-	enum TransformMode {
-		TRANSFORM_NONE,
-		TRANSFORM_ROTATE,
-		TRANSFORM_TRANSLATE,
-		TRANSFORM_SCALE
 
-	};
 	enum TransformPlane {
 		TRANSFORM_VIEW,
 		TRANSFORM_X_AXIS,
@@ -468,6 +469,8 @@ public:
 	Viewport *get_viewport_node() { return viewport; }
 	Camera *get_camera() { return camera; } // return the default camera object.
 
+	Transform compute_edit_external(TransformMode p_transform_mode, const Point2 &p_point);
+
 	SpatialEditorViewport(SpatialEditor *p_spatial_editor, EditorNode *p_editor, int p_index);
 };
 
@@ -583,6 +586,7 @@ private:
 	/////
 
 	ToolMode tool_mode;
+	ExternalToolMode external_tool_mode = EX_TOOL_MODE_SELECT;
 	bool orthogonal;
 
 	VisualServer::ScenarioDebugMode scenario_debug;
@@ -759,6 +763,8 @@ public:
 
 	void set_tool_mode(ToolMode p_tool_mode);
 	ToolMode get_tool_mode() const { return tool_mode; }
+	bool is_tool_external() const { return tool_mode == TOOL_MODE_EXTERNAL; }
+	ExternalToolMode get_external_tool_mode() const { return external_tool_mode; }
 	bool are_local_coords_enabled() const { return tool_option_button[SpatialEditor::TOOL_OPT_LOCAL_COORDS]->is_pressed(); }
 	bool is_snap_enabled() const { return snap_enabled ^ snap_key_enabled; }
 	float get_translate_snap() const;
