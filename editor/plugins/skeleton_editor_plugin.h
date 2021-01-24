@@ -31,6 +31,7 @@
 #ifndef SKELETON_EDITOR_PLUGIN_H
 #define SKELETON_EDITOR_PLUGIN_H
 
+#include "core/os/input_event.h"
 #include "editor/editor_node.h"
 #include "editor/editor_plugin.h"
 #include "spatial_editor_plugin.h"
@@ -204,6 +205,17 @@ class SkeletonEditor : public VBoxContainer {
 	Ref<ArrayMesh> am;
 	void _hide_handles();
 	void _draw_handles();
+
+	SpatialEditorViewport::EditData _edit;
+	void _compute_edit(int p_index, const Point2 &p_point);
+	bool _gizmo_select(int p_index, const Vector2 &p_screenpos, bool p_highlight_only = false);
+
+	struct OriginalTransform {
+		Transform local;
+		Transform global;
+	} original_tr;
+
+	void _update_spatial_transform_gizmo();
 
 protected:
 	void _notification(int p_what);

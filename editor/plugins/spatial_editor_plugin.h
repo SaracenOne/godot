@@ -239,6 +239,33 @@ public:
 		TRANSFORM_SCALE
 	};
 
+	enum TransformPlane {
+		TRANSFORM_VIEW,
+		TRANSFORM_X_AXIS,
+		TRANSFORM_Y_AXIS,
+		TRANSFORM_Z_AXIS,
+		TRANSFORM_YZ,
+		TRANSFORM_XZ,
+		TRANSFORM_XY,
+	};
+
+	struct EditData {
+		TransformMode mode;
+		TransformPlane plane;
+		Transform original;
+		Vector3 click_ray;
+		Vector3 click_ray_pos;
+		Vector3 center;
+		Vector3 orig_gizmo_pos;
+		int edited_gizmo;
+		Point2 mouse_pos;
+		bool snap;
+		Ref<EditorSpatialGizmo> gizmo;
+		int gizmo_handle;
+		Variant gizmo_initial_value;
+		Vector3 gizmo_initial_pos;
+	};
+
 private:
 	int index;
 	String name;
@@ -298,14 +325,11 @@ private:
 	void _select(Node *p_node, bool p_append, bool p_single);
 	ObjectID _select_ray(const Point2 &p_pos, bool p_append, bool &r_includes_current, int *r_gizmo_handle = NULL, bool p_alt_select = false);
 	void _find_items_at_pos(const Point2 &p_pos, bool &r_includes_current, Vector<_RayResult> &results, bool p_alt_select = false);
-	Vector3 _get_ray_pos(const Vector2 &p_pos) const;
-	Vector3 _get_ray(const Vector2 &p_pos) const;
 	Point2 _point_to_screen(const Vector3 &p_point);
 	Transform _get_camera_transform() const;
 	int get_selected_count() const;
 
 	Vector3 _get_camera_position() const;
-	Vector3 _get_camera_normal() const;
 	Vector3 _get_screen_to_space(const Vector3 &p_vector3);
 
 	void _select_region();
@@ -340,32 +364,7 @@ private:
 		NAVIGATION_LOOK
 	};
 
-	enum TransformPlane {
-		TRANSFORM_VIEW,
-		TRANSFORM_X_AXIS,
-		TRANSFORM_Y_AXIS,
-		TRANSFORM_Z_AXIS,
-		TRANSFORM_YZ,
-		TRANSFORM_XZ,
-		TRANSFORM_XY,
-	};
-
-	struct EditData {
-		TransformMode mode;
-		TransformPlane plane;
-		Transform original;
-		Vector3 click_ray;
-		Vector3 click_ray_pos;
-		Vector3 center;
-		Vector3 orig_gizmo_pos;
-		int edited_gizmo;
-		Point2 mouse_pos;
-		bool snap;
-		Ref<EditorSpatialGizmo> gizmo;
-		int gizmo_handle;
-		Variant gizmo_initial_value;
-		Vector3 gizmo_initial_pos;
-	} _edit;
+	EditData _edit;
 
 	struct Cursor {
 
@@ -468,8 +467,11 @@ public:
 
 	Viewport *get_viewport_node() { return viewport; }
 	Camera *get_camera() { return camera; } // return the default camera object.
+	float get_gizmo_scale() { return gizmo_scale; };
 
-	Transform compute_edit_external(TransformMode p_transform_mode, const Point2 &p_point);
+	Vector3 get_camera_normal() const;
+	Vector3 get_ray_pos(const Vector2 &p_pos) const;
+	Vector3 get_ray(const Vector2 &p_pos) const;
 
 	SpatialEditorViewport(SpatialEditor *p_spatial_editor, EditorNode *p_editor, int p_index);
 };

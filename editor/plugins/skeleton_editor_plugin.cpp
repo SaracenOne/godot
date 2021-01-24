@@ -43,6 +43,30 @@
 #include "scene/resources/sphere_shape.h"
 #include "spatial_editor_plugin.h"
 
+#define DISTANCE_DEFAULT 4
+
+#define GIZMO_ARROW_SIZE 0.35
+#define GIZMO_RING_HALF_WIDTH 0.1
+#define GIZMO_SCALE_DEFAULT 0.15
+#define GIZMO_PLANE_SIZE 0.2
+#define GIZMO_PLANE_DST 0.3
+#define GIZMO_CIRCLE_SIZE 1.1
+#define GIZMO_SCALE_OFFSET (GIZMO_CIRCLE_SIZE + 0.3)
+#define GIZMO_ARROW_OFFSET (GIZMO_CIRCLE_SIZE + 0.3)
+
+#define ZOOM_MIN_DISTANCE 0.001
+#define ZOOM_MULTIPLIER 1.08
+#define ZOOM_INDICATOR_DELAY_S 1.5
+
+#define FREELOOK_MIN_SPEED 0.01
+#define FREELOOK_SPEED_MULTIPLIER 1.08
+
+#define MIN_Z 0.01
+#define MAX_Z 1000000.0
+
+#define MIN_FOV 0.01
+#define MAX_FOV 179
+
 void BoneTransformEditor::create_editors() {
 	const Color section_color = get_color("prop_subsection", "Editor");
 
@@ -590,6 +614,14 @@ void SkeletonEditor::move_skeleton_bone(NodePath p_skeleton_path, int32_t p_sele
 	ur->commit_action();
 }
 
+void SkeletonEditor::_update_spatial_transform_gizmo() {
+	if (skeleton->get_selected_bone() > 0) {
+		SpatialEditor::get_singleton()->clear_externals();
+		SpatialEditor::get_singleton()->append_to_externals(skeleton->get_bone_global_pose(skeleton->get_selected_bone()));
+		SpatialEditor::get_singleton()->update_transform_gizmo();
+	}
+};
+
 void SkeletonEditor::_joint_tree_selection_changed() {
 	TreeItem *selected = joint_tree->get_selected();
 	const String path = selected->get_metadata(0);
@@ -607,10 +639,6 @@ void SkeletonEditor::_joint_tree_selection_changed() {
 		custom_pose_editor->set_visible(true);
 
 		skeleton->set_selected_bone(b_idx);
-
-		SpatialEditor::get_singleton()->clear_externals();
-		SpatialEditor::get_singleton()->append_to_externals(skeleton->get_bone_global_pose(b_idx));
-		SpatialEditor::get_singleton()->update_transform_gizmo();
 	}
 
 	_update_properties();
@@ -626,6 +654,7 @@ void SkeletonEditor::_update_properties() {
 		pose_editor->_update_properties();
 	if (custom_pose_editor)
 		custom_pose_editor->_update_custom_pose_properties();
+	_update_spatial_transform_gizmo();
 }
 
 void SkeletonEditor::update_joint_tree() {
@@ -839,7 +868,7 @@ void SkeletonEditor::_menu_item_pressed(int p_option) {
 					}
 				}
 			}
-			SpatialEditor::get_singleton()->update_transform_gizmo();
+			_update_spatial_transform_gizmo();
 		} break;
 	}
 }
@@ -985,8 +1014,18 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 			case TOOL_MODE_BONE_SELECT : {
 				if (mb->get_button_index() == BUTTON_LEFT) {
 					if (mb->is_pressed()) {
-						print_line("lb: bone select mode");
+						// print_line("lb: bone select mode");
 
+						_edit.mouse_pos = mb->get_position();
+						_edit.snap = se->is_snap_enabled();
+						_edit.mode = SpatialEditorViewport::TRANSFORM_NONE;
+
+						// check gizmo
+						if (_gizmo_select(p_index, _edit.mouse_pos)) {
+							break;
+						}
+
+						// select bone
 						int closest_idx = -1;
 						real_t closest_dist = 1e10;
 						int bone_len = skeleton->get_bone_count();
@@ -1001,14 +1040,16 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 								closest_idx = i;
 							}
 						}
-
 						if (closest_idx >= 0) {
 							TreeItem *ti = joint_tree->get_item_with_text(skeleton->get_bone_name(closest_idx));
 							ti->select(0);
 							joint_tree->scroll_to_item(ti);
 						} else {
-							print_line("nothing");
+							// print_line("nothing");
 						}
+
+					} else {
+						// release
 
 					}
 				}
@@ -1031,6 +1072,110 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 		}
 		return true;
 	}
+
+	Ref<InputEventMouseMotion> mm = p_event;
+	if (mm.is_valid()) {
+		_edit.mouse_pos = mm->get_position();
+		if (!(mm->get_button_mask() & 1) && !_edit.gizmo.is_valid()) {
+			_gizmo_select(p_index, _edit.mouse_pos, true);
+		}
+		if (mm->get_button_mask() & BUTTON_MASK_LEFT) {
+			if (_edit.mode == SpatialEditorViewport::TRANSFORM_NONE)
+				return true;
+
+			Vector3 ray_pos = sev->get_ray_pos(mm->get_position());
+			Vector3 ray = sev->get_ray(mm->get_position());
+			float snap = EDITOR_GET("interface/inspector/default_float_step");
+			int snap_step_decimals = Math::range_step_decimals(snap);
+
+			print_line("kokomade");
+
+			switch (_edit.mode) {
+				case SpatialEditorViewport::TRANSFORM_ROTATE: {
+
+					Plane plane;
+					Vector3 axis;
+
+					switch (_edit.plane) {
+						case SpatialEditorViewport::TRANSFORM_VIEW:
+							plane = Plane(_edit.center, sev->get_camera_normal());
+							break;
+						case SpatialEditorViewport::TRANSFORM_X_AXIS:
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(0));
+							axis = Vector3(1, 0, 0);
+							break;
+						case SpatialEditorViewport::TRANSFORM_Y_AXIS:
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(1));
+							axis = Vector3(0, 1, 0);
+							break;
+						case SpatialEditorViewport::TRANSFORM_Z_AXIS:
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(2));
+							axis = Vector3(0, 0, 1);
+							break;
+						case SpatialEditorViewport::TRANSFORM_YZ:
+						case SpatialEditorViewport::TRANSFORM_XZ:
+						case SpatialEditorViewport::TRANSFORM_XY:
+							break;
+					}
+
+					Vector3 intersection;
+					if (!plane.intersects_ray(ray_pos, ray, &intersection))
+						break;
+
+					Vector3 click;
+					if (!plane.intersects_ray(_edit.click_ray_pos, _edit.click_ray, &click))
+						break;
+
+					Vector3 y_axis = (click - _edit.center).normalized();
+					Vector3 x_axis = plane.normal.cross(y_axis).normalized();
+
+					float angle = Math::atan2(x_axis.dot(intersection - _edit.center), y_axis.dot(intersection - _edit.center));
+
+					if (_edit.snap || se->is_snap_enabled()) {
+						snap = se->get_rotate_snap();
+					}
+					angle = Math::rad2deg(angle) + snap * 0.5; //else it won't reach +180
+					angle -= Math::fmod(angle, snap);
+					// set_message(vformat(TTR("Rotating %s degrees."), String::num(angle, snap_step_decimals)));
+					angle = Math::deg2rad(angle);
+
+					bool local_coords = (se->are_local_coords_enabled() && _edit.plane != SpatialEditorViewport::TRANSFORM_VIEW); // Disable local transformation for TRANSFORM_VIEW
+
+					Transform t;
+
+					if (local_coords) {
+						Transform original_local = original_tr.local;
+						Basis rot = Basis(axis, angle);
+
+						t.basis = original_local.get_basis().orthonormalized() * rot;
+						t.basis = t.basis.scaled(original_local.basis.get_scale());
+						t.origin = original_local.origin;
+
+						// Apply rotation
+						skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
+					} else {
+						Transform original = original_tr.global;
+						Transform r;
+						Transform base = Transform(Basis(), _edit.center);
+
+						r.basis.rotate(plane.normal, angle);
+						t = base * r * base.inverse() * original;
+
+						// Apply rotation
+						skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
+					}
+
+					sev->update_surface();
+
+				} break;
+				default: {
+				}
+			}
+
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -1057,4 +1202,223 @@ SkeletonEditorPlugin::SkeletonEditorPlugin(EditorNode *p_node) {
 
 bool SkeletonEditorPlugin::handles(Object *p_object) const {
 	return p_object->is_class("Skeleton");
+}
+
+void SkeletonEditor::_compute_edit(int p_index, const Point2 &p_point) {
+
+	SpatialEditor *se = SpatialEditor::get_singleton();
+	SpatialEditorViewport *sev = se->get_editor_viewport(p_index);
+
+	_edit.click_ray = sev->get_ray(Vector2(p_point.x, p_point.y));
+	_edit.click_ray_pos = sev->get_ray_pos(Vector2(p_point.x, p_point.y));
+	_edit.plane = SpatialEditorViewport::TRANSFORM_VIEW;
+	_update_spatial_transform_gizmo();
+	_edit.center = se->get_gizmo_transform().origin;
+
+	if (skeleton->get_selected_bone() != -1) {
+		original_tr.global = skeleton->get_bone_global_pose(skeleton->get_selected_bone());
+		original_tr.local = skeleton->get_bone_pose(skeleton->get_selected_bone());
+	}
+}
+
+bool SkeletonEditor::_gizmo_select(int p_index, const Vector2 &p_screenpos, bool p_highlight_only) {
+
+	SpatialEditor *se = SpatialEditor::get_singleton();
+	SpatialEditorViewport *sev = se->get_editor_viewport(p_index);
+
+	if (!se->is_gizmo_visible())
+		return false;
+	if (skeleton->get_selected_bone() == -1) {
+		if (p_highlight_only)
+			se->select_gizmo_highlight_axis(-1);
+		return false;
+	}
+
+	Vector3 ray_pos = sev->get_ray_pos(Vector2(p_screenpos.x, p_screenpos.y));
+	Vector3 ray = sev->get_ray(Vector2(p_screenpos.x, p_screenpos.y));
+
+	Transform gt = se->get_gizmo_transform();
+	float gs = sev->get_gizmo_scale();
+
+	if (se->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || se->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_MOVE) {
+
+		int col_axis = -1;
+		float col_d = 1e20;
+
+		for (int i = 0; i < 3; i++) {
+
+			Vector3 grabber_pos = gt.origin + gt.basis.get_axis(i) * gs * (GIZMO_ARROW_OFFSET + (GIZMO_ARROW_SIZE * 0.5));
+			float grabber_radius = gs * GIZMO_ARROW_SIZE;
+
+			Vector3 r;
+
+			if (Geometry::segment_intersects_sphere(ray_pos, ray_pos + ray * MAX_Z, grabber_pos, grabber_radius, &r)) {
+				float d = r.distance_to(ray_pos);
+				if (d < col_d) {
+					col_d = d;
+					col_axis = i;
+				}
+			}
+		}
+
+		bool is_plane_translate = false;
+		// plane select
+		if (col_axis == -1) {
+			col_d = 1e20;
+
+			for (int i = 0; i < 3; i++) {
+
+				Vector3 ivec2 = gt.basis.get_axis((i + 1) % 3).normalized();
+				Vector3 ivec3 = gt.basis.get_axis((i + 2) % 3).normalized();
+
+				Vector3 grabber_pos = gt.origin + (ivec2 + ivec3) * gs * (GIZMO_PLANE_SIZE + GIZMO_PLANE_DST);
+
+				Vector3 r;
+				Plane plane(gt.origin, gt.basis.get_axis(i).normalized());
+
+				if (plane.intersects_ray(ray_pos, ray, &r)) {
+
+					float dist = r.distance_to(grabber_pos);
+					if (dist < (gs * GIZMO_PLANE_SIZE)) {
+
+						float d = ray_pos.distance_to(r);
+						if (d < col_d) {
+							col_d = d;
+							col_axis = i;
+
+							is_plane_translate = true;
+						}
+					}
+				}
+			}
+		}
+
+		if (col_axis != -1) {
+
+			if (p_highlight_only) {
+
+				se->select_gizmo_highlight_axis(col_axis + (is_plane_translate ? 6 : 0));
+
+			} else {
+				//handle plane translate
+				_edit.mode = SpatialEditorViewport::TRANSFORM_TRANSLATE;
+				_compute_edit(p_index, Point2(p_screenpos.x, p_screenpos.y));
+				_edit.plane = SpatialEditorViewport::TransformPlane(SpatialEditorViewport::TRANSFORM_X_AXIS + col_axis + (is_plane_translate ? 3 : 0));
+			}
+			return true;
+		}
+	}
+
+	if (se->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SELECT || se->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_ROTATE) {
+
+		int col_axis = -1;
+		float col_d = 1e20;
+
+		for (int i = 0; i < 3; i++) {
+
+			Plane plane(gt.origin, gt.basis.get_axis(i).normalized());
+			Vector3 r;
+			if (!plane.intersects_ray(ray_pos, ray, &r))
+				continue;
+
+			float dist = r.distance_to(gt.origin);
+
+			if (dist > gs * (GIZMO_CIRCLE_SIZE - GIZMO_RING_HALF_WIDTH) && dist < gs * (GIZMO_CIRCLE_SIZE + GIZMO_RING_HALF_WIDTH)) {
+
+				float d = ray_pos.distance_to(r);
+				if (d < col_d) {
+					col_d = d;
+					col_axis = i;
+				}
+			}
+		}
+
+		if (col_axis != -1) {
+
+			if (p_highlight_only) {
+
+				se->select_gizmo_highlight_axis(col_axis + 3);
+			} else {
+				//handle rotate
+				_edit.mode = SpatialEditorViewport::TRANSFORM_ROTATE;
+				_compute_edit(p_index, Point2(p_screenpos.x, p_screenpos.y));
+				_edit.plane = SpatialEditorViewport::TransformPlane(SpatialEditorViewport::TRANSFORM_X_AXIS + col_axis);
+			}
+			return true;
+		}
+	}
+
+	if (se->get_external_tool_mode() == SpatialEditor::EX_TOOL_MODE_SCALE) {
+
+		int col_axis = -1;
+		float col_d = 1e20;
+
+		for (int i = 0; i < 3; i++) {
+
+			Vector3 grabber_pos = gt.origin + gt.basis.get_axis(i) * gs * GIZMO_SCALE_OFFSET;
+			float grabber_radius = gs * GIZMO_ARROW_SIZE;
+
+			Vector3 r;
+
+			if (Geometry::segment_intersects_sphere(ray_pos, ray_pos + ray * MAX_Z, grabber_pos, grabber_radius, &r)) {
+				float d = r.distance_to(ray_pos);
+				if (d < col_d) {
+					col_d = d;
+					col_axis = i;
+				}
+			}
+		}
+
+		bool is_plane_scale = false;
+		// plane select
+		if (col_axis == -1) {
+			col_d = 1e20;
+
+			for (int i = 0; i < 3; i++) {
+
+				Vector3 ivec2 = gt.basis.get_axis((i + 1) % 3).normalized();
+				Vector3 ivec3 = gt.basis.get_axis((i + 2) % 3).normalized();
+
+				Vector3 grabber_pos = gt.origin + (ivec2 + ivec3) * gs * (GIZMO_PLANE_SIZE + GIZMO_PLANE_DST);
+
+				Vector3 r;
+				Plane plane(gt.origin, gt.basis.get_axis(i).normalized());
+
+				if (plane.intersects_ray(ray_pos, ray, &r)) {
+
+					float dist = r.distance_to(grabber_pos);
+					if (dist < (gs * GIZMO_PLANE_SIZE)) {
+
+						float d = ray_pos.distance_to(r);
+						if (d < col_d) {
+							col_d = d;
+							col_axis = i;
+
+							is_plane_scale = true;
+						}
+					}
+				}
+			}
+		}
+
+		if (col_axis != -1) {
+
+			if (p_highlight_only) {
+
+				se->select_gizmo_highlight_axis(col_axis + (is_plane_scale ? 12 : 9));
+
+			} else {
+				//handle scale
+				_edit.mode = SpatialEditorViewport::TRANSFORM_SCALE;
+				_compute_edit(p_index, Point2(p_screenpos.x, p_screenpos.y));
+				_edit.plane = SpatialEditorViewport::TransformPlane(SpatialEditorViewport::TRANSFORM_X_AXIS + col_axis + (is_plane_scale ? 3 : 0));
+			}
+			return true;
+		}
+	}
+
+	if (p_highlight_only)
+		se->select_gizmo_highlight_axis(-1);
+
+	return false;
 }
