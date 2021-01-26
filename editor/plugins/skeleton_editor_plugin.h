@@ -145,13 +145,27 @@ class SkeletonEditor : public VBoxContainer {
 		TOOL_MODE_BONE_MAX
 	};
 
-	enum MenuOption {
+	enum MenuToolOption {
 		MENU_TOOL_BONE_SELECT,
 		MENU_TOOL_BONE_MOVE,
 		MENU_TOOL_BONE_ROTATE,
 		MENU_TOOL_BONE_SCALE,
 		MENU_TOOL_BONE_NONE,
 		MENU_TOOL_BONE_MAX
+	};
+
+	enum ApplyMode {
+		APPLY_MODE_POSE,
+		APPLY_MODE_REST,
+		APPLY_MODE_CUSTOM_POSE,
+		APPLY_MODE_MAX
+	};
+
+	enum MenuApplyOption {
+		MENU_APPLY_POSE,
+		MENU_APPLY_REST,
+		MENU_APPLY_CUSTOM_POSE,
+		MENU_APPLY_MODE_MAX
 	};
 
 	struct BoneInfo {

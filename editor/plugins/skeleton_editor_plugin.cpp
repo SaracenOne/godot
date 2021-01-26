@@ -115,20 +115,24 @@ void BoneTransformEditor::create_editors() {
 	section->get_vbox()->add_child(transform_grid);
 
 	static const char *desc[TRANSFORM_COMPONENTS] = { "x", "y", "z", "x", "y", "z", "x", "y", "z", "x", "y", "z" };
+	float snap = EDITOR_GET("interface/inspector/default_float_step");
 
 	for (int i = 0; i < TRANSFORM_CONTROL_COMPONENTS; ++i) {
 		translation_slider[i] = memnew(EditorSpinSlider());
 		translation_slider[i]->set_label(desc[i]);
+		translation_slider[i]->set_step(snap);
 		setup_spinner(translation_slider[i], false);
 		translation_grid->add_child(translation_slider[i]);
 
 		rotation_slider[i] = memnew(EditorSpinSlider());
 		rotation_slider[i]->set_label(desc[i]);
+		rotation_slider[i]->set_step(snap);
 		setup_spinner(rotation_slider[i], false);
 		rotation_grid->add_child(rotation_slider[i]);
 
 		scale_slider[i] = memnew(EditorSpinSlider());
 		scale_slider[i]->set_label(desc[i]);
+		scale_slider[i]->set_step(snap);
 		setup_spinner(scale_slider[i], false);
 		scale_grid->add_child(scale_slider[i]);
 	}
@@ -136,6 +140,7 @@ void BoneTransformEditor::create_editors() {
 	for (int i = 0; i < TRANSFORM_COMPONENTS; ++i) {
 		transform_slider[i] = memnew(EditorSpinSlider());
 		transform_slider[i]->set_label(desc[i]);
+		transform_slider[i]->set_step(snap);
 		setup_spinner(transform_slider[i], true);
 		transform_grid->add_child(transform_slider[i]);
 	}
@@ -615,11 +620,11 @@ void SkeletonEditor::move_skeleton_bone(NodePath p_skeleton_path, int32_t p_sele
 }
 
 void SkeletonEditor::_update_spatial_transform_gizmo() {
-	if (skeleton->get_selected_bone() > 0) {
-		SpatialEditor::get_singleton()->clear_externals();
-		SpatialEditor::get_singleton()->append_to_externals(skeleton->get_bone_global_pose(skeleton->get_selected_bone()));
-		SpatialEditor::get_singleton()->update_transform_gizmo();
+	SpatialEditor::get_singleton()->clear_externals();
+	if (skeleton->get_selected_bone() >= 0) {
+		SpatialEditor::get_singleton()->append_to_externals(skeleton->get_global_transform() * skeleton->get_bone_global_pose(skeleton->get_selected_bone()));
 	}
+	SpatialEditor::get_singleton()->update_transform_gizmo();
 };
 
 void SkeletonEditor::_joint_tree_selection_changed() {
@@ -645,6 +650,8 @@ void SkeletonEditor::_joint_tree_selection_changed() {
 }
 
 void SkeletonEditor::_joint_tree_rmb_select(const Vector2 &p_pos) {
+	skeleton->set_selected_bone(-1);
+	_update_spatial_transform_gizmo();
 }
 
 void SkeletonEditor::_update_properties() {
@@ -813,6 +820,7 @@ void SkeletonEditor::_notification(int p_what) {
 			get_tree()->connect("node_removed", this, "_node_removed", Vector<Variant>(), Object::CONNECT_ONESHOT);
 			joint_tree->connect("item_selected", this, "_joint_tree_selection_changed");
 			joint_tree->connect("item_rmb_selected", this, "_joint_tree_rmb_select");
+			
 #ifdef TOOLS_ENABLED
 			skeleton->connect("pose_updated", this, "_update_properties");
 #endif // TOOLS_ENABLED
@@ -862,9 +870,9 @@ void SkeletonEditor::_menu_item_pressed(int p_option) {
 					_hide_handles();
 				} else {
 					_draw_handles();
-					if (skeleton->get_selected_bone() > 0) {
+					if (skeleton->get_selected_bone() >= 0) {
 						SpatialEditor::get_singleton()->clear_externals();
-						SpatialEditor::get_singleton()->append_to_externals(skeleton->get_bone_global_pose(skeleton->get_selected_bone()));
+						SpatialEditor::get_singleton()->append_to_externals(skeleton->get_global_transform() * skeleton->get_bone_global_pose(skeleton->get_selected_bone()));
 					}
 				}
 			}
@@ -1010,19 +1018,17 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 		Vector2 gpoint = mb->get_position();
 		real_t grab_threshold = 4 * EDSCALE;
 
-		switch (tool_mode) {
-			case TOOL_MODE_BONE_SELECT : {
-				if (mb->get_button_index() == BUTTON_LEFT) {
-					if (mb->is_pressed()) {
-						// print_line("lb: bone select mode");
-
+		switch (mb->get_button_index()) {
+			case BUTTON_LEFT: {
+				if (mb->is_pressed()) {
+					if (tool_mode == TOOL_MODE_BONE_SELECT) {
 						_edit.mouse_pos = mb->get_position();
 						_edit.snap = se->is_snap_enabled();
 						_edit.mode = SpatialEditorViewport::TRANSFORM_NONE;
 
 						// check gizmo
 						if (_gizmo_select(p_index, _edit.mouse_pos)) {
-							break;
+							return true;
 						}
 
 						// select bone
@@ -1045,38 +1051,35 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 							ti->select(0);
 							joint_tree->scroll_to_item(ti);
 						} else {
-							// print_line("nothing");
+							skeleton->set_selected_bone(-1);
+							joint_tree->deselect_all();
 						}
-
-					} else {
-						// release
-
+					}
+				} else {
+					if (_edit.mode != SpatialEditorViewport::TRANSFORM_NONE) {
+						if (skeleton && (skeleton->get_selected_bone() >= 0)) {
+							UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+							ur->create_action(TTR("Set Bone Transform"), UndoRedo::MERGE_ENDS);
+							// Todo: pose/rest/custom pose
+							ur->add_do_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), skeleton->get_bone_pose(skeleton->get_selected_bone()));
+							ur->add_undo_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), original_tr.local);
+							ur->commit_action();
+							_edit.mode = SpatialEditorViewport::TRANSFORM_NONE;
+						}
 					}
 				}
+				return true;
 			} break;
-			case TOOL_MODE_BONE_MOVE : {
-				if (mb->get_button_index() == BUTTON_LEFT) {
-					print_line("lb: bone move mode");
-				}
-			} break;
-			case TOOL_MODE_BONE_ROTATE : {
-				if (mb->get_button_index() == BUTTON_LEFT) {
-					print_line("lb: bone rotate mode");
-				}
-			} break;
-			case TOOL_MODE_BONE_SCALE : {
-				if (mb->get_button_index() == BUTTON_LEFT) {
-					print_line("lb: bone scale mode");
-				}
-			} break;
+			default:
+				break;
 		}
-		return true;
+		
 	}
 
 	Ref<InputEventMouseMotion> mm = p_event;
 	if (mm.is_valid()) {
 		_edit.mouse_pos = mm->get_position();
-		if (!(mm->get_button_mask() & 1) && !_edit.gizmo.is_valid()) {
+		if (!(mm->get_button_mask() & 1)) {
 			_gizmo_select(p_index, _edit.mouse_pos, true);
 		}
 		if (mm->get_button_mask() & BUTTON_MASK_LEFT) {
@@ -1087,8 +1090,6 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 			Vector3 ray = sev->get_ray(mm->get_position());
 			float snap = EDITOR_GET("interface/inspector/default_float_step");
 			int snap_step_decimals = Math::range_step_decimals(snap);
-
-			print_line("kokomade");
 
 			switch (_edit.mode) {
 				case SpatialEditorViewport::TRANSFORM_ROTATE: {
@@ -1152,17 +1153,24 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 						t.origin = original_local.origin;
 
 						// Apply rotation
+						// Todo: pose/rest/custom pose
 						skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
 					} else {
-						Transform original = original_tr.global;
+						Transform original_global = original_tr.global;
 						Transform r;
 						Transform base = Transform(Basis(), _edit.center);
 
 						r.basis.rotate(plane.normal, angle);
-						t = base * r * base.inverse() * original;
+						t = base * r * base.inverse() * original_global;
 
 						// Apply rotation
-						skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
+						Transform to_local = skeleton->get_global_transform();
+						int parent_idx = skeleton->get_bone_parent(skeleton->get_selected_bone());
+						// Todo: pose/rest/custom pose
+						if (parent_idx >= 0) {
+							to_local = to_local * skeleton->get_bone_global_pose(parent_idx) * skeleton->get_bone_rest(skeleton->get_selected_bone());
+						}
+						skeleton->set_bone_pose(skeleton->get_selected_bone(), to_local.inverse() * t);
 					}
 
 					sev->update_surface();
@@ -1216,7 +1224,8 @@ void SkeletonEditor::_compute_edit(int p_index, const Point2 &p_point) {
 	_edit.center = se->get_gizmo_transform().origin;
 
 	if (skeleton->get_selected_bone() != -1) {
-		original_tr.global = skeleton->get_bone_global_pose(skeleton->get_selected_bone());
+		original_tr.global = skeleton->get_global_transform() * skeleton->get_bone_global_pose(skeleton->get_selected_bone());
+		// Todo: pose/rest/custom pose
 		original_tr.local = skeleton->get_bone_pose(skeleton->get_selected_bone());
 	}
 }
