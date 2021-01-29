@@ -185,11 +185,13 @@ class SkeletonEditor : public VBoxContainer {
 	BoneTransformEditor *pose_editor;
 	BoneTransformEditor *custom_pose_editor;
 
-	VSeparator *separator;
+	VSeparator *separators[2];
 	MenuButton *options;
 	ToolButton *tool_button[TOOL_MODE_BONE_MAX];
+	ToolButton *apply_button[APPLY_MODE_MAX];
 
 	ToolMode tool_mode = TOOL_MODE_BONE_NONE;
+	ApplyMode apply_mode = APPLY_MODE_POSE;
 
 	EditorFileDialog *file_dialog;
 
@@ -197,7 +199,8 @@ class SkeletonEditor : public VBoxContainer {
 
 	void _on_click_option(int p_option);
 	void _file_selected(const String &p_file);
-	void _menu_item_pressed(int p_option);
+	void _menu_tool_item_pressed(int p_option);
+	void _menu_apply_item_pressed(int p_option);
 
 	EditorFileDialog *file_export_lib;
 
