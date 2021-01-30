@@ -1612,8 +1612,10 @@ void Position3DSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 SkeletonSpatialGizmoPlugin::SkeletonSpatialGizmoPlugin() {
 
-	Color gizmo_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/skeleton", Color(1, 0.8, 0.4));
-	create_material("skeleton_material", gizmo_color);
+	skeleton_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/skeleton", Color(1, 0.8, 0.4));
+	selected_bone_color = EDITOR_DEF("editors/3d_gizmos/gizmo_colors/selected_bone", Color(1, 0, 0));
+	bone_axis_length = EDITOR_DEF("editors/3d_gizmos/gizmo_settings/bone_axis_length", (float)0.015);
+	create_material("skeleton_material", skeleton_color);
 	selected_mat = Ref<ShaderMaterial>(memnew(ShaderMaterial));
 	selected_sh = Ref<Shader>(memnew(Shader));
 	selected_sh->set_code(" \
@@ -1685,16 +1687,14 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 
 	weights.write[0] = 1;
 
+	Color bone_color;
 	AABB aabb;
-
-	Color bonecolor = Color(1.0, 0.8, 0.4, 1.0);
-	Color rootcolor = Color(0.4, 1.0, 0.4, 1.0);
 
 	for (int i_bone = 0; i_bone < skel->get_bone_count(); i_bone++) {
 		if (skel->get_bone_parent(i_bone) == skel->get_selected_bone()) {
-			bonecolor = Color(1.0, 0.0, 0.0, 1.0);
+			bone_color = selected_bone_color;
 		} else {
-			bonecolor = Color(1.0, 0.8, 0.4, 1.0);
+			bone_color = skeleton_color;
 		}
 
 		int i = skel->get_process_order(i_bone);
@@ -1729,15 +1729,27 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 			axis_color[2] = Color(0,0,1);
 			for (int j = 0; j < 3; j++) {
 
-				bones.write[0] = i;
-				surface_tool->add_bones(bones);
-				surface_tool->add_weights(weights);
-				surface_tool->add_color(axis_color[j]);
-				surface_tool->add_vertex(v1);
-				surface_tool->add_bones(bones);
-				surface_tool->add_weights(weights);
-				surface_tool->add_color(axis_color[j]);
-				surface_tool->add_vertex(v1 + grests[i].basis[j].normalized() * 0.015);
+				if (p_gizmo->is_selected()) {
+					bones.write[0] = i;
+					surface_tool->add_bones(bones);
+					surface_tool->add_weights(weights);
+					surface_tool->add_color(axis_color[j]);
+					surface_tool->add_vertex(v1);
+					surface_tool->add_bones(bones);
+					surface_tool->add_weights(weights);
+					surface_tool->add_color(axis_color[j]);
+					surface_tool->add_vertex(v1 + grests[i].basis[j].normalized() * bone_axis_length);
+				} else {
+					bones.write[0] = i;
+					surface_tool->add_bones(bones);
+					surface_tool->add_weights(weights);
+					surface_tool->add_color(axis_color[j]);
+					surface_tool->add_vertex(v1 - grests[i].basis[j].normalized() * dist * 0.05);
+					surface_tool->add_bones(bones);
+					surface_tool->add_weights(weights);
+					surface_tool->add_color(axis_color[j]);
+					surface_tool->add_vertex(v1 + grests[i].basis[j].normalized() * dist * 0.05);
+				}
 
 				if (j == closest)
 					continue;
@@ -1760,22 +1772,22 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 					bones.write[0] = parent;
 					surface_tool->add_bones(bones);
 					surface_tool->add_weights(weights);
-					surface_tool->add_color(bonecolor);
+					surface_tool->add_color(bone_color);
 					surface_tool->add_vertex(v0);
 					surface_tool->add_bones(bones);
 					surface_tool->add_weights(weights);
-					surface_tool->add_color(bonecolor);
+					surface_tool->add_color(bone_color);
 					surface_tool->add_vertex(point);
 
 					bones.write[0] = parent;
 					surface_tool->add_bones(bones);
 					surface_tool->add_weights(weights);
-					surface_tool->add_color(bonecolor);
+					surface_tool->add_color(bone_color);
 					surface_tool->add_vertex(point);
 					bones.write[0] = i;
 					surface_tool->add_bones(bones);
 					surface_tool->add_weights(weights);
-					surface_tool->add_color(bonecolor);
+					surface_tool->add_color(bone_color);
 					surface_tool->add_vertex(v1);
 					points[pointidx++] = point;
 				}
@@ -1787,11 +1799,11 @@ void SkeletonSpatialGizmoPlugin::redraw(EditorSpatialGizmo *p_gizmo) {
 				bones.write[0] = parent;
 				surface_tool->add_bones(bones);
 				surface_tool->add_weights(weights);
-				surface_tool->add_color(bonecolor);
+				surface_tool->add_color(bone_color);
 				surface_tool->add_vertex(points[j]);
 				surface_tool->add_bones(bones);
 				surface_tool->add_weights(weights);
-				surface_tool->add_color(bonecolor);
+				surface_tool->add_color(bone_color);
 				surface_tool->add_vertex(points[(j + 1) % 4]);
 			}
 

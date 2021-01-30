@@ -137,6 +137,9 @@ public:
 class SkeletonSpatialGizmoPlugin : public EditorSpatialGizmoPlugin {
 
 	GDCLASS(SkeletonSpatialGizmoPlugin, EditorSpatialGizmoPlugin);
+	Color skeleton_color;
+	Color selected_bone_color;
+	float bone_axis_length;
 	Ref<ShaderMaterial> selected_mat;
 	Ref<Shader> selected_sh;
 
