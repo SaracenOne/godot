@@ -227,10 +227,8 @@ class SkeletonEditor : public VBoxContainer {
 	void _compute_edit(int p_index, const Point2 &p_point);
 	bool _gizmo_select(int p_index, const Vector2 &p_screenpos, bool p_highlight_only = false);
 
-	struct OriginalTransform {
-		Transform local;
-		Transform global;
-	} original_tr;
+	Transform original_local;
+	Transform original_global;
 
 	void _update_spatial_transform_gizmo();
 

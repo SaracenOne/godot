@@ -838,9 +838,9 @@ void SkeletonEditor::_notification(int p_what) {
 			tool_button[TOOL_MODE_BONE_MOVE]->set_icon(get_icon("ToolMove", "EditorIcons"));
 			tool_button[TOOL_MODE_BONE_ROTATE]->set_icon(get_icon("ToolRotate", "EditorIcons"));
 			tool_button[TOOL_MODE_BONE_SCALE]->set_icon(get_icon("ToolScale", "EditorIcons"));
-			apply_button[APPLY_MODE_POSE]->set_icon(get_icon("ToolSelect", "EditorIcons"));
-			apply_button[APPLY_MODE_REST]->set_icon(get_icon("ToolSelect", "EditorIcons"));
-			apply_button[APPLY_MODE_CUSTOM_POSE]->set_icon(get_icon("ToolSelect", "EditorIcons"));
+			apply_button[APPLY_MODE_POSE]->set_icon(get_icon("ToolBonePose", "EditorIcons"));
+			apply_button[APPLY_MODE_REST]->set_icon(get_icon("ToolBoneRest", "EditorIcons"));
+			apply_button[APPLY_MODE_CUSTOM_POSE]->set_icon(get_icon("ToolBoneCustomPose", "EditorIcons"));
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
 			create_editors();
@@ -921,6 +921,8 @@ void SkeletonEditor::_menu_apply_item_pressed(int p_option) {
 				apply_button[i]->set_pressed(i == p_option);
 			apply_mode = (ApplyMode)p_option;
 		} break;
+		default:
+			break;
 	}
 }
 
@@ -1110,9 +1112,22 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 						if (skeleton && (skeleton->get_selected_bone() >= 0)) {
 							UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
 							ur->create_action(TTR("Set Bone Transform"), UndoRedo::MERGE_ENDS);
-							// Todo: pose/rest/custom pose
-							ur->add_do_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), skeleton->get_bone_pose(skeleton->get_selected_bone()));
-							ur->add_undo_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), original_tr.local);
+							switch (apply_mode) {
+								case APPLY_MODE_POSE: {
+									ur->add_do_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), skeleton->get_bone_pose(skeleton->get_selected_bone()));
+									ur->add_undo_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), original_local);
+								} break;
+								case APPLY_MODE_REST: {
+									ur->add_do_method(skeleton, "set_bone_rest", skeleton->get_selected_bone(), skeleton->get_bone_rest(skeleton->get_selected_bone()));
+									ur->add_undo_method(skeleton, "set_bone_rest", skeleton->get_selected_bone(), original_local);
+								} break;
+								case APPLY_MODE_CUSTOM_POSE: {
+									ur->add_do_method(skeleton, "set_bone_custom_pose", skeleton->get_selected_bone(), skeleton->get_bone_custom_pose(skeleton->get_selected_bone()));
+									ur->add_undo_method(skeleton, "set_bone_custom_pose", skeleton->get_selected_bone(), original_local);
+								} break;
+								default:
+									break;
+							}
 							ur->commit_action();
 							_edit.mode = SpatialEditorViewport::TRANSFORM_NONE;
 						}
@@ -1195,18 +1210,26 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 					Transform t;
 
 					if (local_coords) {
-						Transform original_local = original_tr.local;
 						Basis rot = Basis(axis, angle);
-
 						t.basis = original_local.get_basis().orthonormalized() * rot;
 						t.basis = t.basis.scaled(original_local.basis.get_scale());
 						t.origin = original_local.origin;
 
 						// Apply rotation
-						// Todo: pose/rest/custom pose
-						skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
+						switch (apply_mode) {
+							case APPLY_MODE_POSE: {
+								skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
+							} break;
+							case APPLY_MODE_REST: {
+								skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
+							} break;
+							case APPLY_MODE_CUSTOM_POSE: {
+								skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), t);
+							} break;
+							default:
+								break;
+						}
 					} else {
-						Transform original_global = original_tr.global;
 						Transform r;
 						Transform base = Transform(Basis(), _edit.center);
 
@@ -1216,11 +1239,34 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 						// Apply rotation
 						Transform to_local = skeleton->get_global_transform();
 						int parent_idx = skeleton->get_bone_parent(skeleton->get_selected_bone());
-						// Todo: pose/rest/custom pose
 						if (parent_idx >= 0) {
-							to_local = to_local * skeleton->get_bone_global_pose(parent_idx) * skeleton->get_bone_rest(skeleton->get_selected_bone());
+							switch (apply_mode) {
+								case APPLY_MODE_POSE: {
+									to_local = to_local * skeleton->get_bone_global_pose(parent_idx) * skeleton->get_bone_rest(skeleton->get_selected_bone());
+								} break;
+								case APPLY_MODE_REST: {
+									to_local = to_local * skeleton->get_bone_global_pose(parent_idx);
+								} break;
+								case APPLY_MODE_CUSTOM_POSE: {
+									to_local = to_local * skeleton->get_bone_global_pose(parent_idx) * skeleton->get_bone_rest(skeleton->get_selected_bone()) * skeleton->get_bone_pose(skeleton->get_selected_bone());
+								} break;
+								default:
+									break;
+							}
 						}
-						skeleton->set_bone_pose(skeleton->get_selected_bone(), to_local.inverse() * t);
+						switch (apply_mode) {
+							case APPLY_MODE_POSE: {
+								skeleton->set_bone_pose(skeleton->get_selected_bone(), to_local.inverse() * t);
+							} break;
+							case APPLY_MODE_REST: {
+								skeleton->set_bone_rest(skeleton->get_selected_bone(), to_local.inverse() * t);
+							} break;
+							case APPLY_MODE_CUSTOM_POSE: {
+								skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), to_local.inverse() * t);
+							} break;
+							default:
+								break;
+						}
 					}
 
 					sev->update_surface();
@@ -1274,9 +1320,20 @@ void SkeletonEditor::_compute_edit(int p_index, const Point2 &p_point) {
 	_edit.center = se->get_gizmo_transform().origin;
 
 	if (skeleton->get_selected_bone() != -1) {
-		original_tr.global = skeleton->get_global_transform() * skeleton->get_bone_global_pose(skeleton->get_selected_bone());
-		// Todo: pose/rest/custom pose
-		original_tr.local = skeleton->get_bone_pose(skeleton->get_selected_bone());
+		original_global = skeleton->get_global_transform() * skeleton->get_bone_global_pose(skeleton->get_selected_bone());
+		switch (apply_mode) {
+			case APPLY_MODE_POSE: {
+				original_local = skeleton->get_bone_pose(skeleton->get_selected_bone());
+			} break;
+			case APPLY_MODE_REST: {
+				original_local = skeleton->get_bone_rest(skeleton->get_selected_bone());
+			} break;
+			case APPLY_MODE_CUSTOM_POSE: {
+				original_local = skeleton->get_bone_custom_pose(skeleton->get_selected_bone());
+			} break;
+			default:
+				break;
+		}
 	}
 }
 
