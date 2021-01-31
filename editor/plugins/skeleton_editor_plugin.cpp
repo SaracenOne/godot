@@ -678,7 +678,7 @@ void SkeletonEditor::update_joint_tree() {
 
 	const Vector<int> &joint_porder = skeleton->get_bone_process_order();
 
-	Ref<Texture> bone_icon = get_icon("Skeleton", "EditorIcons");
+	Ref<Texture> bone_icon = get_icon("Bone", "EditorIcons");
 
 	for (int i = 0; i < joint_porder.size(); ++i) {
 		const int b_idx = joint_porder[i];
@@ -711,33 +711,40 @@ void SkeletonEditor::create_editors() {
 	separators[1] = memnew(VSeparator);
 
 	options = memnew(MenuButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(options);
 	options->set_text(TTR("Skeleton"));
 	options->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("Skeleton", "EditorIcons"));
 	options->get_popup()->add_item(TTR("Create physical skeleton"), MENU_OPTION_CREATE_PHYSICAL_SKELETON);
 	options->get_popup()->connect("id_pressed", this, "_on_click_option");
 
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(separators[0]);
+
 	Vector<Variant> button_binds;
 	button_binds.resize(1);
 
 	tool_button[TOOL_MODE_BONE_SELECT] = memnew(ToolButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[TOOL_MODE_BONE_SELECT]);
 	tool_button[TOOL_MODE_BONE_SELECT]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_BONE_SELECT]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_SELECT;
 	tool_button[TOOL_MODE_BONE_SELECT]->connect("pressed", this, "_menu_tool_item_pressed", button_binds);
 
 	tool_button[TOOL_MODE_BONE_MOVE] = memnew(ToolButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[TOOL_MODE_BONE_MOVE]);
 	tool_button[TOOL_MODE_BONE_MOVE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_BONE_MOVE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_MOVE;
 	tool_button[TOOL_MODE_BONE_MOVE]->connect("pressed", this, "_menu_tool_item_pressed", button_binds);
 
 	tool_button[TOOL_MODE_BONE_ROTATE] = memnew(ToolButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[TOOL_MODE_BONE_ROTATE]);
 	tool_button[TOOL_MODE_BONE_ROTATE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_BONE_ROTATE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_ROTATE;
 	tool_button[TOOL_MODE_BONE_ROTATE]->connect("pressed", this, "_menu_tool_item_pressed", button_binds);
 
 	tool_button[TOOL_MODE_BONE_SCALE] = memnew(ToolButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[TOOL_MODE_BONE_SCALE]);
 	tool_button[TOOL_MODE_BONE_SCALE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_BONE_SCALE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_SCALE;
@@ -750,19 +757,24 @@ void SkeletonEditor::create_editors() {
 
 	tool_mode = TOOL_MODE_BONE_NONE;
 
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(separators[1]);
+
 	apply_button[APPLY_MODE_POSE] = memnew(ToolButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(apply_button[APPLY_MODE_POSE]);
 	apply_button[APPLY_MODE_POSE]->set_toggle_mode(true);
 	apply_button[APPLY_MODE_POSE]->set_flat(true);
 	button_binds.write[0] = MENU_APPLY_POSE;
 	apply_button[APPLY_MODE_POSE]->connect("pressed", this, "_menu_apply_item_pressed", button_binds);
 
 	apply_button[APPLY_MODE_REST] = memnew(ToolButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(apply_button[APPLY_MODE_REST]);
 	apply_button[APPLY_MODE_REST]->set_toggle_mode(true);
 	apply_button[APPLY_MODE_REST]->set_flat(true);
 	button_binds.write[0] = MENU_APPLY_REST;
 	apply_button[APPLY_MODE_REST]->connect("pressed", this, "_menu_apply_item_pressed", button_binds);
 
 	apply_button[APPLY_MODE_CUSTOM_POSE] = memnew(ToolButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(apply_button[APPLY_MODE_CUSTOM_POSE]);
 	apply_button[APPLY_MODE_CUSTOM_POSE]->set_toggle_mode(true);
 	apply_button[APPLY_MODE_CUSTOM_POSE]->set_flat(true);
 	button_binds.write[0] = MENU_APPLY_CUSTOM_POSE;
@@ -775,16 +787,6 @@ void SkeletonEditor::create_editors() {
 		skeleton->add_child(pointsm);
 		pointsm->set_skeleton_path(NodePath(""));
 		skeleton->connect("pose_updated", this, "_draw_handles");
-	}
-
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(separators[0]);
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(options);
-	for (int i = 0; i < TOOL_MODE_BONE_MAX; i++) {
-		SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[i]);
-	}
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(separators[1]);
-	for (int i = 0; i < APPLY_MODE_MAX; i++) {
-		SpatialEditor::get_singleton()->add_control_to_menu_panel(apply_button[i]);
 	}
 
 	const Color section_color = get_color("prop_subsection", "Editor");
@@ -834,10 +836,10 @@ void SkeletonEditor::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-			tool_button[TOOL_MODE_BONE_SELECT]->set_icon(get_icon("ToolSelect", "EditorIcons"));
-			tool_button[TOOL_MODE_BONE_MOVE]->set_icon(get_icon("ToolMove", "EditorIcons"));
-			tool_button[TOOL_MODE_BONE_ROTATE]->set_icon(get_icon("ToolRotate", "EditorIcons"));
-			tool_button[TOOL_MODE_BONE_SCALE]->set_icon(get_icon("ToolScale", "EditorIcons"));
+			tool_button[TOOL_MODE_BONE_SELECT]->set_icon(get_icon("ToolBoneSelect", "EditorIcons"));
+			tool_button[TOOL_MODE_BONE_MOVE]->set_icon(get_icon("ToolBoneMove", "EditorIcons"));
+			tool_button[TOOL_MODE_BONE_ROTATE]->set_icon(get_icon("ToolBoneRotate", "EditorIcons"));
+			tool_button[TOOL_MODE_BONE_SCALE]->set_icon(get_icon("ToolBoneScale", "EditorIcons"));
 			apply_button[APPLY_MODE_POSE]->set_icon(get_icon("ToolBonePose", "EditorIcons"));
 			apply_button[APPLY_MODE_REST]->set_icon(get_icon("ToolBoneRest", "EditorIcons"));
 			apply_button[APPLY_MODE_CUSTOM_POSE]->set_icon(get_icon("ToolBoneCustomPose", "EditorIcons"));
@@ -884,32 +886,43 @@ void SkeletonEditor::_bind_methods() {
 }
 
 void SkeletonEditor::_menu_tool_item_pressed(int p_option) {
-	switch (p_option) {
-		case TOOL_MODE_BONE_SELECT:
-		case TOOL_MODE_BONE_MOVE:
-		case TOOL_MODE_BONE_ROTATE:
-		case TOOL_MODE_BONE_SCALE:
-		case TOOL_MODE_BONE_NONE: {
-			if (p_option != TOOL_MODE_BONE_NONE && !SpatialEditor::get_singleton()->is_tool_external()) {
-				SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_EXTERNAL);
-			}
-			for (int i = 0; i < TOOL_MODE_BONE_MAX; i++)
-				tool_button[i]->set_pressed(i == p_option);
-			tool_mode = (ToolMode)p_option;
-			if (skeleton) {
-				if (p_option == TOOL_MODE_BONE_NONE) {
-					_hide_handles();
-				} else {
-					_draw_handles();
-					if (skeleton->get_selected_bone() >= 0) {
-						SpatialEditor::get_singleton()->clear_externals();
-						SpatialEditor::get_singleton()->append_to_externals(skeleton->get_global_transform() * skeleton->get_bone_global_pose(skeleton->get_selected_bone()));
-					}
-				}
-			}
-			_update_spatial_transform_gizmo();
-		} break;
+
+	if (p_option != TOOL_MODE_BONE_NONE && !SpatialEditor::get_singleton()->is_tool_external()) {
+		SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_EXTERNAL);
 	}
+	for (int i = 0; i < TOOL_MODE_BONE_MAX; i++)
+		tool_button[i]->set_pressed(i == p_option);
+	tool_mode = (ToolMode)p_option;
+	if (skeleton) {
+		if (p_option == TOOL_MODE_BONE_NONE) {
+			_hide_handles();
+		} else {
+			_draw_handles();
+			if (skeleton->get_selected_bone() >= 0) {
+				SpatialEditor::get_singleton()->clear_externals();
+				SpatialEditor::get_singleton()->append_to_externals(skeleton->get_global_transform() * skeleton->get_bone_global_pose(skeleton->get_selected_bone()));
+			}
+		}
+	}
+
+	switch (p_option) {
+		case TOOL_MODE_BONE_SELECT: {
+			SpatialEditor::get_singleton()->set_external_tool_mode(SpatialEditor::EX_TOOL_MODE_SELECT);
+		} break;
+		case TOOL_MODE_BONE_MOVE: {
+			SpatialEditor::get_singleton()->set_external_tool_mode(SpatialEditor::EX_TOOL_MODE_MOVE);
+		} break;
+		case TOOL_MODE_BONE_ROTATE: {
+			SpatialEditor::get_singleton()->set_external_tool_mode(SpatialEditor::EX_TOOL_MODE_ROTATE);
+		} break;
+		case TOOL_MODE_BONE_SCALE: {
+			SpatialEditor::get_singleton()->set_external_tool_mode(SpatialEditor::EX_TOOL_MODE_SCALE);
+		} break;
+		case TOOL_MODE_BONE_NONE:
+			break;
+	}
+
+	_update_spatial_transform_gizmo();
 }
 
 void SkeletonEditor::_menu_apply_item_pressed(int p_option) {
@@ -990,20 +1003,26 @@ SkeletonEditor::~SkeletonEditor() {
 		SpatialEditor::get_singleton()->remove_control_from_menu_panel(options);
 		memdelete(options);
 	}
+	SpatialEditor::get_singleton()->remove_control_from_menu_panel(tool_button[TOOL_MODE_BONE_SELECT]);
+	SpatialEditor::get_singleton()->remove_control_from_menu_panel(tool_button[TOOL_MODE_BONE_MOVE]);
+	SpatialEditor::get_singleton()->remove_control_from_menu_panel(tool_button[TOOL_MODE_BONE_ROTATE]);
+	SpatialEditor::get_singleton()->remove_control_from_menu_panel(tool_button[TOOL_MODE_BONE_SCALE]);
 	for (int i = 0; i < TOOL_MODE_BONE_MAX; i++) {
 		if (tool_button[i]) {
-			SpatialEditor::get_singleton()->remove_control_from_menu_panel(tool_button[i]);
 			memdelete(tool_button[i]);
+		}
+	}
+	SpatialEditor::get_singleton()->remove_control_from_menu_panel(apply_button[APPLY_MODE_POSE]);
+	SpatialEditor::get_singleton()->remove_control_from_menu_panel(apply_button[APPLY_MODE_REST]);
+	SpatialEditor::get_singleton()->remove_control_from_menu_panel(apply_button[APPLY_MODE_CUSTOM_POSE]);
+	for (int i = 0; i < APPLY_MODE_MAX; i++) {
+		if (apply_button[i]) {
+			memdelete(apply_button[i]);
 		}
 	}
 	if (SpatialEditor::get_singleton()->is_tool_external()) {
 		SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_SELECT);
-	}
-	for (int i = 0; i < APPLY_MODE_MAX; i++) {
-		if (tool_button[i]) {
-			SpatialEditor::get_singleton()->remove_control_from_menu_panel(apply_button[i]);
-			memdelete(apply_button[i]);
-		}
+		SpatialEditor::get_singleton()->set_external_tool_mode(SpatialEditor::EX_TOOL_MODE_SELECT);
 	}
 
 }
@@ -1073,15 +1092,17 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 		switch (mb->get_button_index()) {
 			case BUTTON_LEFT: {
 				if (mb->is_pressed()) {
-					if (tool_mode == TOOL_MODE_BONE_SELECT) {
-						_edit.mouse_pos = mb->get_position();
-						_edit.snap = se->is_snap_enabled();
-						_edit.mode = SpatialEditorViewport::TRANSFORM_NONE;
 
-						// check gizmo
-						if (_gizmo_select(p_index, _edit.mouse_pos)) {
-							return true;
-						}
+					_edit.mouse_pos = mb->get_position();
+					_edit.snap = se->is_snap_enabled();
+					_edit.mode = SpatialEditorViewport::TRANSFORM_NONE;
+
+					// check gizmo
+					if (_gizmo_select(p_index, _edit.mouse_pos)) {
+						return true;
+					}
+
+					if (tool_mode == TOOL_MODE_BONE_SELECT) {
 
 						// select bone
 						int closest_idx = -1;

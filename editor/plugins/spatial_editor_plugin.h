@@ -767,6 +767,7 @@ public:
 	ToolMode get_tool_mode() const { return tool_mode; }
 	bool is_tool_external() const { return tool_mode == TOOL_MODE_EXTERNAL; }
 	ExternalToolMode get_external_tool_mode() const { return external_tool_mode; }
+	void set_external_tool_mode(ExternalToolMode p_external_tool_mode) { external_tool_mode = p_external_tool_mode; }
 	bool are_local_coords_enabled() const { return tool_option_button[SpatialEditor::TOOL_OPT_LOCAL_COORDS]->is_pressed(); }
 	bool is_snap_enabled() const { return snap_enabled ^ snap_key_enabled; }
 	float get_translate_snap() const;
