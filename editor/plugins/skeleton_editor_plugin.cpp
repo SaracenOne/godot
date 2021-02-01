@@ -1538,13 +1538,13 @@ void SkeletonEditor::_compute_edit(int p_index, const Point2 &p_point) {
 		}
 		switch (apply_mode) {
 			case APPLY_MODE_POSE: {
-				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone());
+				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone()) * skeleton->get_bone_custom_pose(skeleton->get_selected_bone());
 			} break;
 			case APPLY_MODE_REST: {
 				original_to_local = original_to_local;
 			} break;
 			case APPLY_MODE_CUSTOM_POSE: {
-				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone()) * skeleton->get_bone_pose(skeleton->get_selected_bone());
+				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone());
 			} break;
 			default:
 				break;
