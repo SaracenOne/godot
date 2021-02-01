@@ -348,7 +348,7 @@ void BoneTransformEditor::_update_custom_pose_properties() {
 
 void BoneTransformEditor::_update_transform_properties(Transform tform) {
 
-	Quat rot = tform.get_basis();
+	Quat rot = tform.get_basis().orthonormalized();
 	Vector3 rot_rad = rot.get_euler();
 	Vector3 rot_degrees = Vector3(Math::rad2deg(rot_rad.x), Math::rad2deg(rot_rad.y), Math::rad2deg(rot_rad.z));
 	Vector3 tr = tform.get_origin();
@@ -710,14 +710,14 @@ void SkeletonEditor::create_editors() {
 	separators[0] = memnew(VSeparator);
 	separators[1] = memnew(VSeparator);
 
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(separators[0]);
+
 	options = memnew(MenuButton);
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(options);
 	options->set_text(TTR("Skeleton"));
 	options->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("Skeleton", "EditorIcons"));
 	options->get_popup()->add_item(TTR("Create physical skeleton"), MENU_OPTION_CREATE_PHYSICAL_SKELETON);
 	options->get_popup()->connect("id_pressed", this, "_on_click_option");
-
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(separators[0]);
 
 	Vector<Variant> button_binds;
 	button_binds.resize(1);
@@ -1178,6 +1178,213 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 			int snap_step_decimals = Math::range_step_decimals(snap);
 
 			switch (_edit.mode) {
+
+
+
+
+
+
+				case SpatialEditorViewport::TRANSFORM_SCALE: {
+
+					Vector3 motion_mask;
+					Plane plane;
+					bool plane_mv = false;
+
+					switch (_edit.plane) {
+						case SpatialEditorViewport::TRANSFORM_VIEW:
+							motion_mask = Vector3(0, 0, 0);
+							plane = Plane(_edit.center, sev->get_camera_normal());
+							break;
+						case SpatialEditorViewport::TRANSFORM_X_AXIS:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(0);
+							plane = Plane(_edit.center, motion_mask.cross(motion_mask.cross(sev->get_camera_normal())).normalized());
+							break;
+						case SpatialEditorViewport::TRANSFORM_Y_AXIS:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(1);
+							plane = Plane(_edit.center, motion_mask.cross(motion_mask.cross(sev->get_camera_normal())).normalized());
+							break;
+						case SpatialEditorViewport::TRANSFORM_Z_AXIS:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(2);
+							plane = Plane(_edit.center, motion_mask.cross(motion_mask.cross(sev->get_camera_normal())).normalized());
+							break;
+						case SpatialEditorViewport::TRANSFORM_YZ:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(2) + se->get_gizmo_transform().basis.get_axis(1);
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(0));
+							plane_mv = true;
+							break;
+						case SpatialEditorViewport::TRANSFORM_XZ:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(2) + se->get_gizmo_transform().basis.get_axis(0);
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(1));
+							plane_mv = true;
+							break;
+						case SpatialEditorViewport::TRANSFORM_XY:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(0) + se->get_gizmo_transform().basis.get_axis(1);
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(2));
+							plane_mv = true;
+							break;
+					}
+
+					Vector3 intersection;
+					if (!plane.intersects_ray(ray_pos, ray, &intersection))
+						break;
+
+					Vector3 click;
+					if (!plane.intersects_ray(_edit.click_ray_pos, _edit.click_ray, &click))
+						break;
+
+					Vector3 motion = intersection - click;
+					if (_edit.plane != SpatialEditorViewport::TRANSFORM_VIEW) {
+						motion = motion_mask.dot(motion) * motion_mask;
+					} else {
+						float center_click_dist = click.distance_to(_edit.center);
+						float center_inters_dist = intersection.distance_to(_edit.center);
+						if (center_click_dist == 0)
+							break;
+
+						float scale = center_inters_dist - center_click_dist;
+						motion = Vector3(scale, scale, scale);
+					}
+
+					bool local_coords = (se->are_local_coords_enabled() && _edit.plane != SpatialEditorViewport::TRANSFORM_VIEW);
+
+					if (_edit.snap || se->is_snap_enabled()) {
+						snap = se->get_scale_snap() / 100;
+					}
+
+					Transform t;
+					Transform base = Transform(Basis(), _edit.center);
+
+					if (local_coords) {
+						Basis g = original_global.basis;
+						Vector3 local_motion = g.inverse().xform(motion);
+						if (_edit.snap || se->is_snap_enabled()) {
+							local_motion.snap(Vector3(snap, snap, snap));
+						}
+						Vector3 local_scale = original_local.basis.get_scale() * (local_motion + Vector3(1, 1, 1));
+						// Prevent scaling to 0 it would break the gizmo
+						Basis check = original_local.basis;
+						check.scale(local_scale);
+						if (check.determinant() != 0) {
+							t = original_local;
+							t.basis = t.basis.scaled_local(local_motion + Vector3(1, 1, 1));
+						}
+					} else {
+						if (_edit.snap || se->is_snap_enabled()) {
+							motion.snap(Vector3(snap, snap, snap));
+						}
+						t = original_local;
+						t.basis = t.basis.scaled(motion + Vector3(1, 1, 1));
+					}
+
+					// Apply scale
+					switch (apply_mode) {
+						case APPLY_MODE_POSE: {
+							skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
+						} break;
+						case APPLY_MODE_REST: {
+							skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
+						} break;
+						case APPLY_MODE_CUSTOM_POSE: {
+							skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), t);
+						} break;
+						default:
+							break;
+					}
+
+					sev->update_surface();
+
+				} break;
+
+
+
+				case SpatialEditorViewport::TRANSFORM_TRANSLATE: {
+
+					Vector3 motion_mask;
+					Plane plane;
+					bool plane_mv = false;
+
+					switch (_edit.plane) {
+						case SpatialEditorViewport::TRANSFORM_VIEW:
+							plane = Plane(_edit.center, sev->get_camera_normal());
+							break;
+						case SpatialEditorViewport::TRANSFORM_X_AXIS:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(0);
+							plane = Plane(_edit.center, motion_mask.cross(motion_mask.cross(sev->get_camera_normal())).normalized());
+							break;
+						case SpatialEditorViewport::TRANSFORM_Y_AXIS:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(1);
+							plane = Plane(_edit.center, motion_mask.cross(motion_mask.cross(sev->get_camera_normal())).normalized());
+							break;
+						case SpatialEditorViewport::TRANSFORM_Z_AXIS:
+							motion_mask = se->get_gizmo_transform().basis.get_axis(2);
+							plane = Plane(_edit.center, motion_mask.cross(motion_mask.cross(sev->get_camera_normal())).normalized());
+							break;
+						case SpatialEditorViewport::TRANSFORM_YZ:
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(0));
+							plane_mv = true;
+							break;
+						case SpatialEditorViewport::TRANSFORM_XZ:
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(1));
+							plane_mv = true;
+							break;
+						case SpatialEditorViewport::TRANSFORM_XY:
+							plane = Plane(_edit.center, se->get_gizmo_transform().basis.get_axis(2));
+							plane_mv = true;
+							break;
+					}
+
+					Vector3 intersection;
+					if (!plane.intersects_ray(ray_pos, ray, &intersection))
+						break;
+
+					Vector3 click;
+					if (!plane.intersects_ray(_edit.click_ray_pos, _edit.click_ray, &click))
+						break;
+
+					Vector3 motion = intersection - click;
+					if (_edit.plane != SpatialEditorViewport::TRANSFORM_VIEW) {
+						if (!plane_mv) {
+							motion = motion_mask.dot(motion) * motion_mask;
+						}
+					}
+
+					bool local_coords = (se->are_local_coords_enabled() && _edit.plane != SpatialEditorViewport::TRANSFORM_VIEW);
+
+					if (_edit.snap || se->is_snap_enabled()) {
+						snap = se->get_translate_snap();
+					}
+
+					motion = original_to_local.basis.inverse().xform(motion);
+					if (_edit.snap || se->is_snap_enabled()) {
+						motion.snap(Vector3(snap, snap, snap));
+					}
+
+					Transform t;
+					// Apply translation
+					t = original_local;
+					t.origin += motion;
+
+					switch (apply_mode) {
+						case APPLY_MODE_POSE: {
+							skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
+						} break;
+						case APPLY_MODE_REST: {
+							skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
+						} break;
+						case APPLY_MODE_CUSTOM_POSE: {
+							skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), t);
+						} break;
+						default:
+							break;
+					}
+
+					sev->update_surface();
+
+				} break;
+
+
+
+
 				case SpatialEditorViewport::TRANSFORM_ROTATE: {
 
 					Plane plane;
@@ -1233,61 +1440,30 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 					if (local_coords) {
 						Basis rot = Basis(axis, angle);
 						t.basis = original_local.get_basis().orthonormalized() * rot;
-						t.basis = t.basis.scaled(original_local.basis.get_scale());
+						t.basis = t.basis.scaled_local(original_local.basis.get_scale());
 						t.origin = original_local.origin;
-
-						// Apply rotation
-						switch (apply_mode) {
-							case APPLY_MODE_POSE: {
-								skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
-							} break;
-							case APPLY_MODE_REST: {
-								skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
-							} break;
-							case APPLY_MODE_CUSTOM_POSE: {
-								skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), t);
-							} break;
-							default:
-								break;
-						}
 					} else {
 						Transform r;
 						Transform base = Transform(Basis(), _edit.center);
-
 						r.basis.rotate(plane.normal, angle);
-						t = base * r * base.inverse() * original_global;
+						t.basis = base.get_basis() * r.get_basis() * base.get_basis().inverse() * original_local.get_basis().orthonormalized();
+						t.basis = t.basis.scaled_local(original_local.basis.get_scale());
+						t.origin = original_local.origin;
+					}
 
-						// Apply rotation
-						Transform to_local = skeleton->get_global_transform();
-						int parent_idx = skeleton->get_bone_parent(skeleton->get_selected_bone());
-						if (parent_idx >= 0) {
-							switch (apply_mode) {
-								case APPLY_MODE_POSE: {
-									to_local = to_local * skeleton->get_bone_global_pose(parent_idx) * skeleton->get_bone_rest(skeleton->get_selected_bone());
-								} break;
-								case APPLY_MODE_REST: {
-									to_local = to_local * skeleton->get_bone_global_pose(parent_idx);
-								} break;
-								case APPLY_MODE_CUSTOM_POSE: {
-									to_local = to_local * skeleton->get_bone_global_pose(parent_idx) * skeleton->get_bone_rest(skeleton->get_selected_bone()) * skeleton->get_bone_pose(skeleton->get_selected_bone());
-								} break;
-								default:
-									break;
-							}
-						}
-						switch (apply_mode) {
-							case APPLY_MODE_POSE: {
-								skeleton->set_bone_pose(skeleton->get_selected_bone(), to_local.inverse() * t);
-							} break;
-							case APPLY_MODE_REST: {
-								skeleton->set_bone_rest(skeleton->get_selected_bone(), to_local.inverse() * t);
-							} break;
-							case APPLY_MODE_CUSTOM_POSE: {
-								skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), to_local.inverse() * t);
-							} break;
-							default:
-								break;
-						}
+					// Apply rotation
+					switch (apply_mode) {
+						case APPLY_MODE_POSE: {
+							skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
+						} break;
+						case APPLY_MODE_REST: {
+							skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
+						} break;
+						case APPLY_MODE_CUSTOM_POSE: {
+							skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), t);
+						} break;
+						default:
+							break;
 					}
 
 					sev->update_surface();
@@ -1351,6 +1527,24 @@ void SkeletonEditor::_compute_edit(int p_index, const Point2 &p_point) {
 			} break;
 			case APPLY_MODE_CUSTOM_POSE: {
 				original_local = skeleton->get_bone_custom_pose(skeleton->get_selected_bone());
+			} break;
+			default:
+				break;
+		}
+		original_to_local = skeleton->get_global_transform();
+		int parent_idx = skeleton->get_bone_parent(skeleton->get_selected_bone());
+		if (parent_idx >= 0) {
+			original_to_local = original_to_local * skeleton->get_bone_global_pose(parent_idx);
+		}
+		switch (apply_mode) {
+			case APPLY_MODE_POSE: {
+				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone());
+			} break;
+			case APPLY_MODE_REST: {
+				original_to_local = original_to_local;
+			} break;
+			case APPLY_MODE_CUSTOM_POSE: {
+				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone()) * skeleton->get_bone_pose(skeleton->get_selected_bone());
 			} break;
 			default:
 				break;

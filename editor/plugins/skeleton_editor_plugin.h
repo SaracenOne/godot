@@ -229,6 +229,7 @@ class SkeletonEditor : public VBoxContainer {
 
 	Transform original_local;
 	Transform original_global;
+	Transform original_to_local;
 
 	void _update_spatial_transform_gizmo();
 
