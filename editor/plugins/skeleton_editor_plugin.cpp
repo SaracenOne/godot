@@ -1102,32 +1102,30 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 						return true;
 					}
 
-					if (tool_mode == TOOL_MODE_BONE_SELECT) {
-
-						// select bone
-						int closest_idx = -1;
-						real_t closest_dist = 1e10;
-						int bone_len = skeleton->get_bone_count();
-						for (int i = 0; i < bone_len; i++) {
-							
-							Vector3 joint_pos_3d = gt.xform(skeleton->get_bone_global_pose(i).origin);
-							Vector2 joint_pos_2d = p_camera->unproject_position(joint_pos_3d);
-							real_t dist_3d = ray_from.distance_to(joint_pos_3d);
-							real_t dist_2d = gpoint.distance_to(joint_pos_2d);
-							if (dist_2d < grab_threshold && dist_3d < closest_dist) {
-								closest_dist = dist_3d;
-								closest_idx = i;
-							}
-						}
-						if (closest_idx >= 0) {
-							TreeItem *ti = joint_tree->get_item_with_text(skeleton->get_bone_name(closest_idx));
-							ti->select(0);
-							joint_tree->scroll_to_item(ti);
-						} else {
-							skeleton->set_selected_bone(-1);
-							joint_tree->deselect_all();
+					// select bone
+					int closest_idx = -1;
+					real_t closest_dist = 1e10;
+					int bone_len = skeleton->get_bone_count();
+					for (int i = 0; i < bone_len; i++) {
+						
+						Vector3 joint_pos_3d = gt.xform(skeleton->get_bone_global_pose(i).origin);
+						Vector2 joint_pos_2d = p_camera->unproject_position(joint_pos_3d);
+						real_t dist_3d = ray_from.distance_to(joint_pos_3d);
+						real_t dist_2d = gpoint.distance_to(joint_pos_2d);
+						if (dist_2d < grab_threshold && dist_3d < closest_dist) {
+							closest_dist = dist_3d;
+							closest_idx = i;
 						}
 					}
+					if (closest_idx >= 0) {
+						TreeItem *ti = joint_tree->get_item_with_text(skeleton->get_bone_name(closest_idx));
+						ti->select(0);
+						joint_tree->scroll_to_item(ti);
+					} else {
+						skeleton->set_selected_bone(-1);
+						joint_tree->deselect_all();
+					}
+
 				} else {
 					if (_edit.mode != SpatialEditorViewport::TRANSFORM_NONE) {
 						if (skeleton && (skeleton->get_selected_bone() >= 0)) {
@@ -1175,7 +1173,6 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 			Vector3 ray_pos = sev->get_ray_pos(mm->get_position());
 			Vector3 ray = sev->get_ray(mm->get_position());
 			float snap = EDITOR_GET("interface/inspector/default_float_step");
-			int snap_step_decimals = Math::range_step_decimals(snap);
 
 			switch (_edit.mode) {
 
@@ -1252,7 +1249,6 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 					}
 
 					Transform t;
-					Transform base = Transform(Basis(), _edit.center);
 
 					if (local_coords) {
 						Basis g = original_global.basis;
@@ -1347,8 +1343,6 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 							motion = motion_mask.dot(motion) * motion_mask;
 						}
 					}
-
-					bool local_coords = (se->are_local_coords_enabled() && _edit.plane != SpatialEditorViewport::TRANSFORM_VIEW);
 
 					if (_edit.snap || se->is_snap_enabled()) {
 						snap = se->get_translate_snap();
@@ -1540,12 +1534,10 @@ void SkeletonEditor::_compute_edit(int p_index, const Point2 &p_point) {
 			case APPLY_MODE_POSE: {
 				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone()) * skeleton->get_bone_custom_pose(skeleton->get_selected_bone());
 			} break;
-			case APPLY_MODE_REST: {
-				original_to_local = original_to_local;
-			} break;
 			case APPLY_MODE_CUSTOM_POSE: {
 				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone());
 			} break;
+			case APPLY_MODE_REST:
 			default:
 				break;
 		}
