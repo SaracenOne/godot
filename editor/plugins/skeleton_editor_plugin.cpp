@@ -440,17 +440,76 @@ void BoneTransformEditor::_checkbox_toggled(const bool p_toggled) {
 	}
 }
 
+void BoneTransformEditor::set_read_only(const bool p_read_only) {
+	for (int i = 0; i < TRANSLATION_COMPONENTS; i++) {
+		translation_slider[i]->set_read_only(p_read_only);
+	}
+	for (int i = 0; i < ROTATION_DEGREES_COMPONENTS; i++) {
+		rotation_slider[i]->set_read_only(p_read_only);
+	}
+	for (int i = 0; i < SCALE_COMPONENTS; i++) {
+		scale_slider[i]->set_read_only(p_read_only);
+	}
+	for (int i = 0; i < TRANSFORM_COMPONENTS; i++) {
+		transform_slider[i]->set_read_only(p_read_only);
+	}
+}
+
+
 void SkeletonEditor::_on_click_option(int p_option) {
 	if (!skeleton) {
 		return;
 	}
 
 	switch (p_option) {
+		case MENU_OPTION_INIT_POSE: {
+			init_pose();
+		} break;
+		case MENU_OPTION_MAKE_KEY: {
+			make_key();
+		} break;
+		case MENU_OPTION_POSE_TO_REST: {
+			pose_to_rest();
+		} break;
 		case MENU_OPTION_CREATE_PHYSICAL_SKELETON: {
 			create_physical_skeleton();
-			break;
-		}
+		} break;
 	}
+}
+
+void SkeletonEditor::init_pose() {
+	const int bone_len = skeleton->get_bone_count();
+	if (!bone_len) {
+		return;
+	}
+	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	ur->create_action(TTR("Set Bone Transform"), UndoRedo::MERGE_ENDS);
+	for (int i = 0; i < bone_len; i++) {
+		ur->add_do_method(skeleton, "set_bone_pose", i, Transform());
+		ur->add_undo_method(skeleton, "set_bone_pose", i, skeleton->get_bone_pose(i));
+	}
+	ur->commit_action();
+}
+
+void SkeletonEditor::make_key() {
+}
+
+void SkeletonEditor::pose_to_rest() {
+	const int bone_len = skeleton->get_bone_count();
+	if (!bone_len) {
+		return;
+	}
+	UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
+	ur->create_action(TTR("Set Bone Transform"), UndoRedo::MERGE_ENDS);
+	for (int i = 0; i < bone_len; i++) {
+		ur->add_do_method(skeleton, "set_bone_pose", i, Transform());
+		ur->add_undo_method(skeleton, "set_bone_pose", i, skeleton->get_bone_pose(i));
+		ur->add_do_method(skeleton, "set_bone_custom_pose", i, Transform());
+		ur->add_undo_method(skeleton, "set_bone_custom_pose", i, skeleton->get_bone_custom_pose(i));
+		ur->add_do_method(skeleton, "set_bone_rest", i, skeleton->get_bone_rest(i) * skeleton->get_bone_custom_pose(i) * skeleton->get_bone_pose(i));
+		ur->add_undo_method(skeleton, "set_bone_rest", i, skeleton->get_bone_rest(i));
+	}
+	ur->commit_action();
 }
 
 void SkeletonEditor::create_physical_skeleton() {
@@ -716,6 +775,9 @@ void SkeletonEditor::create_editors() {
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(options);
 	options->set_text(TTR("Skeleton"));
 	options->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("Skeleton", "EditorIcons"));
+	options->get_popup()->add_item(TTR("Init pose"), MENU_OPTION_INIT_POSE);
+	options->get_popup()->add_item(TTR("Make key from current pose"), MENU_OPTION_MAKE_KEY);
+	options->get_popup()->add_item(TTR("Apply current pose to rest"), MENU_OPTION_POSE_TO_REST);
 	options->get_popup()->add_item(TTR("Create physical skeleton"), MENU_OPTION_CREATE_PHYSICAL_SKELETON);
 	options->get_popup()->connect("id_pressed", this, "_on_click_option");
 
@@ -913,9 +975,13 @@ void SkeletonEditor::_menu_tool_item_pressed(int p_option) {
 	_update_spatial_transform_gizmo();
 }
 
-void SkeletonEditor::rest_mode_toggled(bool pressed) {
+void SkeletonEditor::rest_mode_toggled(const bool pressed) {
 	bool before_val = rest_mode;
 
+	// Prevent that bone pose will be undo during rest mode.
+	// However SkeletonEditor will be memdeleted,
+	// so it need to record in SpatialEditor with calling method in
+	// EditorInspectorPluginSkeleton and it will not be memdeleted.
 	UndoRedo *ur = SpatialEditor::get_singleton()->get_undo_redo();
 	ur->create_action(TTR("Toggled Rest Mode"));
 	set_rest_mode_toggled(pressed);
@@ -924,14 +990,21 @@ void SkeletonEditor::rest_mode_toggled(bool pressed) {
 	ur->commit_action();
 }
 
-void SkeletonEditor::set_rest_mode_toggled(bool pressed) {
+void SkeletonEditor::set_rest_mode_toggled(const bool pressed) {
 	rest_mode_button->disconnect("toggled", this, "rest_mode_toggled");
 	rest_mode_button->set_pressed(pressed);
 	rest_mode_button->connect("toggled", this, "rest_mode_toggled");
 
 	rest_mode = pressed;
-	for (int i = 0; i < skeleton->get_bone_count(); i++) {
+	const int bone_len = skeleton->get_bone_count();
+	for (int i = 0; i < bone_len; i++) {
 		skeleton->set_bone_enabled(i, !rest_mode);
+	}
+	if (pose_editor) {
+		pose_editor->set_read_only(rest_mode);
+	}
+	if (custom_pose_editor) {
+		custom_pose_editor->set_read_only(rest_mode);
 	}
 }
 
@@ -1043,11 +1116,13 @@ void SkeletonEditor::_draw_handles() {
 	PoolVector<Vector3> va;
 	PoolVector<Color> ca;
 	{
-		va.resize(skeleton->get_bone_count());
-		ca.resize(skeleton->get_bone_count());
+		const int bone_len = skeleton->get_bone_count();
+		va.resize(bone_len);
+		ca.resize(bone_len);
 		PoolVector<Vector3>::Write vaw = va.write();
 		PoolVector<Color>::Write caw = ca.write();
-		for (int i = 0; i < skeleton->get_bone_count(); i++) {
+		
+		for (int i = 0; i < bone_len; i++) {
 			Vector3 point = skeleton->get_bone_global_pose(i).origin;
 			vaw[i] = point;
 			Color c;
@@ -1098,7 +1173,7 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 					// select bone
 					int closest_idx = -1;
 					real_t closest_dist = 1e10;
-					int bone_len = skeleton->get_bone_count();
+					const int bone_len = skeleton->get_bone_count();
 					for (int i = 0; i < bone_len; i++) {
 						
 						Vector3 joint_pos_3d = gt.xform(skeleton->get_bone_global_pose(i).origin);
@@ -1450,7 +1525,7 @@ void EditorInspectorPluginSkeleton::parse_begin(Object *p_object) {
 	add_custom_control(skel_editor);
 }
 
-void EditorInspectorPluginSkeleton::set_rest_mode_toggled(bool p_pressed) {
+void EditorInspectorPluginSkeleton::set_rest_mode_toggled(const bool p_pressed) {
 	if (SpatialEditor::get_singleton()->get_selected()->get_class() == "Skeleton" && skel_editor) {
 		skel_editor->set_rest_mode_toggled(p_pressed);
 	}

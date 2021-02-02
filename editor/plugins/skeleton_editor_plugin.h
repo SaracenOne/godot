@@ -133,7 +133,10 @@ class SkeletonEditor : public VBoxContainer {
 	friend class SkeletonEditorPlugin;
 
 	enum Menu {
-		MENU_OPTION_CREATE_PHYSICAL_SKELETON,
+		MENU_OPTION_INIT_POSE,
+		MENU_OPTION_MAKE_KEY,
+		MENU_OPTION_POSE_TO_REST,
+		MENU_OPTION_CREATE_PHYSICAL_SKELETON
 	};
 
 	enum ToolMode {
@@ -186,7 +189,7 @@ class SkeletonEditor : public VBoxContainer {
 	void _on_click_option(int p_option);
 	void _file_selected(const String &p_file);
 	void _menu_tool_item_pressed(int p_option);
-	void rest_mode_toggled(bool pressed);
+	void rest_mode_toggled(const bool pressed);
 
 	EditorFileDialog *file_export_lib;
 
@@ -195,6 +198,9 @@ class SkeletonEditor : public VBoxContainer {
 
 	void create_editors();
 
+	void init_pose();
+	void make_key();
+	void pose_to_rest();
 	void create_physical_skeleton();
 	PhysicalBone *create_physical_bone(int bone_id, int bone_child_id, const Vector<BoneInfo> &bones_infos);
 
@@ -230,7 +236,7 @@ public:
 
 	Skeleton *get_skeleton() const { return skeleton; };
 
-	void set_rest_mode_toggled(bool pressed);
+	void set_rest_mode_toggled(const bool pressed);
 
 	void _joint_tree_selection_changed();
 	void _joint_tree_rmb_select(const Vector2 &p_pos);
@@ -250,7 +256,7 @@ class EditorInspectorPluginSkeleton : public EditorInspectorPlugin {
 	EditorNode *editor;
 	UndoRedo *undo_redo;
 
-	void set_rest_mode_toggled (bool p_pressed);
+	void set_rest_mode_toggled (const bool p_pressed);
 
 protected:
 	static void _bind_methods();
