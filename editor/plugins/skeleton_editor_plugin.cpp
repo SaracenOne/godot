@@ -514,7 +514,7 @@ void SkeletonEditor::insert_keys(bool p_all_bones) {
 		if (name.empty())
 			continue;
 
-		if (!p_all_bones && !AnimationPlayerEditor::singleton->get_track_editor()->is_exist_transform_key(skeleton, name)) {
+		if (!p_all_bones && !AnimationPlayerEditor::singleton->get_track_editor()->has_transform_key(skeleton, name)) {
 			continue;
 		}
 

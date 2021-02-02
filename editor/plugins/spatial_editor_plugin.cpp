@@ -4847,8 +4847,9 @@ void SpatialEditor::_menu_item_pressed(int p_option) {
 		case MENU_TOOL_SCALE:
 		case MENU_TOOL_LIST_SELECT:
 		case MENU_TOOL_EXTERNAL: {
-			for (int i = 0; i < TOOL_MAX; i++)
+			for (int i = 0; i < TOOL_MAX; i++) {
 				tool_button[i]->set_pressed(i == p_option);
+			}
 			tool_mode = (ToolMode)p_option;
 			clear_externals();
 			update_transform_gizmo();
