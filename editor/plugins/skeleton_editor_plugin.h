@@ -154,20 +154,6 @@ class SkeletonEditor : public VBoxContainer {
 		MENU_TOOL_BONE_MAX
 	};
 
-	enum ApplyMode {
-		APPLY_MODE_POSE,
-		APPLY_MODE_REST,
-		APPLY_MODE_CUSTOM_POSE,
-		APPLY_MODE_MAX
-	};
-
-	enum MenuApplyOption {
-		MENU_APPLY_POSE,
-		MENU_APPLY_REST,
-		MENU_APPLY_CUSTOM_POSE,
-		MENU_APPLY_MODE_MAX
-	};
-
 	struct BoneInfo {
 		PhysicalBone *physical_bone;
 		Transform relative_rest; // Relative to skeleton node
@@ -188,10 +174,10 @@ class SkeletonEditor : public VBoxContainer {
 	VSeparator *separators[2];
 	MenuButton *options;
 	ToolButton *tool_button[TOOL_MODE_BONE_MAX];
-	ToolButton *apply_button[APPLY_MODE_MAX];
+	ToolButton *rest_mode_button;
 
 	ToolMode tool_mode = TOOL_MODE_BONE_NONE;
-	ApplyMode apply_mode = APPLY_MODE_POSE;
+	bool rest_mode = false;
 
 	EditorFileDialog *file_dialog;
 
@@ -200,7 +186,7 @@ class SkeletonEditor : public VBoxContainer {
 	void _on_click_option(int p_option);
 	void _file_selected(const String &p_file);
 	void _menu_tool_item_pressed(int p_option);
-	void _menu_apply_item_pressed(int p_option);
+	void rest_mode_toggled(bool pressed);
 
 	EditorFileDialog *file_export_lib;
 
@@ -244,6 +230,8 @@ public:
 
 	Skeleton *get_skeleton() const { return skeleton; };
 
+	void set_rest_mode_toggled(bool pressed);
+
 	void _joint_tree_selection_changed();
 	void _joint_tree_rmb_select(const Vector2 &p_pos);
 
@@ -260,11 +248,17 @@ class EditorInspectorPluginSkeleton : public EditorInspectorPlugin {
 
 	SkeletonEditor *skel_editor;
 	EditorNode *editor;
+	UndoRedo *undo_redo;
 
+	void set_rest_mode_toggled (bool p_pressed);
+
+protected:
+	static void _bind_methods();
 public:
 	virtual bool forward_spatial_gui_input(int p_index, Camera *p_camera, const Ref<InputEvent> &p_event) { return skel_editor->forward_spatial_gui_input(p_index, p_camera, p_event); }
 	virtual bool can_handle(Object *p_object);
 	virtual void parse_begin(Object *p_object);
+	UndoRedo *get_undo_redo() { return undo_redo; }
 };
 
 class SkeletonEditorPlugin : public EditorPlugin {

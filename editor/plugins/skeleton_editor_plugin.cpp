@@ -724,6 +724,7 @@ void SkeletonEditor::create_editors() {
 
 	tool_button[TOOL_MODE_BONE_SELECT] = memnew(ToolButton);
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[TOOL_MODE_BONE_SELECT]);
+	tool_button[TOOL_MODE_BONE_SELECT]->set_tooltip(TTR("Transform Bone Mode"));
 	tool_button[TOOL_MODE_BONE_SELECT]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_BONE_SELECT]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_SELECT;
@@ -731,6 +732,7 @@ void SkeletonEditor::create_editors() {
 
 	tool_button[TOOL_MODE_BONE_MOVE] = memnew(ToolButton);
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[TOOL_MODE_BONE_MOVE]);
+	tool_button[TOOL_MODE_BONE_MOVE]->set_tooltip(TTR("Move Bone Mode"));
 	tool_button[TOOL_MODE_BONE_MOVE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_BONE_MOVE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_MOVE;
@@ -738,6 +740,7 @@ void SkeletonEditor::create_editors() {
 
 	tool_button[TOOL_MODE_BONE_ROTATE] = memnew(ToolButton);
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[TOOL_MODE_BONE_ROTATE]);
+	tool_button[TOOL_MODE_BONE_ROTATE]->set_tooltip(TTR("Rotate Bone Mode"));
 	tool_button[TOOL_MODE_BONE_ROTATE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_BONE_ROTATE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_ROTATE;
@@ -745,6 +748,7 @@ void SkeletonEditor::create_editors() {
 
 	tool_button[TOOL_MODE_BONE_SCALE] = memnew(ToolButton);
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(tool_button[TOOL_MODE_BONE_SCALE]);
+	tool_button[TOOL_MODE_BONE_SCALE]->set_tooltip(TTR("Scale Bone Mode"));
 	tool_button[TOOL_MODE_BONE_SCALE]->set_toggle_mode(true);
 	tool_button[TOOL_MODE_BONE_SCALE]->set_flat(true);
 	button_binds.write[0] = MENU_TOOL_BONE_SCALE;
@@ -759,29 +763,14 @@ void SkeletonEditor::create_editors() {
 
 	SpatialEditor::get_singleton()->add_control_to_menu_panel(separators[1]);
 
-	apply_button[APPLY_MODE_POSE] = memnew(ToolButton);
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(apply_button[APPLY_MODE_POSE]);
-	apply_button[APPLY_MODE_POSE]->set_toggle_mode(true);
-	apply_button[APPLY_MODE_POSE]->set_flat(true);
-	button_binds.write[0] = MENU_APPLY_POSE;
-	apply_button[APPLY_MODE_POSE]->connect("pressed", this, "_menu_apply_item_pressed", button_binds);
+	rest_mode_button = memnew(ToolButton);
+	SpatialEditor::get_singleton()->add_control_to_menu_panel(rest_mode_button);
+	rest_mode_button->set_tooltip(TTR("Rest Mode\nNote: Bone poses are disabled during Rest Mode."));
+	rest_mode_button->set_toggle_mode(true);
+	rest_mode_button->set_flat(true);
+	rest_mode_button->connect("toggled", this, "rest_mode_toggled");
 
-	apply_button[APPLY_MODE_REST] = memnew(ToolButton);
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(apply_button[APPLY_MODE_REST]);
-	apply_button[APPLY_MODE_REST]->set_toggle_mode(true);
-	apply_button[APPLY_MODE_REST]->set_flat(true);
-	button_binds.write[0] = MENU_APPLY_REST;
-	apply_button[APPLY_MODE_REST]->connect("pressed", this, "_menu_apply_item_pressed", button_binds);
-
-	apply_button[APPLY_MODE_CUSTOM_POSE] = memnew(ToolButton);
-	SpatialEditor::get_singleton()->add_control_to_menu_panel(apply_button[APPLY_MODE_CUSTOM_POSE]);
-	apply_button[APPLY_MODE_CUSTOM_POSE]->set_toggle_mode(true);
-	apply_button[APPLY_MODE_CUSTOM_POSE]->set_flat(true);
-	button_binds.write[0] = MENU_APPLY_CUSTOM_POSE;
-	apply_button[APPLY_MODE_CUSTOM_POSE]->connect("pressed", this, "_menu_apply_item_pressed", button_binds);
-
-	apply_mode = APPLY_MODE_POSE;
-	_menu_apply_item_pressed(APPLY_MODE_POSE);
+	rest_mode = false;
 
 	if (skeleton) {
 		skeleton->add_child(pointsm);
@@ -815,7 +804,7 @@ void SkeletonEditor::create_editors() {
 	pose_editor = memnew(BoneTransformEditor(skeleton));
 	pose_editor->set_label(TTR("Bone Pose"));
 	pose_editor->set_keyable(AnimationPlayerEditor::singleton->get_track_editor()->has_keying());
-	pose_editor->set_toggle_enabled(true);
+	// pose_editor->set_toggle_enabled(true);
 	pose_editor->set_visible(false);
 	add_child(pose_editor);
 
@@ -840,9 +829,7 @@ void SkeletonEditor::_notification(int p_what) {
 			tool_button[TOOL_MODE_BONE_MOVE]->set_icon(get_icon("ToolBoneMove", "EditorIcons"));
 			tool_button[TOOL_MODE_BONE_ROTATE]->set_icon(get_icon("ToolBoneRotate", "EditorIcons"));
 			tool_button[TOOL_MODE_BONE_SCALE]->set_icon(get_icon("ToolBoneScale", "EditorIcons"));
-			apply_button[APPLY_MODE_POSE]->set_icon(get_icon("ToolBonePose", "EditorIcons"));
-			apply_button[APPLY_MODE_REST]->set_icon(get_icon("ToolBoneRest", "EditorIcons"));
-			apply_button[APPLY_MODE_CUSTOM_POSE]->set_icon(get_icon("ToolBoneCustomPose", "EditorIcons"));
+			rest_mode_button->set_icon(get_icon("ToolBoneRest", "EditorIcons"));
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
 			create_editors();
@@ -875,7 +862,8 @@ void SkeletonEditor::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_update_properties"), &SkeletonEditor::_update_properties);
 	ClassDB::bind_method(D_METHOD("_on_click_option"), &SkeletonEditor::_on_click_option);
 	ClassDB::bind_method(D_METHOD("_menu_tool_item_pressed"), &SkeletonEditor::_menu_tool_item_pressed);
-	ClassDB::bind_method(D_METHOD("_menu_apply_item_pressed"), &SkeletonEditor::_menu_apply_item_pressed);
+	ClassDB::bind_method(D_METHOD("rest_mode_toggled"), &SkeletonEditor::rest_mode_toggled);
+	ClassDB::bind_method(D_METHOD("set_rest_mode_toggled"), &SkeletonEditor::set_rest_mode_toggled);
 
 	ClassDB::bind_method(D_METHOD("get_drag_data_fw"), &SkeletonEditor::get_drag_data_fw);
 	ClassDB::bind_method(D_METHOD("can_drop_data_fw"), &SkeletonEditor::can_drop_data_fw);
@@ -925,17 +913,25 @@ void SkeletonEditor::_menu_tool_item_pressed(int p_option) {
 	_update_spatial_transform_gizmo();
 }
 
-void SkeletonEditor::_menu_apply_item_pressed(int p_option) {
-	switch (p_option) {
-		case APPLY_MODE_POSE:
-		case APPLY_MODE_REST:
-		case APPLY_MODE_CUSTOM_POSE: {
-			for (int i = 0; i < APPLY_MODE_MAX; i++)
-				apply_button[i]->set_pressed(i == p_option);
-			apply_mode = (ApplyMode)p_option;
-		} break;
-		default:
-			break;
+void SkeletonEditor::rest_mode_toggled(bool pressed) {
+	bool before_val = rest_mode;
+
+	UndoRedo *ur = SpatialEditor::get_singleton()->get_undo_redo();
+	ur->create_action(TTR("Toggled Rest Mode"));
+	set_rest_mode_toggled(pressed);
+	ur->add_undo_method(editor_plugin, "set_rest_mode_toggled", before_val);
+	ur->add_do_method(editor_plugin, "set_rest_mode_toggled", pressed);
+	ur->commit_action();
+}
+
+void SkeletonEditor::set_rest_mode_toggled(bool pressed) {
+	rest_mode_button->disconnect("toggled", this, "rest_mode_toggled");
+	rest_mode_button->set_pressed(pressed);
+	rest_mode_button->connect("toggled", this, "rest_mode_toggled");
+
+	rest_mode = pressed;
+	for (int i = 0; i < skeleton->get_bone_count(); i++) {
+		skeleton->set_bone_enabled(i, !rest_mode);
 	}
 }
 
@@ -986,6 +982,7 @@ SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNo
 }
 
 SkeletonEditor::~SkeletonEditor() {
+	set_rest_mode_toggled(false);
 	SpatialEditor::get_singleton()->disconnect("change_tool_mode", this, "_menu_tool_item_pressed");
 	if (skeleton) {
 		pointsm->get_parent()->remove_child(pointsm);
@@ -1012,13 +1009,9 @@ SkeletonEditor::~SkeletonEditor() {
 			memdelete(tool_button[i]);
 		}
 	}
-	SpatialEditor::get_singleton()->remove_control_from_menu_panel(apply_button[APPLY_MODE_POSE]);
-	SpatialEditor::get_singleton()->remove_control_from_menu_panel(apply_button[APPLY_MODE_REST]);
-	SpatialEditor::get_singleton()->remove_control_from_menu_panel(apply_button[APPLY_MODE_CUSTOM_POSE]);
-	for (int i = 0; i < APPLY_MODE_MAX; i++) {
-		if (apply_button[i]) {
-			memdelete(apply_button[i]);
-		}
+	SpatialEditor::get_singleton()->remove_control_from_menu_panel(rest_mode_button);
+	if (rest_mode_button) {
+		memdelete(rest_mode_button);
 	}
 	if (SpatialEditor::get_singleton()->is_tool_external()) {
 		SpatialEditor::get_singleton()->set_tool_mode(SpatialEditor::TOOL_MODE_SELECT);
@@ -1131,21 +1124,12 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 						if (skeleton && (skeleton->get_selected_bone() >= 0)) {
 							UndoRedo *ur = EditorNode::get_singleton()->get_undo_redo();
 							ur->create_action(TTR("Set Bone Transform"), UndoRedo::MERGE_ENDS);
-							switch (apply_mode) {
-								case APPLY_MODE_POSE: {
-									ur->add_do_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), skeleton->get_bone_pose(skeleton->get_selected_bone()));
-									ur->add_undo_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), original_local);
-								} break;
-								case APPLY_MODE_REST: {
-									ur->add_do_method(skeleton, "set_bone_rest", skeleton->get_selected_bone(), skeleton->get_bone_rest(skeleton->get_selected_bone()));
-									ur->add_undo_method(skeleton, "set_bone_rest", skeleton->get_selected_bone(), original_local);
-								} break;
-								case APPLY_MODE_CUSTOM_POSE: {
-									ur->add_do_method(skeleton, "set_bone_custom_pose", skeleton->get_selected_bone(), skeleton->get_bone_custom_pose(skeleton->get_selected_bone()));
-									ur->add_undo_method(skeleton, "set_bone_custom_pose", skeleton->get_selected_bone(), original_local);
-								} break;
-								default:
-									break;
+							if (rest_mode) {
+								ur->add_do_method(skeleton, "set_bone_rest", skeleton->get_selected_bone(), skeleton->get_bone_rest(skeleton->get_selected_bone()));
+								ur->add_undo_method(skeleton, "set_bone_rest", skeleton->get_selected_bone(), original_local);
+							} else {
+								ur->add_do_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), skeleton->get_bone_pose(skeleton->get_selected_bone()));
+								ur->add_undo_method(skeleton, "set_bone_pose", skeleton->get_selected_bone(), original_local);
 							}
 							ur->commit_action();
 							_edit.mode = SpatialEditorViewport::TRANSFORM_NONE;
@@ -1273,18 +1257,10 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 					}
 
 					// Apply scale
-					switch (apply_mode) {
-						case APPLY_MODE_POSE: {
-							skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
-						} break;
-						case APPLY_MODE_REST: {
-							skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
-						} break;
-						case APPLY_MODE_CUSTOM_POSE: {
-							skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), t);
-						} break;
-						default:
-							break;
+					if (rest_mode) {
+						skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
+					} else {
+						skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
 					}
 
 					sev->update_surface();
@@ -1358,18 +1334,10 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 					t = original_local;
 					t.origin += motion;
 
-					switch (apply_mode) {
-						case APPLY_MODE_POSE: {
-							skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
-						} break;
-						case APPLY_MODE_REST: {
-							skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
-						} break;
-						case APPLY_MODE_CUSTOM_POSE: {
-							skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), t);
-						} break;
-						default:
-							break;
+					if (rest_mode) {
+						skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
+					} else {
+						skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
 					}
 
 					sev->update_surface();
@@ -1446,18 +1414,10 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 					}
 
 					// Apply rotation
-					switch (apply_mode) {
-						case APPLY_MODE_POSE: {
-							skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
-						} break;
-						case APPLY_MODE_REST: {
-							skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
-						} break;
-						case APPLY_MODE_CUSTOM_POSE: {
-							skeleton->set_bone_custom_pose(skeleton->get_selected_bone(), t);
-						} break;
-						default:
-							break;
+					if (rest_mode) {
+						skeleton->set_bone_rest(skeleton->get_selected_bone(), t);
+					} else {
+						skeleton->set_bone_pose(skeleton->get_selected_bone(), t);
 					}
 
 					sev->update_surface();
@@ -1474,6 +1434,10 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 	return false;
 }
 
+void EditorInspectorPluginSkeleton::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_rest_mode_toggled"), &EditorInspectorPluginSkeleton::set_rest_mode_toggled);
+}
+
 bool EditorInspectorPluginSkeleton::can_handle(Object *p_object) {
 	return Object::cast_to<Skeleton>(p_object) != nullptr;
 }
@@ -1484,6 +1448,12 @@ void EditorInspectorPluginSkeleton::parse_begin(Object *p_object) {
 
 	skel_editor = memnew(SkeletonEditor(this, editor, skeleton));
 	add_custom_control(skel_editor);
+}
+
+void EditorInspectorPluginSkeleton::set_rest_mode_toggled(bool p_pressed) {
+	if (SpatialEditor::get_singleton()->get_selected()->get_class() == "Skeleton" && skel_editor) {
+		skel_editor->set_rest_mode_toggled(p_pressed);
+	}
 }
 
 SkeletonEditorPlugin::SkeletonEditorPlugin(EditorNode *p_node) {
@@ -1512,34 +1482,18 @@ void SkeletonEditor::_compute_edit(int p_index, const Point2 &p_point) {
 
 	if (skeleton->get_selected_bone() != -1) {
 		original_global = skeleton->get_global_transform() * skeleton->get_bone_global_pose(skeleton->get_selected_bone());
-		switch (apply_mode) {
-			case APPLY_MODE_POSE: {
-				original_local = skeleton->get_bone_pose(skeleton->get_selected_bone());
-			} break;
-			case APPLY_MODE_REST: {
-				original_local = skeleton->get_bone_rest(skeleton->get_selected_bone());
-			} break;
-			case APPLY_MODE_CUSTOM_POSE: {
-				original_local = skeleton->get_bone_custom_pose(skeleton->get_selected_bone());
-			} break;
-			default:
-				break;
+		if (rest_mode) {
+			original_local = skeleton->get_bone_rest(skeleton->get_selected_bone());
+		} else {
+			original_local = skeleton->get_bone_pose(skeleton->get_selected_bone());
 		}
 		original_to_local = skeleton->get_global_transform();
 		int parent_idx = skeleton->get_bone_parent(skeleton->get_selected_bone());
 		if (parent_idx >= 0) {
 			original_to_local = original_to_local * skeleton->get_bone_global_pose(parent_idx);
 		}
-		switch (apply_mode) {
-			case APPLY_MODE_POSE: {
-				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone()) * skeleton->get_bone_custom_pose(skeleton->get_selected_bone());
-			} break;
-			case APPLY_MODE_CUSTOM_POSE: {
-				original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone());
-			} break;
-			case APPLY_MODE_REST:
-			default:
-				break;
+		if (!rest_mode) {
+			original_to_local = original_to_local * skeleton->get_bone_rest(skeleton->get_selected_bone()) * skeleton->get_bone_custom_pose(skeleton->get_selected_bone());
 		}
 	}
 }
