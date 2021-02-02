@@ -456,6 +456,12 @@ void BoneTransformEditor::set_read_only(const bool p_read_only) {
 }
 
 
+void SkeletonEditor::set_keyable(const bool p_keyable) {
+	keyable = p_keyable;
+	options->get_popup()->set_item_disabled(MENU_OPTION_INSERT_KEYS, !p_keyable);
+	options->get_popup()->set_item_disabled(MENU_OPTION_INSERT_KEYS_EXISTED, !p_keyable);
+};
+
 void SkeletonEditor::_on_click_option(int p_option) {
 	if (!skeleton) {
 		return;
@@ -465,8 +471,11 @@ void SkeletonEditor::_on_click_option(int p_option) {
 		case MENU_OPTION_INIT_POSE: {
 			init_pose();
 		} break;
-		case MENU_OPTION_MAKE_KEY: {
-			make_key();
+		case MENU_OPTION_INSERT_KEYS: {
+			insert_keys(true);
+		} break;
+		case MENU_OPTION_INSERT_KEYS_EXISTED: {
+			insert_keys(false);
 		} break;
 		case MENU_OPTION_POSE_TO_REST: {
 			pose_to_rest();
@@ -491,7 +500,30 @@ void SkeletonEditor::init_pose() {
 	ur->commit_action();
 }
 
-void SkeletonEditor::make_key() {
+void SkeletonEditor::insert_keys(bool p_all_bones) {
+	if (skeleton == nullptr)
+		return;
+
+	int bone_len = skeleton->get_bone_count();
+	Node *root = EditorNode::get_singleton()->get_tree()->get_root();
+	String path = root->get_path_to(skeleton);
+
+	for (int i = 0; i < bone_len; i++) {
+		const String name = skeleton->get_bone_name(i);
+
+		if (name.empty())
+			continue;
+
+		if (!p_all_bones && !AnimationPlayerEditor::singleton->get_track_editor()->is_exist_transform_key(skeleton, name)) {
+			continue;
+		}
+
+		// Need to normalize the basis before you key it
+		Transform tform = skeleton->get_bone_pose(i);
+		tform.orthonormalize();
+		AnimationPlayerEditor::singleton->get_track_editor()->insert_transform_key(skeleton, name, tform);
+	}
+
 }
 
 void SkeletonEditor::pose_to_rest() {
@@ -776,7 +808,8 @@ void SkeletonEditor::create_editors() {
 	options->set_text(TTR("Skeleton"));
 	options->set_icon(EditorNode::get_singleton()->get_gui_base()->get_icon("Skeleton", "EditorIcons"));
 	options->get_popup()->add_item(TTR("Init pose"), MENU_OPTION_INIT_POSE);
-	options->get_popup()->add_item(TTR("Make key from current pose"), MENU_OPTION_MAKE_KEY);
+	options->get_popup()->add_item(TTR("Insert key of all bone poses"), MENU_OPTION_INSERT_KEYS);
+	options->get_popup()->add_item(TTR("Insert key of bone poses already exist track"), MENU_OPTION_INSERT_KEYS_EXISTED);
 	options->get_popup()->add_item(TTR("Apply current pose to rest"), MENU_OPTION_POSE_TO_REST);
 	options->get_popup()->add_item(TTR("Create physical skeleton"), MENU_OPTION_CREATE_PHYSICAL_SKELETON);
 	options->get_popup()->connect("id_pressed", this, "_on_click_option");
@@ -833,6 +866,8 @@ void SkeletonEditor::create_editors() {
 	rest_mode_button->connect("toggled", this, "rest_mode_toggled");
 
 	rest_mode = false;
+
+	set_keyable(AnimationPlayerEditor::singleton->get_track_editor()->has_keying());
 
 	if (skeleton) {
 		skeleton->add_child(pointsm);
@@ -1006,6 +1041,7 @@ void SkeletonEditor::set_rest_mode_toggled(const bool pressed) {
 	if (custom_pose_editor) {
 		custom_pose_editor->set_read_only(rest_mode);
 	}
+	set_keyable(AnimationPlayerEditor::singleton->get_track_editor()->has_keying() && !rest_mode);
 }
 
 SkeletonEditor::SkeletonEditor(EditorInspectorPluginSkeleton *e_plugin, EditorNode *p_editor, Skeleton *p_skeleton) :

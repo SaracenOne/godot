@@ -134,7 +134,8 @@ class SkeletonEditor : public VBoxContainer {
 
 	enum Menu {
 		MENU_OPTION_INIT_POSE,
-		MENU_OPTION_MAKE_KEY,
+		MENU_OPTION_INSERT_KEYS,
+		MENU_OPTION_INSERT_KEYS_EXISTED,
 		MENU_OPTION_POSE_TO_REST,
 		MENU_OPTION_CREATE_PHYSICAL_SKELETON
 	};
@@ -186,6 +187,8 @@ class SkeletonEditor : public VBoxContainer {
 
 	UndoRedo *undo_redo;
 
+	bool keyable;
+
 	void _on_click_option(int p_option);
 	void _file_selected(const String &p_file);
 	void _menu_tool_item_pressed(int p_option);
@@ -199,7 +202,7 @@ class SkeletonEditor : public VBoxContainer {
 	void create_editors();
 
 	void init_pose();
-	void make_key();
+	void insert_keys(bool p_all_bones);
 	void pose_to_rest();
 	void create_physical_skeleton();
 	PhysicalBone *create_physical_bone(int bone_id, int bone_child_id, const Vector<BoneInfo> &bones_infos);
@@ -233,6 +236,9 @@ protected:
 public:
 	virtual bool forward_spatial_gui_input(int p_index, Camera *p_camera, const Ref<InputEvent> &p_event);
 	void move_skeleton_bone(NodePath p_skeleton_path, int32_t p_selected_boneidx, int32_t p_target_boneidx);
+
+	// Transform can be keyed, whether or not to show the button
+	void set_keyable(const bool p_keyable);
 
 	Skeleton *get_skeleton() const { return skeleton; };
 
