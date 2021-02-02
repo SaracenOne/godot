@@ -3562,7 +3562,7 @@ void AnimationTrackEditor::_insert_delay() {
 	insert_queue = false;
 }
 
-bool AnimationTrackEditor::is_exist_transform_key(Spatial *p_node, const String &p_sub) {
+bool AnimationTrackEditor::has_transform_key(Spatial *p_node, const String &p_sub) {
 
 	if (!keying)
 		return false;
