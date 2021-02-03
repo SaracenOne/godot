@@ -1271,11 +1271,6 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 
 			switch (_edit.mode) {
 
-
-
-
-
-
 				case SpatialEditorViewport::TRANSFORM_SCALE: {
 
 					Vector3 motion_mask;
@@ -1347,24 +1342,27 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 
 					if (local_coords) {
 						Basis g = original_global.basis;
-						Vector3 local_motion = g.inverse().xform(motion);
+						motion = g.inverse().xform(motion);
 						if (_edit.snap || se->is_snap_enabled()) {
-							local_motion.snap(Vector3(snap, snap, snap));
+							motion.snap(Vector3(snap, snap, snap));
 						}
-						Vector3 local_scale = original_local.basis.get_scale() * (local_motion + Vector3(1, 1, 1));
+						Vector3 local_scale = original_local.basis.get_scale() * (motion + Vector3(1, 1, 1));
 						// Prevent scaling to 0 it would break the gizmo
 						Basis check = original_local.basis;
 						check.scale(local_scale);
 						if (check.determinant() != 0) {
 							t = original_local;
-							t.basis = t.basis.scaled_local(local_motion + Vector3(1, 1, 1));
+							t.basis = t.basis.scaled_local(motion + Vector3(1, 1, 1));
 						}
 					} else {
 						if (_edit.snap || se->is_snap_enabled()) {
 							motion.snap(Vector3(snap, snap, snap));
 						}
 						t = original_local;
-						t.basis = t.basis.scaled(motion + Vector3(1, 1, 1));
+						Transform r;
+						r.basis.scale(motion + Vector3(1, 1, 1));
+						Basis base = original_to_local.get_basis().orthonormalized().inverse();
+						t.basis = base * (r.get_basis() * (base.inverse() * original_local.get_basis()));
 					}
 
 					// Apply scale
@@ -1517,9 +1515,9 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 						t.origin = original_local.origin;
 					} else {
 						Transform r;
-						Transform base = Transform(Basis(), _edit.center);
+						Basis base = original_to_local.get_basis().orthonormalized().inverse();
 						r.basis.rotate(plane.normal, angle);
-						t.basis = base.get_basis() * r.get_basis() * base.get_basis().inverse() * original_local.get_basis().orthonormalized();
+						t.basis = base * r.get_basis() * base.inverse() * original_local.get_basis().orthonormalized();
 						t.basis = t.basis.scaled_local(original_local.basis.get_scale());
 						t.origin = original_local.origin;
 					}
