@@ -1376,8 +1376,6 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 
 				} break;
 
-
-
 				case SpatialEditorViewport::TRANSFORM_TRANSLATE: {
 
 					Vector3 motion_mask;
@@ -1453,9 +1451,6 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 
 				} break;
 
-
-
-
 				case SpatialEditorViewport::TRANSFORM_ROTATE: {
 
 					Plane plane;
@@ -1517,8 +1512,8 @@ bool SkeletonEditor::forward_spatial_gui_input(int p_index, Camera *p_camera, co
 						Transform r;
 						Basis base = original_to_local.get_basis().orthonormalized().inverse();
 						r.basis.rotate(plane.normal, angle);
-						t.basis = base * r.get_basis() * base.inverse() * original_local.get_basis().orthonormalized();
-						t.basis = t.basis.scaled_local(original_local.basis.get_scale());
+						t.basis = base * r.get_basis() * base.inverse() * original_local.get_basis();
+						// t.basis = t.basis.scaled(original_local.basis.get_scale());
 						t.origin = original_local.origin;
 					}
 
