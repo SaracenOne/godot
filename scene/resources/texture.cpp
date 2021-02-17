@@ -2237,6 +2237,10 @@ AnimatedTexture::~AnimatedTexture() {
 void TextureLayered::set_flags(uint32_t p_flags) {
 	flags = p_flags;
 
+	if (width == 0 || height == 0 || depth == 0) {
+		return; //uninitialized, do not set to texture
+	}
+
 	if (texture.is_valid()) {
 		VS::get_singleton()->texture_set_flags(texture, flags);
 	}

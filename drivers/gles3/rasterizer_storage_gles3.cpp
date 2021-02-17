@@ -1388,7 +1388,10 @@ Ref<Image> RasterizerStorageGLES3::texture_get_data(RID p_texture, int p_layer) 
 void RasterizerStorageGLES3::texture_set_flags(RID p_texture, uint32_t p_flags) {
 
 	Texture *texture = texture_owner.get(p_texture);
+
 	ERR_FAIL_COND(!texture);
+	ERR_FAIL_COND(!texture->active);
+
 	if (texture->render_target) {
 
 		p_flags &= VS::TEXTURE_FLAG_FILTER; //can change only filter

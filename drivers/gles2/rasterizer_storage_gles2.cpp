@@ -953,7 +953,9 @@ Ref<Image> RasterizerStorageGLES2::texture_get_data(RID p_texture, int p_layer) 
 void RasterizerStorageGLES2::texture_set_flags(RID p_texture, uint32_t p_flags) {
 
 	Texture *texture = texture_owner.getornull(p_texture);
+
 	ERR_FAIL_COND(!texture);
+	ERR_FAIL_COND(!texture->active);
 
 	bool had_mipmaps = texture->flags & VS::TEXTURE_FLAG_MIPMAPS;
 
