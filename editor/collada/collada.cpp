@@ -968,11 +968,11 @@ void Collada::_parse_mesh_geometry(XMLParser &parser, String p_id, String p_name
 						if (parser.get_node_name() == "input") {
 							String semantic = parser.get_attribute_value("semantic");
 							String source = _uri_to_id(parser.get_attribute_value("source"));
-							
+
 							if (semantic == "TEXCOORD") {
 								semantic = "TEXCOORD" + itos(last_ref++);
 							}
-							
+
 							vert.sources[semantic] = source;
 
 							COLLADA_PRINT(section + " input semantic: " + semantic + " source: " + source);
